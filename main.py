@@ -1,12 +1,21 @@
-import os
-import subprocess
 from pathlib import Path
+from plugins.parsers.pmc import PMCParser  # Or JATSMarkdownParser, depending on what you named the class
 
-from plugins.collectors.pmc import PMCCollector
 
 def main():
-    cardiology = PMCCollector('"Cardiac Arrest" AND 2025[dp]', 'data/raw/heart-attack-25',1_000)
-    cardiology.collect()
+    parser = PMCParser()
+    source = Path("data/raw/cardiology2-25/PMC7616479.2.xml")
+
+    # parse() already returns the fully formatted Markdown string
+    # complete with the --- YAML frontmatter --- and the article body!
+    markdown_content = parser.parse(source)
+
+    output_file = source.with_suffix(".md")
+
+    # Just write the string directly to the file
+    output_file.write_text(markdown_content, encoding="utf-8")
+
+    print(f"Saved: {output_file}")
 
 
 if __name__ == "__main__":
