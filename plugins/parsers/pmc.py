@@ -689,9 +689,62 @@ class PMCParser:
         return images if images else f"{anchor}{self._extract_text(node, depth)}"
 
     def _render_footnote(self, node, depth) -> str:
-        """Render footnotes."""
+        """Render footnotes cleanly, separating labels from text."""
         fn_id = node.get("id", "")
-        return f"<a id=\"{fn_id}\"></a>^[{self._extract_text(node, depth).strip()}]"
+        anchor = f'<a id="{fn_id}"></a>\n' if fn_id else ""
+
+        # Extract the label (e.g., 'a', 'b', '*') if it exists
+        label_node = node.find("label")
+        label_text = self._extract_text(label_node, depth).strip() if label_node is not None else ""
+
+        # Extract paragraph text
+        p_nodes = node.findall("p")
+        if p_nodes:
+            p_text = " ".join(self._extract_text(p, depth).strip() for p in p_nodes)
+        else:
+            # Fallback if no <p> tags are present
+            full_text = self._extract_text(node, depth).strip()
+            if label_text and full_text.startswith(label_text):
+                p_text = full_text[len(label_text):].strip()
+            else:
+                p_text = full_text
+
+        # Format cleanly
+        if label_text:
+            return f"{anchor}**[{label_text}]** {p_text}"
+        return f"{anchor}{p_text}"
+
+    def _render_table_footnotes(self, node, depth) -> str:
+        """Render table footnotes and attributions cleanly."""
+        md = ""
+        # Handle table attributions (often source notes)
+        for attrib in node.findall("attrib"):
+            rendered = self._format_node(attrib, depth).strip()
+            if rendered:
+                md += f"*{rendered}*\n\n"
+
+        # Handle table-wrap-foot
+        foots = node.findall(".//table-wrap-foot")
+        if foots:
+            md += "\n"
+            for foot in foots:
+                for child in foot:
+                    tag = self._local_name(child.tag)
+                    if tag == "fn":
+                        # Use our new clean footnote renderer
+                        rendered = self._render_footnote(child, depth)
+                        if rendered.strip():
+                            md += rendered + "\n\n"
+                    elif tag == "p":
+                        # Sometimes footnotes are just raw paragraphs
+                        rendered = self._format_node(child, depth).strip()
+                        if rendered:
+                            md += rendered + "\n\n"
+                    else:
+                        rendered = self._format_node(child, depth).strip()
+                        if rendered:
+                            md += rendered + "\n\n"
+        return md + "\n"
 
     def _render_fig(self, node, depth) -> str:
         """Render figures."""
@@ -945,21 +998,6 @@ class PMCParser:
                 imgs.append(f"![{self._sanitize_image_alt(label or 'Table')}]({full_href})")
         return "<table><tbody><tr><td>" + "<br>".join(imgs) + "</td></tr></tbody></table>\n" if imgs else ""
 
-    def _render_table_footnotes(self, node, depth) -> str:
-        """Render table footnotes and attributions."""
-        md = ""
-        for attrib in node.findall("attrib"):
-            rendered = self._format_node(attrib, depth)
-            if rendered.strip(): md += rendered + "\n"
-
-        foots = node.findall(".//table-wrap-foot")
-        if foots:
-            md += "\n"
-            for foot in foots:
-                for child in foot:
-                    rendered = self._format_node(child, depth)
-                    if rendered.strip(): md += rendered + "\n"
-        return md + "\n"
 
     def _table_to_html(self, table_node) -> str:
         """Convert an XML table node to an HTML string."""
