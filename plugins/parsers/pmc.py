@@ -342,7 +342,9 @@ class PMCParser:
             parts = [f"## {heading}"]
             for child in abs_node:
                 if self._local_name(child.tag) == "title": continue
-                rendered = self._format_node(child, depth=2)
+                # Use depth=3 so that <sec> tags inside the abstract render as ### (e.g., ### Background)
+                # instead of ##, preventing them from being parsed as top-level paper sections.
+                rendered = self._format_node(child, depth=3)
                 if rendered.strip(): parts.append(rendered)
             if len(parts) == 1:
                 text = self._extract_text(abs_node, depth=2).strip()

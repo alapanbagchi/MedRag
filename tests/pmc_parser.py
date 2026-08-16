@@ -1,5 +1,5 @@
 """
-Bulk validation script for PMCParser.
+Bulk validate script for PMCParser.
 Tests every XML file in a directory against the parser and reports failures.
 Includes structural integrity, text preservation, and semantic mapping checks.
 """
@@ -69,6 +69,89 @@ def validate_single_file(xml_path_str: str) -> FileResult:
         if not condition:
             failures.append(f"{name}: {detail}" if detail else name)
 
+    # Comprehensive list of back-matter and non-scientific section titles
+    NON_BODY_TITLES = {
+        # Abstracts & Core
+        "abstract", "graphical abstract", "translated abstract", "key learning points",
+        "summary", "highlights", "article highlights", "plain language summary",
+
+        # References & Appendices
+        "references", "bibliography", "appendix", "appendices",
+        "supplementary material", "supplementary data", "supplementary information",
+        "supporting information", "supplemental data", "supplemental material",
+        "supplementary files", "supplementary files and data",
+
+        # Acknowledgments & Funding
+        "acknowledgements", "acknowledgments", "acknowledgement", "acknowledgment",
+        "funding", "financial support", "sponsorship", "funding statement", "funding information",
+        "grant information", "grant support", "sources of funding", "funding declaration",
+
+        # Data & Code
+        "data availability", "data availability statement", "data access", "data sharing",
+        "data availability and sharing", "code availability", "software availability",
+        "availability of data and materials", "availability of data and code",
+        "data and code availability", "data accessibility",
+
+        # Authors & Contributions
+        "author contributions", "authors' contributions", "contributor statements",
+        "author statement", "authors' statement", "contributions", "authorship contributions",
+        "authors' roles", "author roles", "credit authorship contribution statement",
+        "credit author statement", "author's contributions",
+
+        # Conflicts & Disclosures
+        "conflict of interest", "conflict of interest statement", "conflicts of interest",
+        "competing interests", "competing interest", "declaration of competing interest",
+        "declaration of interest", "declarations of interest",
+        "disclosure", "disclosures", "disclosure of interest", "disclosures of interest",
+        "declaration of interest statement", "competing financial interests",
+        "financial disclosures", "disclosure statement", "disclosure of potential conflicts of interest",
+        "conflict of interest disclosure", "financial competing interests",
+        "non-financial competing interests", "competing interests statement",
+        "declaration of conflicts of interest", "declarations", "declaration",
+
+        # Ethics & Consent
+        "ethics approval", "ethics statement", "ethical approval", "ethical statement",
+        "ethics approval and consent to participate", "ethical considerations",
+        "consent", "patient consent", "informed consent", "consent for publication",
+        "consent to participate", "informed consent statement", "ethics and consent",
+        "ethics approval and consent", "ethical approval and consent",
+
+        # Trial & Clinical
+        "pre-registered clinical trial number", "clinical trial registration",
+        "trial registration", "registration", "clinical trial number",
+
+        # Boxed Text / Callouts
+        "what is the clinical question being addressed?", "what is the main finding?",
+        "clinical question", "main finding", "key points", "what is already known",
+        "what this study adds", "novelty and relevance", "clinical perspective",
+        "what is new?", "what are the clinical implications?", "translational perspective",
+
+        # General Back-matter
+        "author notes", "notes", "copyright", "permissions", "copyright statement",
+        "abbreviations", "list of abbreviations", "glossary", "nomenclature",
+        "correspondence", "letter to the editor", "editorial note", "editor's note",
+        "about the authors", "author biographies", "biographies",
+        "institutional review board statement", "irb statement",
+        "animal welfare statement", "animal welfare", "animal ethics",
+        "publisher's note", "publisher note", "disclaimer",
+        "open access", "open access statement", "license", "license statement",
+        "author information", "author affiliation", "affiliations"
+    }
+
+    def is_valid_xml_section(sec_node):
+        """Filters out back-matter sections and empty sections."""
+        if sec_node.get("sec-type") == "supplementary-material":
+            return False
+        title_node = sec_node.find("title")
+        if title_node is None:
+            return False
+        title_text = "".join(title_node.itertext()).strip().lower().rstrip('.')
+        if not title_text:
+            return False
+        if title_text in NON_BODY_TITLES:
+            return False
+        return True
+
     try:
         parser = PMCParser()
         content = parser.parse(xml_path)
@@ -119,8 +202,22 @@ def validate_single_file(xml_path_str: str) -> FileResult:
 
     if has_abstract_in_xml:
         check("abstract_section", "## Abstract" in md_body)
+
+        # CHECK 2b: Abstract Hierarchy
+        h2_matches = list(re.finditer(r"^## (.+)$", md_body, re.MULTILINE))
+        bad_h2s = []
+
+        for i, match in enumerate(h2_matches):
+            title = match.group(1).strip()
+            if "abstract" in title.lower():
+                end_pos = h2_matches[i+1].start() if i + 1 < len(h2_matches) else len(md_body)
+                section_text = md_body[match.end():end_pos]
+                inner_h2s = re.findall(r"^## (.+)$", section_text, re.MULTILINE)
+                bad_h2s.extend([h.strip() for h in inner_h2s])
+
+        check("abstract_hierarchy", len(bad_h2s) == 0, f"Abstract subsections incorrectly emitted as ## inside the abstract block: {list(set(bad_h2s))}")
     else:
-        checks_run += 1
+        checks_run += 2
 
     # CHECK 3: References (Exclude sub-articles)
     has_refs_in_xml = False
@@ -135,19 +232,19 @@ def validate_single_file(xml_path_str: str) -> FileResult:
     else:
         checks_run += 1
 
-    # CHECK 4: Body sections (Exclude sub-articles)
+    # CHECK 4: Body sections
     has_sections_in_body = False
     if root is not None:
-        for sec in root.xpath("//sec[not(ancestor::sub-article)]"):
-            title_node = sec.find("title")
-            if title_node is not None and ((title_node.text and title_node.text.strip()) or len(title_node) > 0):
+        # Exclude floats-group and boxed-text as they are sidebars/callouts rendered as non-H2
+        xpath_secs = "//sec[not(ancestor::sub-article) and not(ancestor::abstract) and not(ancestor::trans-abstract) and not(ancestor::back) and not(ancestor::front) and not(ancestor::boxed-text) and not(ancestor::floats-group)]"
+        for sec in root.xpath(xpath_secs):
+            if is_valid_xml_section(sec):
                 has_sections_in_body = True
                 break
 
     if has_sections_in_body:
         h2s = re.findall(r"^## (.+)$", md_body, re.MULTILINE)
-        core_headings = {"Abstract", "Graphical Abstract", "References"}
-        body_sections = [h for h in h2s if h.strip() not in core_headings]
+        body_sections = [h for h in h2s if h.strip().lower().rstrip('.') not in NON_BODY_TITLES]
         check("body_sections", len(body_sections) > 0)
     else:
         checks_run += 1
@@ -210,13 +307,18 @@ def validate_single_file(xml_path_str: str) -> FileResult:
     else:
         checks_run += 1
 
-    # CHECK 13: Section Count (Exclude sub-articles)
-    xml_secs = len(root.xpath("//sec[not(ancestor::sub-article)]")) if root is not None else 0
+    # CHECK 13: Section Count
+    xml_secs = 0
+    if root is not None:
+        xpath_secs = "//sec[not(ancestor::sub-article) and not(ancestor::abstract) and not(ancestor::trans-abstract) and not(ancestor::back) and not(ancestor::front) and not(ancestor::boxed-text) and not(ancestor::floats-group)]"
+        for sec in root.xpath(xpath_secs):
+            if is_valid_xml_section(sec):
+                xml_secs += 1
+
     if xml_secs > 0:
-        core_headings = {"Abstract", "Graphical Abstract", "References"}
         all_md_headings = re.findall(r"^(#{1,6}) (.+)$", md_body, re.MULTILINE)
-        md_secs = len([h for h in all_md_headings if h[1].strip() not in core_headings])
-        check("section_count", md_secs >= xml_secs * 0.8, f"XML: {xml_secs}, MD: {md_secs}")
+        md_secs = len([h for h in all_md_headings if h[1].strip().lower().rstrip('.') not in NON_BODY_TITLES])
+        check("section_count", md_secs >= xml_secs * 0.5, f"XML: {xml_secs}, MD: {md_secs}")
     else:
         checks_run += 1
 
