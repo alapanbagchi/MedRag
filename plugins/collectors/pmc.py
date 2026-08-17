@@ -1,7 +1,5 @@
-import os
-import shutil
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import boto3
@@ -9,10 +7,8 @@ from botocore import UNSIGNED
 from botocore.config import Config
 from tqdm import tqdm
 
-from core.protocols import Collector
 
-
-class PMCCollector(Collector):
+class PMCCollector:
 
     def __init__(
         self,

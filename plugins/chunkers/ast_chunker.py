@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, List, Optional
 
+from core.classification import classify_section_title
 from core.models import Block, Chunk, Document, Section
 
 
@@ -1928,98 +1929,13 @@ class ASTChunker:
     # SECTION CLASSIFICATION
     # ==================================================================
 
-    def _classify_section(
-        self,
-        section: Section,
-    ) -> str:
-
-        # The AST parser records an explicit deterministic classification.
-        # Prefer it when present; fall back to title-based classification
-        # for ASTs produced by other builders.
-        explicit = (section.metadata or {}).get(
-            "section_type"
-        )
-        if explicit in {
-            "content",
-            "administrative",
-            "references",
-        }:
+    def _classify_section(self, section: Section) -> str:
+        # Prefer the explicit classification recorded by the AST parser;
+        # fall back to title-based classification for ASTs built elsewhere.
+        explicit = (section.metadata or {}).get("section_type")
+        if explicit in {"content", "administrative", "references"}:
             return explicit
-
-        title = self._normalize_title(
-            section.title
-        )
-
-        if not title:
-            return "content"
-
-        # References (exclude "reference value/range" style sections)
-        if title in {
-            "reference",
-            "references",
-            "bibliography",
-        }:
-            return "references"
-
-        reference_exclusions = {
-            "reference value",
-            "reference values",
-            "reference range",
-            "reference ranges",
-            "reference interval",
-            "reference standard",
-        }
-        if any(term in title for term in reference_exclusions):
-            return "content"
-
-        if "reference" in title:
-            return "references"
-
-        # Administrative
-        administrative_titles = {
-            "funding",
-            "funding sources",
-            "acknowledgements",
-            "acknowledgments",
-            "author contributions",
-            "authors contributions",
-            "data availability",
-            "conflict of interest",
-            "conflicts of interest",
-            "competing interests",
-            "supplementary material",
-            "supplementary materials",
-            "notes",
-        }
-
-        if title in administrative_titles:
-            return "administrative"
-
-        if "funding" in title:
-            return "administrative"
-
-        if "conflict" in title:
-            return "administrative"
-
-        if "competing interest" in title:
-            return "administrative"
-
-        if "data availability" in title:
-            return "administrative"
-
-        if "acknowledg" in title:
-            return "administrative"
-
-        if "supplementary" in title:
-            return "administrative"
-
-        if (
-            "author" in title
-            and "contribution" in title
-        ):
-            return "administrative"
-
-        return "content"
+        return classify_section_title(section.title)
 
     # ==================================================================
     # BLOCK TYPE NORMALIZATION
@@ -2586,17 +2502,6 @@ class ASTChunker:
         )
 
         return text.strip()
-
-    def _normalize_title(
-        self,
-        title: str,
-    ) -> str:
-
-        return " ".join(
-            title.strip()
-            .lower()
-            .split()
-        )
 
     def _initial_breadcrumb(
         self,
