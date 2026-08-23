@@ -887,13 +887,31 @@ class XmlTreeBuilder:
                 self._build_section(child, doc_node, prose_groups, 1, "")
 
     def _build_special(self, el, parent, prose_groups, level, breadcrumb) -> None:
-        """supplementary-material / boxed-text / app content."""
+        """supplementary-material (source-data files, media) / boxed-text / app."""
         title_el = el.find("{*}title")
         title = element_text(title_el) if title_el is not None else localname(el.tag)
         node = self._new_node(SECTION, title, "", level, list(breadcrumb) + [title])
         self._attach(parent, node)
         self._register(node)
-        for p in el.findall(".//{*}p"):
+        # supplementary-material often carries label + caption/title + media hrefs
+        # without any <p>; keep that metadata as node text (no information loss).
+        label = element_text(el.find("{*}label")) if el.find("{*}label") is not None else ""
+        media_hrefs: List[str] = []
+        for media in el.iter("{*}media"):
+            href = media.get("{http://www.w3.org/1999/xlink}href") or media.get("href") or ""
+            if href and href not in media_hrefs:
+                media_hrefs.append(href)
+        if label or media_hrefs:
+            node["text"] = "\n".join(
+                [x for x in ([label] if label else []) + media_hrefs if x])
+        paras = el.findall(".//{*}p")
+        if not paras and (label or media_hrefs):
+            # no paragraph children: the media entry is the evidence object
+            node["chunk_ids"] = []
+            self._map_chunks(node, [], status="supplementary-media",
+                             note="label/caption/media recorded in node text")
+            return
+        for p in paras:
             pnode = self._new_node(PARAGRAPH, None, element_text(p), level + 1, list(node["breadcrumb"]))
             self._attach(node, pnode)
             self._register(pnode)

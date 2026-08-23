@@ -110,3 +110,14 @@ Known limit of MD mode: tables are rendered as HTML blocks, so row-level chunk
 mapping (PMC..._T2_row_*) is not re-attached in this mode; paragraphs that
 match exactly are mapped (chunk_to_node). The XML-tree builder
 (medrag.retrieval_v2.xml_tree) retains full row/chunk mapping when needed.
+
+### Supplementary-material (source data files)
+
+JATS `<supplementary-material>` elements (source data for figures, raw blots,
+supplementary datasets, movies) are no longer dropped from the Markdown. The
+converter renders each as a `#### <label>` node carrying its caption/title text
+and a `Media: <href>` line, inserted at the element's source section
+(position = deepest ancestor `<sec>` title; otherwise appended under a top-level
+"Supplementary data" section). Conversion is idempotent (re-running does not
+duplicate entries). The XML-tree builder records the same label/caption/media
+metadata on its supplementary-material section node.

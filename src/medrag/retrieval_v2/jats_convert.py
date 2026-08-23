@@ -47,6 +47,11 @@ from medrag.retrieval_v2.xml_tree import locate_xml
 #     never an invented "Figures and Tables" branch.
 
 XLink = "{http://www.w3.org/1999/xlink}"
+
+
+def localname(tag) -> str:
+    import lxml.etree as _ET
+    return _ET.QName(tag).localname
 _FIG_MENTION_RE = re.compile(r"^.*?\[Figure[s]?\s+([0-9]+)")
 
 
@@ -172,6 +177,118 @@ _BOLD_CAPTION_RE = re.compile(
     r"^\*\*(Table|Figure|Supplementary Table|Supplementary Figure)\b\s*([0-9A-Za-z-]+):\s*(.*)$")
 
 
+def supplement_supplementary_material(xml_path: Path, md: str) -> str:
+    """Render <supplementary-material> elements (source-data files for figures,
+    supplementary datasets, movies, ...) that the installed jats converter
+    drops entirely.
+
+    Each element becomes a '#### <label>' node carrying its caption/title text
+    and a Media: <href> line. Placement follows the source XML: the block is
+    inserted right after the heading of the section that contains the element
+    (the deepest ancestor <sec> title), preserving XML order; elements with no
+    resolvable section are appended under a top-level 'Supplementary data'
+    section. Re-conversion is idempotent (already-present labels/hrefs are
+    skipped).
+    """
+    import lxml.etree as ET
+    root = ET.parse(str(xml_path)).getroot()
+
+    def text_of(el) -> str:
+        if el is None:
+            return ""
+        return " ".join(("".join(el.itertext())).split()).strip()
+
+    items: List[Dict[str, Any]] = []
+    for sm in root.iter("{*}supplementary-material"):
+        label = text_of(sm.find("{*}label"))
+        if not label:
+            label = sm.get("id") or "Supplementary data"
+        cap_texts: List[str] = []
+        for t in sm.iter("{*}title"):
+            txt = text_of(t)
+            if txt and txt not in cap_texts:
+                cap_texts.append(txt)
+        cap_el = sm.find("{*}caption")
+        if cap_el is not None:
+            full = text_of(cap_el)
+            for t in cap_texts:
+                full = full.replace(t, "", 1)
+            full = full.strip(" -:;")
+            if full and full not in cap_texts:
+                cap_texts.append(full)
+        medias: List[str] = []
+        for media in sm.iter("{*}media"):
+            href = media.get(XLink + "href") or media.get("href") or ""
+            if href and href not in medias:
+                medias.append(href)
+        sec_title: Optional[str] = None
+        node = sm.getparent()
+        while node is not None:
+            if localname(node.tag) == "sec":
+                t = node.find("{*}title")
+                if t is not None and (t.text or "").strip():
+                    sec_title = (t.text or "").strip()
+                    break
+            node = node.getparent()
+        items.append({"label": label, "cap_texts": cap_texts, "medias": medias,
+                      "sec_title": sec_title, "xml_id": sm.get("id")})
+
+    if not items:
+        return md
+
+    def render(it: Dict[str, Any]) -> List[str]:
+        lines = [f"#### {it['label']}"]
+        for c in it["cap_texts"]:
+            lines.append(c)
+        for href in it["medias"]:
+            lines.append(f"Media: {href}")
+        return lines
+
+    lines = md.split("\n")
+    heading_last: Dict[str, int] = {}
+    for i, line in enumerate(lines):
+        if line.startswith("#"):
+            heading_last[line.lstrip("#").strip().lower()] = i
+    existing_hrefs = [h for h in md.split("\n") if h.startswith("Media: ")]
+    existing_media = [h.split("Media: ", 1)[1].strip() for h in existing_hrefs]
+
+    insert_at: Dict[int, List[str]] = {}
+    appendix: List[str] = []
+    for it in items:
+        # idempotence: skip when the label heading or its media already exists
+        if any(l.lower().startswith(it["label"].lower()) for l in heading_last):
+            continue
+        if any(m and m in existing_media for m in it["medias"]):
+            continue
+        block = render(it)
+        anchor = None
+        if it["sec_title"]:
+            want = it["sec_title"].lower()
+            if want in heading_last:
+                anchor = heading_last[want]
+            else:
+                # substring-tolerant anchor: last heading containing the section title
+                cand = None
+                for h, idx in heading_last.items():
+                    if want and (want in h or h in want):
+                        cand = idx
+                anchor = cand
+        if anchor is None:
+            appendix.extend(block)
+            appendix.append("")
+        else:
+            insert_at.setdefault(anchor, []).extend(block)
+            insert_at[anchor].append("")
+
+    new_lines = list(lines)
+    for idx in sorted(insert_at, reverse=True):
+        new_lines[idx + 1:idx + 1] = insert_at[idx]
+    result = "\n".join(new_lines)
+    if appendix:
+        result = result.rstrip() + "\n\n## Supplementary data\n\n" + "\n".join(appendix) + "\n"
+    return result
+
+
 def normalize_pageindex_md(md: str) -> str:
     """Rewrite bold table/figure labels and captions into #### headings."""
     out_lines: List[str] = []
@@ -207,6 +324,7 @@ def convert_paper_xml_to_md(paper_id: str, xml_path: Path, md_dir: Path, *,
     article = parse_jats_xml(xml_path, no_refs=no_refs)
     md = convert_to_markdown(article)
     md = supplement_floats_group(xml_path, md)   # floats-group tables/figures are dropped by the converter
+    md = supplement_supplementary_material(xml_path, md)  # source-data / media blocks are dropped by the converter
     if normalize:
         md = normalize_pageindex_md(md)
     out_path = md_dir / f"{paper_id}.md"

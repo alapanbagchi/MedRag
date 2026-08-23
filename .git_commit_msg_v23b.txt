@@ -1,0 +1,11 @@
+jats_convert: include <supplementary-material> (source data files) in Markdown
+
+- render label + caption/title + Media: href per supplementary-material element
+  at its source section (deepest ancestor <sec> heading; appendix fallback),
+  XML order preserved, idempotent on re-conversion
+- fixed None-label crash (text_of(None))
+- xml_tree._build_special records label/caption/media on the supplementary
+  section node (no information loss in the XML-tree path either)
+- verified: PMC10327125 (9 data files), PMC11684812 (blot/gel PDFs + xlsx
+  source data with captions), PMC11092466 (media-1.docx); md_to_tree nests
+  Supplement nodes under the source section
