@@ -1,0 +1,30 @@
+PageIndex stages (V2.4): markdown validation, native indexing, query navigation
+
+machinery only - BM25/pgvector/RRF/global retrieval/paper selection/MedGemma/
+UMLS/MedCPT/reranking/coverage/repair/final answer/chunking untouched.
+
+- config.py: PAGEINDEX_* env knobs (INDEX/CHAT model, temperature, max steps,
+  max nodes, timeout, LLM base url/key) - models never hardcoded
+- indexer.py: validation (heading count/depth, tables, captions, footnotes,
+  malformed level-jump detection, hierarchy) + corpus scan; indexing feeds the
+  existing Markdown DIRECTLY to pageindex.page_index_md.md_to_tree (native
+  heuristic, no LLM) and persists {tree_dir}/{paper_id}/tree.json
+- cache.py: tree cache (build once per paper, reused on every query)
+- navigator.py: target/condition/fields -> navigation objective; primary path
+  drives the installed SDK (PageIndexClient.chat_completions with doc_id +
+  backend dict for MedGemma/OpenAI-compatible); offline fallback = clearly
+  labeled deterministic structural navigation (status degraded); structured
+  failures (markdown_missing / pageindex_unavailable / tree_build_failed /
+  navigation_failed / llm_unavailable) - never fabricated results
+- SDK bridge: native md_to_tree tree registered in the SDK local store via the
+  SDK's own DocStore (submit_document is PDF-only in local mode - documented
+  limitation), so get_document/get_document_structure/get_tree and the managed
+  chat agent can navigate it
+- test_pageindex.py: standalone script (validation -> index -> tree -> nav)
+- tests/test_pageindex_stage.py: 8 tests (corpus, fixture validity, native
+  indexing, cache reuse, table region, degraded navigation with correct
+  structural selection, structured missing-paper error)
+
+PMC11743609: indexing 1.9 ms / 50 nodes / 52 KB; navigation selects
+Table 2, Recurrent coarctation (re-CoA), Surgical technique and re-CoA under
+Results > MRI assessment.
