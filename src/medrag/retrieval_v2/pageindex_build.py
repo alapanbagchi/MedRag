@@ -341,7 +341,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     built, skipped, failed = 0, 0, 0
     t0 = time.perf_counter()
-    for pid in paper_ids:
+    from tqdm import tqdm
+    bar = tqdm(paper_ids, desc="pageindex-build", unit="paper")
+    for pid in bar:
+        bar.set_postfix(built=built, skipped=skipped, failed=failed)
         try:
             if args.from_md:
                 artifact = build_from_md(
@@ -349,7 +352,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     Path(args.index_dir) / "corpus.parquet", cfg,
                     map_chunks=not args.no_chunk_map)
                 built += 1
-                print(f"  built(md) {pid}  nodes={len(artifact['node_map'])}  mapped_chunks={artifact['metadata']['mapped_chunks']}/{artifact['metadata']['total_existing_chunks']}")
+                bar.write(f"  built(md) {pid}  nodes={len(artifact['node_map'])}  mapped_chunks={artifact['metadata']['mapped_chunks']}/{artifact['metadata']['total_existing_chunks']}")
                 continue
             if args.from_chunks:
                 from medrag.retrieval_v2.document_index import LogicalDocumentIndex
@@ -357,20 +360,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                 doc_index2 = LogicalDocumentIndex(Path(args.index_dir) / CORPUS_FILENAME)
                 artifact = build_pageindex_artifact(doc_index2, pid, pageindex_dir, cfg)
                 built += 1
-                print(f"  built(chunks) {pid}  nodes={len(artifact['node_map'])}")
+                bar.write(f"  built(chunks) {pid}  nodes={len(artifact['node_map'])}")
                 continue
             from medrag.retrieval_v2.pageindex_adapter import PageIndexAdapter
             adapter = PageIndexAdapter(doc_index, pageindex_dir=pageindex_dir, config=cfg)
             existed = adapter.build_or_load(pid, force=args.rebuild)
             if existed == "built":
                 built += 1
-                print(f"  built  {pid}")
+                bar.write(f"  built  {pid}")
             else:
                 skipped += 1
-                print(f"  exists {pid}")
+                bar.write(f"  exists {pid}")
         except Exception as exc:  # noqa: BLE001
             failed += 1
-            print(f"  FAILED {pid}: {exc}")
+            bar.write(f"  FAILED {pid}: {exc}")
+        bar.set_postfix(built=built, skipped=skipped, failed=failed)
+    bar.close()
     dt = time.perf_counter() - t0
     print(f"Done: built={built} skipped={skipped} failed={failed} in {dt:.1f}s")
     print(f"Artifacts: {pageindex_dir}")

@@ -491,18 +491,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     ok, failed, skipped = 0, 0, 0
     t0 = time.perf_counter()
     reports: List[Dict[str, Any]] = []
-    for pid in papers:
-        if pid.startswith("PMC"):
-            pass
+    from tqdm import tqdm
+    bar = tqdm(papers, desc="jats-convert", unit="paper")
+    for pid in bar:
+        bar.set_postfix(ok=ok, skipped=skipped, failed=failed)
         xml = locate_xml(pid, xml_dir)
         if xml is None:
-            print(f"  NO-XML {pid}")
+            bar.write(f"  NO-XML {pid}")
             failed += 1
             continue
         out = md_dir / f"{pid}.md"
         if out.exists() and not args.rebuild:
             skipped += 1
-            print(f"  exists {pid}")
+            bar.write(f"  exists {pid}")
             continue
         try:
             rep = convert_paper_xml_to_md(pid, xml, md_dir,
@@ -510,10 +511,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                                           image_base_url="" if args.no_resolve_media else args.image_base_url)
             reports.append(rep)
             ok += 1
-            print(f"  ok     {pid}  md={rep['md']}  chars={rep['chars']}  headings={rep['n_headings']}  images={rep['n_images']} media={rep['n_media']} tables={rep['n_tables']} figs={rep['n_figures']}")
+            bar.write(f"  ok     {pid}  md={rep['md']}  chars={rep['chars']}  headings={rep['n_headings']}  images={rep['n_images']} media={rep['n_media']} tables={rep['n_tables']} figs={rep['n_figures']}")
         except Exception as exc:  # noqa: BLE001
             failed += 1
-            print(f"  FAILED {pid}: {exc}")
+            bar.write(f"  FAILED {pid}: {exc}")
+        bar.set_postfix(ok=ok, skipped=skipped, failed=failed)
+    bar.close()
     dt = time.perf_counter() - t0
     print(f"Done: ok={ok} skipped={skipped} failed={failed} in {dt:.1f}s")
     print(f"Markdown folder: {md_dir}")
