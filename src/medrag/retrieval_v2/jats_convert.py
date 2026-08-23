@@ -33,6 +33,78 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from medrag.retrieval_v2.xml_tree import locate_xml
 
+# ---------------------------------------------------------------------------
+# Media / image href resolution (PMC OA convention, mirrors medrag.parser)
+# ---------------------------------------------------------------------------
+IMAGE_EXTENSIONS = frozenset({
+    ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp",
+    ".tif", ".tiff", ".bmp", ".eps",
+})
+IMAGE_MIME_SUBTYPES = frozenset({
+    "jpeg", "jpg", "png", "gif", "svg+xml", "webp", "tiff", "bmp",
+    "x-png", "svg",
+})
+DEFAULT_IMAGE_BASE_URL = "https://pmc-oa-opendata.s3.amazonaws.com"
+
+
+def article_dir_of(root) -> str:
+    """PMC OA article directory: pmcid-ver (or pmcid) from the XML, as the
+    corpus parser derives it."""
+    ids = {
+        aid.get("pub-id-type"): "".join(aid.itertext()).strip()
+        for aid in root.xpath("//front/article-meta/article-id")
+    }
+    return ids.get("pmcid-ver") or ids.get("pmcid") or ""
+
+
+def resolve_media_href(href: str, article_dir: str, image_base_url: str) -> str:
+    """Resolve a relative media/graphic href to an absolute URL. Leaves
+    absolute URLs, anchors, data: URIs untouched. Mirrors
+    medrag.parser.JATSBaseParser._resolve_href."""
+    href = (href or "").strip()
+    if not href or href.startswith("#") or href.startswith(("http://", "https://", "data:", "mailto:")):
+        return href
+    base = (image_base_url or "").rstrip("/")
+    if base and article_dir:
+        return f"{base}/{article_dir}/{href}"
+    return href
+
+
+def is_image_href(href: str) -> bool:
+    return Path((href or "").split("?")[0].split("#")[0]).suffix.lower() in IMAGE_EXTENSIONS
+
+
+def is_image_media(media_el) -> bool:
+    mime = (media_el.get("mimetype") or "").lower()
+    sub = (media_el.get("mime-subtype") or "").lower()
+    return mime == "image" or sub in IMAGE_MIME_SUBTYPES
+
+
+def resolve_markdown_media(md: str, article_dir: str, image_base_url: str) -> str:
+    """Rewrite every Markdown image link and Media: line so relative hrefs
+    point at the absolute PMC OA URL (the image files are not stored locally)."""
+    if not image_base_url:
+        return md
+    img_re = re.compile(r'(!\[[^\]]*\])\(([^)\s]+)([\s]+"[^"]*")?\)')
+    media_re = re.compile(r"^Media: (.+)$", re.M)
+
+    def img_sub(m):
+        alt, href = m.group(1), m.group(2)
+        return f"{alt}({resolve_media_href(href, article_dir, image_base_url)})"
+
+    md = img_re.sub(img_sub, md)
+
+    def media_sub(m):
+        href = m.group(1).strip()
+        if href.startswith("[") or href.startswith("!["):
+            # already a markdown link (rendered by the sm-media supplement)
+            return f"Media: {href}"
+        resolved = resolve_media_href(href, article_dir, image_base_url)
+        return f"Media: [{href}]({resolved})" if resolved != href else f"Media: {href}"
+
+    return media_re.sub(media_sub, md)
+
+
 
 # ---------------------------------------------------------------------------
 # Floats-group supplement
@@ -123,8 +195,11 @@ def _table_wrap_to_html(tw) -> str:
     return "\n".join(rows_html)
 
 
-def supplement_floats_group(xml_path: Path, md: str) -> str:
-    """Re-add floats-group tables/figures that the jats converter dropped."""
+def supplement_floats_group(xml_path: Path, md: str,
+                                article_dir: str = "", image_base_url: str = "") -> str:
+    """Re-add floats-group tables/figures that the jats converter dropped.
+    Figure images are resolved to absolute PMC OA URLs (the image files are not
+    stored locally)."""
     import lxml.etree as ET
     root = ET.parse(str(xml_path)).getroot()
     floats = root.find(".//{*}floats-group")
@@ -141,6 +216,7 @@ def supplement_floats_group(xml_path: Path, md: str) -> str:
         img_src = ""
         if img is not None:
             img_src = img.get(XLink + "href") or img.get("href") or ""
+        img_src = resolve_media_href(img_src, article_dir, image_base_url)
         block = f"#### {label}\n\n![{label}]({img_src})"
         if caption:
             block += f"\n\n{label}: {caption}"
@@ -177,18 +253,25 @@ _BOLD_CAPTION_RE = re.compile(
     r"^\*\*(Table|Figure|Supplementary Table|Supplementary Figure)\b\s*([0-9A-Za-z-]+):\s*(.*)$")
 
 
-def supplement_supplementary_material(xml_path: Path, md: str) -> str:
+def supplement_supplementary_material(xml_path: Path, md: str,
+                                        article_dir: str = "",
+                                        image_base_url: str = "") -> str:
     """Render <supplementary-material> elements (source-data files for figures,
     supplementary datasets, movies, ...) that the installed jats converter
     drops entirely.
 
     Each element becomes a '#### <label>' node carrying its caption/title text
-    and a Media: <href> line. Placement follows the source XML: the block is
-    inserted right after the heading of the section that contains the element
-    (the deepest ancestor <sec> title), preserving XML order; elements with no
-    resolvable section are appended under a top-level 'Supplementary data'
-    section. Re-conversion is idempotent (already-present labels/hrefs are
-    skipped).
+    and its media correctly parsed:
+        * image media   -> ![<label>](<absolute URL>)
+        * other media   -> Media: [<filename>](<absolute URL>)
+    hrefs are read from xlink:href or href and, when relative, resolved to the
+    absolute PMC OA URL (the repo's convention, mirrors medrag.parser).
+
+    Placement follows the source XML: the block is inserted right after the
+    heading of the section that contains the element (the deepest ancestor
+    <sec> title), preserving XML order; elements with no resolvable section are
+    appended under a top-level 'Supplementary data' section. Re-conversion is
+    idempotent (already-present labels/hrefs are skipped).
     """
     import lxml.etree as ET
     root = ET.parse(str(xml_path)).getroot()
@@ -216,11 +299,15 @@ def supplement_supplementary_material(xml_path: Path, md: str) -> str:
             full = full.strip(" -:;")
             if full and full not in cap_texts:
                 cap_texts.append(full)
-        medias: List[str] = []
+        medias: List[Dict[str, Any]] = []
         for media in sm.iter("{*}media"):
             href = media.get(XLink + "href") or media.get("href") or ""
-            if href and href not in medias:
-                medias.append(href)
+            if not href:
+                continue
+            resolved = resolve_media_href(href, article_dir, image_base_url)
+            image = is_image_media(media) or is_image_href(href)
+            if href not in [m["href"] for m in medias]:
+                medias.append({"href": href, "resolved": resolved, "image": image})
         sec_title: Optional[str] = None
         node = sm.getparent()
         while node is not None:
@@ -240,8 +327,14 @@ def supplement_supplementary_material(xml_path: Path, md: str) -> str:
         lines = [f"#### {it['label']}"]
         for c in it["cap_texts"]:
             lines.append(c)
-        for href in it["medias"]:
-            lines.append(f"Media: {href}")
+        first_image = True
+        for m in it["medias"]:
+            if m["image"] and first_image:
+                lines.append(f"![{it['label']}]({m['resolved']})")
+                first_image = False
+            else:
+                lines.append(f"Media: [{m['href']}]({m['resolved']})"
+                             if m["resolved"] != m["href"] else f"Media: {m['href']}")
         return lines
 
     lines = md.split("\n")
@@ -317,16 +410,32 @@ def normalize_pageindex_md(md: str) -> str:
 # Conversion
 # ---------------------------------------------------------------------------
 def convert_paper_xml_to_md(paper_id: str, xml_path: Path, md_dir: Path, *,
-                            no_refs: bool = False, normalize: bool = True) -> Dict[str, Any]:
-    """Convert ONE paper's original XML to Markdown via the installed jats pkg."""
+                            no_refs: bool = False, normalize: bool = True,
+                            image_base_url: str = DEFAULT_IMAGE_BASE_URL) -> Dict[str, Any]:
+    """Convert ONE paper's original XML to Markdown via the installed jats pkg.
+
+    Media is parsed correctly end to end:
+        * <graphic>/<inline-graphic>/<media>/<video>/<audio> hrefs are read from
+          xlink:href and href,
+        * figure images and image-type media render as ![alt](url),
+        * other media render as Media: [filename](url),
+        * relative hrefs resolve to the absolute PMC OA URL (the corpus image
+          convention) so the Markdown links actually load.
+    """
     from jats import convert_to_markdown, parse_jats_xml
 
     article = parse_jats_xml(xml_path, no_refs=no_refs)
     md = convert_to_markdown(article)
-    md = supplement_floats_group(xml_path, md)   # floats-group tables/figures are dropped by the converter
-    md = supplement_supplementary_material(xml_path, md)  # source-data / media blocks are dropped by the converter
+    # article dir for PMC OA URL resolution (pmcid-ver / pmcid)
+    import lxml.etree as _ET
+    xml_root = _ET.parse(str(xml_path)).getroot()
+    article_dir = article_dir_of(xml_root)
+    md = supplement_floats_group(xml_path, md, article_dir, image_base_url)
+    md = supplement_supplementary_material(xml_path, md, article_dir, image_base_url)
     if normalize:
         md = normalize_pageindex_md(md)
+    if image_base_url:
+        md = resolve_markdown_media(md, article_dir, image_base_url)
     out_path = md_dir / f"{paper_id}.md"
     out_path.write_text(md, encoding="utf-8")
     return {
@@ -335,6 +444,8 @@ def convert_paper_xml_to_md(paper_id: str, xml_path: Path, md_dir: Path, *,
         "md": str(out_path),
         "chars": len(md),
         "n_headings": sum(1 for l in md.splitlines() if l.startswith("#")),
+        "n_images": len(re.findall(r"!\[", md)),
+        "n_media": len(re.findall(r"^Media: ", md, re.M)),
         "title": article.title or "",
         "n_tables": len(getattr(article, "tables", []) or []),
         "n_figures": len(getattr(article, "figures", []) or []),
@@ -355,6 +466,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--no-refs", action="store_true", help="strip URL links from references")
     parser.add_argument("--raw", action="store_true", help="keep the jats output verbatim (no normalization)")
     parser.add_argument("--rebuild", action="store_true", help="overwrite existing .md files")
+    parser.add_argument("--image-base-url", default=DEFAULT_IMAGE_BASE_URL,
+                        help="base URL used to resolve relative media/graphic hrefs (default: PMC OA open data)")
+    parser.add_argument("--no-resolve-media", action="store_true",
+                        help="keep relative media/graphic hrefs as-is (no absolute URL resolution)")
     args = parser.parse_args(argv)
 
     xml_dir = Path(args.xml_dir)
@@ -391,10 +506,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             continue
         try:
             rep = convert_paper_xml_to_md(pid, xml, md_dir,
-                                          no_refs=args.no_refs, normalize=not args.raw)
+                                          no_refs=args.no_refs, normalize=not args.raw,
+                                          image_base_url="" if args.no_resolve_media else args.image_base_url)
             reports.append(rep)
             ok += 1
-            print(f"  ok     {pid}  md={rep['md']}  chars={rep['chars']}  headings={rep['n_headings']}  tables={rep['n_tables']} figs={rep['n_figures']}")
+            print(f"  ok     {pid}  md={rep['md']}  chars={rep['chars']}  headings={rep['n_headings']}  images={rep['n_images']} media={rep['n_media']} tables={rep['n_tables']} figs={rep['n_figures']}")
         except Exception as exc:  # noqa: BLE001
             failed += 1
             print(f"  FAILED {pid}: {exc}")
