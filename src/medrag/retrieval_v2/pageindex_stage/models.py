@@ -89,14 +89,21 @@ class NavigationStep:
 
 @dataclass
 class NavigationResult:
-    """Normalized output of PageIndex query-time navigation (Step 3C)."""
+    """Normalized output of PageIndex query-time navigation (Step 3C / V2.5)."""
 
     paper_id: str
-    status: str                                    # success | failed | degraded
+    status: str                                    # success | failed | empty
+    requirement_id: str = ""
     objective: str = ""
     selected_nodes: List[SelectedNode] = field(default_factory=list)
     trace: List[NavigationStep] = field(default_factory=list)
     raw: Dict[str, Any] = field(default_factory=dict)   # native PageIndex response
+    # latency breakdown (Part 13)
+    endpoint_ms: float = 0.0
+    init_ms: float = 0.0
+    tree_ms: float = 0.0
+    agent_ms: float = 0.0
+    total_ms: float = 0.0
     latency_ms: float = 0.0
     error: Optional[Dict[str, str]] = field(default_factory=dict)
 
@@ -104,21 +111,36 @@ class NavigationResult:
         return {
             "paper_id": self.paper_id,
             "status": self.status,
+            "requirement_id": self.requirement_id,
             "objective": self.objective,
             "selected_nodes": [n.to_dict() for n in self.selected_nodes],
             "trace": [s.to_dict() for s in self.trace],
             "raw": self.raw,
+            "latency_endpoint_ms": round(self.endpoint_ms, 1),
+            "latency_init_ms": round(self.init_ms, 1),
+            "latency_tree_ms": round(self.tree_ms, 1),
+            "latency_agent_ms": round(self.agent_ms, 1),
+            "latency_total_ms": round(self.total_ms, 1),
             "latency_ms": round(self.latency_ms, 1),
             "error": self.error or None,
         }
 
 
+# Error classification (Part 17): exactly one layer is reported.
+MEDGEMMA_ENDPOINT_ERROR = "MEDGEMMA_ENDPOINT_ERROR"
+PAGEINDEX_CLIENT_ERROR = "PAGEINDEX_CLIENT_ERROR"
+DOCUMENT_REGISTRATION_ERROR = "DOCUMENT_REGISTRATION_ERROR"
+TREE_LOAD_ERROR = "TREE_LOAD_ERROR"
+NAVIGATION_ERROR = "NAVIGATION_ERROR"
+NAVIGATION_EMPTY_RESULT = "NAVIGATION_EMPTY_RESULT"
+
+
 @dataclass
 class NavigationError(Exception):
-    """Structured error (task error-handling section): never fabricate results."""
+    """Structured error (Part 17): never fabricate results."""
 
     paper_id: str = ""
-    error_type: str = ""   # markdown_missing | pageindex_unavailable | tree_build_failed | navigation_failed | llm_unavailable
+    error_type: str = ""
     message: str = ""
 
     def __str__(self) -> str:

@@ -57,17 +57,18 @@ class StageConfig:
 
     # query-time navigation (reasoning model)
     chat_model: str = ""                             # PAGEINDEX_CHAT_MODEL
-    temperature: float = 0.0                         # PAGEINDEX_TEMPERATURE
-    max_steps: int = 12                              # PAGEINDEX_MAX_STEPS (agent max turns)
+    temperature: float = 0.0                         # PAGEINDEX_LLM_TEMPERATURE (or PAGEINDEX_TEMPERATURE)
+    max_steps: int = 8                               # PAGEINDEX_MAX_TURNS (agent max turns)
     max_nodes: int = 40                              # PAGEINDEX_MAX_NODES (payload cap)
-    timeout: int = 180                               # PAGEINDEX_TIMEOUT (seconds)
+    timeout: int = 180                               # PAGEINDEX_LLM_TIMEOUT (seconds)
 
     # custom LLM backend (MedGemma behind our HTTP endpoint)
-    llm_base_url: str = ""                           # PAGEINDEX_LLM_BASE_URL / LLM_BASE_URL
+    llm_base_url: str = ""                           # PAGEINDEX_LLM_BASE_URL ends at /v1
     llm_api_key: str = ""                            # PAGEINDEX_LLM_API_KEY
 
     # behavior
     rebuild: bool = False                            # force re-index even if cached
+    allow_structural_fallback: bool = False          # NEVER auto-lexical-fallback for the MedGemma experiment
 
     def has_llm(self) -> bool:
         return bool(self.llm_base_url and self.chat_model)
@@ -85,6 +86,7 @@ class StageConfig:
             "timeout": self.timeout,
             "llm_base_url": self.llm_base_url,
             "llm_api_key": "***" if self.llm_api_key else "",
+            "allow_structural_fallback": self.allow_structural_fallback,
         }
 
 
@@ -96,13 +98,16 @@ def config_from_env(overrides: dict | None = None) -> StageConfig:
         sdk_storage=Path(_env("PAGEINDEX_SDK_STORAGE", DEFAULT_SDK_STORAGE)),
         index_model=_env("PAGEINDEX_INDEX_MODEL"),
         chat_model=_env("PAGEINDEX_CHAT_MODEL"),
-        temperature=_env_float("PAGEINDEX_TEMPERATURE", 0.0),
-        max_steps=_env_int("PAGEINDEX_MAX_STEPS", 12),
+        temperature=_env_float("PAGEINDEX_LLM_TEMPERATURE",
+                             _env_float("PAGEINDEX_TEMPERATURE", 0.0)),
+        max_steps=_env_int("PAGEINDEX_MAX_TURNS", _env_int("PAGEINDEX_MAX_STEPS", 8)),
         max_nodes=_env_int("PAGEINDEX_MAX_NODES", 40),
-        timeout=_env_int("PAGEINDEX_TIMEOUT", 180),
+        timeout=_env_int("PAGEINDEX_LLM_TIMEOUT", _env_int("PAGEINDEX_TIMEOUT", 180)),
         llm_base_url=_env("PAGEINDEX_LLM_BASE_URL", _env("LLM_BASE_URL")),
         llm_api_key=_env("PAGEINDEX_LLM_API_KEY"),
         rebuild=_env("PAGEINDEX_REBUILD", "0").strip().lower() in ("1", "true", "yes"),
+        allow_structural_fallback=_env("PAGEINDEX_STRUCTURAL_FALLBACK", "0").strip().lower()
+        in ("1", "true", "yes"),
     )
     if overrides:
         for key, val in overrides.items():

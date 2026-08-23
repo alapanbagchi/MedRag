@@ -26,6 +26,12 @@ from medrag.retrieval_v2.pageindex_stage.models import (
     SelectedNode,
     NavigationResult,
     NavigationError,
+    MEDGEMMA_ENDPOINT_ERROR,
+    PAGEINDEX_CLIENT_ERROR,
+    DOCUMENT_REGISTRATION_ERROR,
+    TREE_LOAD_ERROR,
+    NAVIGATION_ERROR,
+    NAVIGATION_EMPTY_RESULT,
 )
 from medrag.retrieval_v2.pageindex_stage.indexer import (
     validate_markdown,
@@ -38,6 +44,8 @@ from medrag.retrieval_v2.pageindex_stage.navigator import (
     navigation_objective,
     navigate,
     navigation_trace,
+    verify_medgemma_endpoint,
+    verify_document_registration,
 )
 
 __all__ = [

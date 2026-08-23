@@ -272,11 +272,11 @@ class TestPageIndexAdapter:
         assert t2 is not None, "Table 2 must be among the navigation hits"
         resolved = a.resolve_node("PMC11743609", t2.pageindex_node_id)
         assert resolved["paper_id"] == "PMC11743609"
-        # Both artifact modes are valid: the full XML tree maps the table to its
-        # existing chunk ids (summary + rows + footnotes); the jats->MD tree
-        # keeps the table structurally (HTML) and reports md-unmapped chunks.
-        if resolved["chunk_ids"]:
-            assert any("T2_summary" in c or "T2_row_" in c for c in resolved["chunk_ids"])
+        # The MD-mode tree maps the table node to the paper's existing corpus
+        # chunks (summary + rows + footnotes); ids are corpus ids (paper prefix).
+        assert resolved["chunk_ids"], "Table 2 must resolve to existing corpus chunks"
+        for c in resolved["chunk_ids"]:
+            assert c.startswith("PMC11743609"), "table chunks must be existing corpus ids"
 
     def test_unavailable_paper_falls_back(self, adapter):
         a, _idx = adapter

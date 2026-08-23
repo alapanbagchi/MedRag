@@ -96,21 +96,49 @@ class TestIndexing:
 
 
 class TestNavigation:
-    def test_navigate_returns_structural_result_without_llm(self, cfg):
+    def test_navigate_without_endpoint_fails_classified(self, cfg):
+        from medrag.retrieval_v2.pageindex_stage import MEDGEMMA_ENDPOINT_ERROR
         obj = navigation_objective(requirement=REQUIREMENT)
         res = navigate(PAPER, objective=obj, config=cfg)
         assert res.paper_id == PAPER
-        # without a reasoning model the result must be clearly 'degraded'
-        assert res.status == "degraded"
-        assert res.error and "llm_unavailable" in res.error.get("error_type", "")
-        # the structural region must be selected
-        titles = {n.title for n in res.selected_nodes}
-        assert "Table  2" in titles or "Table 2" in titles
-        assert any("Recurrent coarctation" in " > ".join(n.path) for n in res.selected_nodes)
-        assert res.trace, "navigation trace must be visible"
+        # without a configured reasoning endpoint the experiment must fail with
+        # the exact endpoint layer - never a lexical fallback nor a fabricated
+        # LLM selection (Part 17).
+        assert res.status == "failed"
+        assert res.error and res.error.get("error_type") == MEDGEMMA_ENDPOINT_ERROR
+        assert res.selected_nodes == []
 
     def test_missing_paper_structured_error(self, tmp_path, cfg):
+        from medrag.retrieval_v2.pageindex_stage import TREE_LOAD_ERROR
         bad = config_from_env({"md_dir": str(tmp_path)})
         res = navigate("PMC99999999", config=bad)
         assert res.status == "failed"
-        assert res.error and res.error.get("error_type") == "markdown_missing"
+        assert res.error and res.error.get("error_type") == TREE_LOAD_ERROR
+
+class TestAgentLoopParsing:
+    def test_parses_tool_json_block_with_args(self):
+        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        content = (
+            chr(96) * 3 + chr(10)
+            + '{"tool": "get_document_structure", "args": {"doc_name": "PMC11743609.md"}}'
+            + chr(10) + chr(96) * 3
+        )
+        calls = agent_loop._parse_tool_invocations(content)
+        assert calls == [("get_document_structure", {"doc_name": "PMC11743609.md"})]
+
+    def test_parse_bare_browse_and_empty_content(self):
+        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        assert agent_loop._parse_tool_invocations('{"tool": "browse_documents"}') == [("browse_documents", {})]
+        assert agent_loop._parse_tool_invocations("I found the evidence now.") == []
+
+    def test_extract_matches_internal_sections_too(self, cfg):
+        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        indexed = build_index(PAPER, config=cfg)
+        picked = agent_loop.extract_from_response(
+            "I select Results, Recurrent coarctation (re-CoA) and Table 2 as the evidence regions.",
+            indexed["structure"], 10)
+        titles = {p["title"] for p in picked}
+        assert "Results" in titles
+        assert any("Recurrent coarctation" in t for t in titles)
+        assert any("Table" in t for t in titles)
+

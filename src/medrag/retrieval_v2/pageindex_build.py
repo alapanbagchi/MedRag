@@ -316,6 +316,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                              "(XML -> jats -> MD -> official pageindex md_to_tree)")
     parser.add_argument("--from-chunks", action="store_true",
                         help="build the legacy chunk-derived tree (comparison only)")
+    parser.add_argument("--no-chunk-map", action="store_true",
+                        help="skip exact-text chunk re-attachment (fast bulk indexing)")
     args = parser.parse_args(argv)
 
     cfg = DEFAULT_CONFIG
@@ -344,7 +346,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             if args.from_md:
                 artifact = build_from_md(
                     pid, args.md_dir, pageindex_dir,
-                    Path(args.index_dir) / "corpus.parquet", cfg)
+                    Path(args.index_dir) / "corpus.parquet", cfg,
+                    map_chunks=not args.no_chunk_map)
                 built += 1
                 print(f"  built(md) {pid}  nodes={len(artifact['node_map'])}  mapped_chunks={artifact['metadata']['mapped_chunks']}/{artifact['metadata']['total_existing_chunks']}")
                 continue
@@ -383,6 +386,7 @@ def build_from_md(
     pageindex_dir: Path,
     corpus_path: Path,
     config: Optional[V2Config] = None,
+    map_chunks: bool = True,
 ) -> Dict[str, Any]:
     """Build the PageIndex artifact from the jats-converted Markdown using the
     OFFICIAL PageIndex library (pageindex.page_index_md.md_to_tree).
@@ -394,6 +398,7 @@ def build_from_md(
     blocks and rows are reported as md-unmapped in this mode).
     """
     import asyncio
+    import difflib
 
     from medrag.retrieval_v2.xml_tree import load_paper_chunks, normalize_text
 
@@ -415,25 +420,69 @@ def build_from_md(
         if_add_node_id="yes",
     ))
 
-    chunks = load_paper_chunks(paper_id, corpus_path)
+    chunks = load_paper_chunks(paper_id, corpus_path) if map_chunks else {}
     structure = tree.get("structure") or []
 
     node_map: Dict[str, Dict[str, Any]] = {}
     chunk_to_node: Dict[str, str] = {}
     counter = [0]
     used_chunks: set = set()
+    ordered_ids: List[str] = [cid for cid, _ in
+                              sorted(chunks.items(), key=lambda kv: kv[1]["position"])]
 
     def ident() -> str:
         i = counter[0]
         counter[0] += 1
         return f"{i:04d}"
 
+    def resolve_md_links(text: str) -> str:
+        """Convert jats-converter markdown links [txt](url) back to plain txt
+        so leaf text can match the corpus chunk text (citations no longer differ)."""
+        out: List[str] = []
+        i = 0
+        n = len(text)
+        while i < n:
+            if text[i] == "[":
+                j = text.find("]", i + 1)
+                k = text.find("(", j + 1) if j != -1 else -1
+                m = text.find(")", k + 1) if k != -1 else -1
+                if j != -1 and k == j + 1 and m != -1:
+                    out.append(text[i + 1:j])
+                    i = m + 1
+                    continue
+            out.append(text[i])
+            i += 1
+        return "".join(out)
+
+    def norm_md(text: str) -> str:
+        t = (text or "").replace("\xa0", " ")
+        t = resolve_md_links(t)
+        t = t.replace("**", "")
+        t = re.sub(r"[ \t]+", " ", t)
+        return normalize_text(t)
+
     def leaf_text(node: Dict[str, Any]) -> str:
         text = node.get("text") or ""
         lines = text.split("\n")
         if lines and lines[0].startswith("#"):
             lines = lines[1:]
-        return normalize_text("\n".join(lines))
+        return norm_md("\n".join(lines))
+
+    def chunk_score(cc: Dict[str, Any], want: str) -> float:
+        ct = cc["text"]
+        if not want or not ct:
+            return 0.0
+        if ct == want:
+            return 3.0
+        if len(want) >= 40:
+            if want in ct:
+                return 2.0
+            if ct in want:
+                return 1.8
+            ratio = difflib.SequenceMatcher(None, ct, want).ratio()
+            if ratio >= 0.92:
+                return ratio
+        return 0.0
 
     def walk(nodes, ancestors) -> None:
         for node in nodes:
@@ -468,21 +517,66 @@ def build_from_md(
                 "mapping_status": "md-unmapped",
             }
             node_map[nid] = rec
-            if is_leaf:
+            if ntype == "paragraph":
                 want = leaf_text(node)
                 if want:
-                    for cid in sorted(chunks, key=lambda c: chunks[c]["position"]):
+                    best = (0.0, None)
+                    for cid in ordered_ids:
                         if cid in used_chunks:
                             continue
-                        if chunks[cid]["text"] == want:
-                            rec["chunk_ids"] = [cid]
-                            rec["mapping_status"] = "mapped-text"
-                            used_chunks.add(cid)
-                            chunk_to_node[cid] = nid
+                        s = chunk_score(chunks[cid], want)
+                        if s > best[0]:
+                            best = (s, cid)
+                        if s >= 3.0:
                             break
+                    if best[1] and best[0] >= 1.8:
+                        cid = best[1]
+                        rec["chunk_ids"] = [cid]
+                        rec["mapping_status"] = ("mapped-text" if best[0] >= 3.0
+                                                 else "mapped-contained" if best[0] >= 2.0
+                                                 else "mapped-fuzzy")
+                        used_chunks.add(cid)
+                        chunk_to_node[cid] = nid
             walk(children, ancestors + [node])
 
     walk(structure, [])
+
+    # tables: assign the paper's table chunks (summary + rows + footnotes) to
+    # the MD table nodes by document order
+    table_groups: List[List[str]] = []
+    cur: List[str] = []
+    cur_key: Any = None
+    for cid in ordered_ids:
+        c = chunks[cid]
+        if c["chunk_type"] not in ("table_summary", "table_row", "table_footnotes"):
+            continue
+        key = str(c["table_id"] or "")
+        if cur and key != cur_key:
+            table_groups.append(cur)
+            cur = []
+        cur_key = key
+        cur.append(cid)
+    if cur:
+        table_groups.append(cur)
+    md_tables = [rec for rec in node_map.values() if rec["node_type"] == "table"]
+    for rec, group in zip(md_tables, table_groups):
+        assignable = [cid for cid in group if cid not in used_chunks]
+        if assignable:
+            rec["chunk_ids"] = assignable
+            rec["mapping_status"] = "mapped-table"
+            for cid in assignable:
+                used_chunks.add(cid)
+                chunk_to_node[cid] = rec["node_id"]
+
+    # figures: assign the paper's figure chunks by document order
+    figure_ids = [cid for cid in ordered_ids if chunks[cid]["chunk_type"] == "figure"]
+    md_figures = [rec for rec in node_map.values() if rec["node_type"] == "figure"]
+    for rec, cid in zip(md_figures, figure_ids):
+        if cid not in used_chunks:
+            rec["chunk_ids"] = [cid]
+            rec["mapping_status"] = "mapped-figure"
+            used_chunks.add(cid)
+            chunk_to_node[cid] = rec["node_id"]
 
     artifact = {
         "paper_id": paper_id,
@@ -500,11 +594,15 @@ def build_from_md(
         "node_map": node_map,
         "chunk_to_node": chunk_to_node,
         "mapping_log": [
-            {"node_id": nid, "node_type": rec["node_type"], "chunk_ids": [],
-             "status": "md-unmapped",
-             "note": "leaf text did not exactly match any corpus chunk (tables/rows are HTML in MD mode)"}
+            {"node_id": nid, "node_type": rec["node_type"],
+             "chunk_ids": rec["chunk_ids"],
+             "status": rec["mapping_status"],
+             "note": "mapped"
+                     if str(rec["mapping_status"]).startswith("mapped")
+                     else "no corpus chunk with matching text (tables/rows are "
+                          "HTML in MD mode; citations are markdown links)"}
             for nid, rec in node_map.items()
-            if rec["node_type"] in ("table", "figure") and rec["mapping_status"] == "md-unmapped"
+            if rec["node_type"] in ("table", "figure", "paragraph")
         ],
     }
     out_path = pageindex_dir / f"{paper_id}.json"

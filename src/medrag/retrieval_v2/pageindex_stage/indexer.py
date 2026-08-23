@@ -206,8 +206,9 @@ def build_index(paper_id: str, markdown_path: Optional[Path] = None,
     cfg = config or config_from_env()
     md_path = Path(markdown_path) if markdown_path is not None else Path(cfg.md_dir) / f"{paper_id}.md"
     if not md_path.exists():
-        raise NavigationError(paper_id=paper_id, error_type="markdown_missing",
-                              message=f"no markdown for {paper_id} at {md_path}")
+        from medrag.retrieval_v2.pageindex_stage.models import TREE_LOAD_ERROR
+        raise NavigationError(paper_id=paper_id, error_type=TREE_LOAD_ERROR,
+                              message=f"markdown missing for {paper_id} at {md_path} (tree cannot be loaded)")
 
     if not rebuild and is_cached(cfg, paper_id):
         tree, meta = load_tree(cfg, paper_id) or (None, {})
@@ -227,7 +228,8 @@ def build_index(paper_id: str, markdown_path: Optional[Path] = None,
     try:
         from pageindex.page_index_md import md_to_tree as _md_to_tree
     except Exception as exc:  # noqa: BLE001
-        raise NavigationError(paper_id=paper_id, error_type="pageindex_unavailable",
+        from medrag.retrieval_v2.pageindex_stage.models import PAGEINDEX_CLIENT_ERROR
+        raise NavigationError(paper_id=paper_id, error_type=PAGEINDEX_CLIENT_ERROR,
                               message=f"pageindex package import failed: {exc}") from exc
 
     t0 = time.perf_counter()
@@ -242,7 +244,8 @@ def build_index(paper_id: str, markdown_path: Optional[Path] = None,
             if_add_node_id="yes",
         ))
     except Exception as exc:  # noqa: BLE001
-        raise NavigationError(paper_id=paper_id, error_type="tree_build_failed",
+        from medrag.retrieval_v2.pageindex_stage.models import TREE_LOAD_ERROR
+        raise NavigationError(paper_id=paper_id, error_type=TREE_LOAD_ERROR,
                               message=f"md_to_tree failed: {exc}") from exc
     latency_ms = (time.perf_counter() - t0) * 1000
 
