@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medrag"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "boto3==1.43.70",
+    "faiss-cpu>=1.15.0",
+    "langchain-core>=1.5.6",
+    "langchain-text-splitters>=1.1.2",
+    "lxml==7.0.0a3",
+    "numpy>=2.5.2",
+    "pandas>=3.0.5",
+    "pyarrow>=25.0.1",
+    "pyyaml>=6.0.3",
+    "requests>=2.34.2",
+    "scipy>=1.18.0",
+    "torch>=2.13.0",
+    "transformers>=5.15.0",
+    "tqdm==4.70.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "ruff>=0.11",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+# Keep the lint surface small: undefined names / unused imports / shadowing.
+# The codebase carries its own deliberately verbose formatting style, so
+# stylistic rules (E, W) are intentionally not enforced.
+select = ["F", "B011"]
+
+[project.scripts]
+medrag-collect = "medrag.collector:main"
+medrag-chunk = "medrag.pipeline:main"
+medrag-embed = "medrag.embedding:main"
+medrag-retrieval = "medrag.retrieval.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+# Install CPU-only torch (much smaller than the CUDA default on Linux).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

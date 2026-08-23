@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE / editor
+.idea/
+.vscode/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data (large, machine-specific)
+data/
+
+# Generated reports
+chunking_report.json
+validation_report.txt
+
+# Retrieval index artifacts (rebuildable)
+index/
+eval/report*.json
+eval/semantic_report*.json
+
+# Docker / pgvector
+pgvector_data/
+
+# derived local data (rebuildable, large)
+chunks/
+embeddings/
+
+# scratch / probes
+.pi_probe/

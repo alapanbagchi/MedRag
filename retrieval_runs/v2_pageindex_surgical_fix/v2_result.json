@@ -1,0 +1,3759 @@
+{
+  "query": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values?",
+  "plan": {
+    "query": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values",
+    "question_type": "numerical",
+    "entities": [
+      "recurrent coarctation",
+      "surgical repair techniques"
+    ],
+    "clinical_entities": [
+      {
+        "surface_form": "recurrent coarctation",
+        "base_concept": "coarctation",
+        "modifiers": [
+          "recurrent"
+        ],
+        "role": "condition",
+        "preferred_name": "",
+        "ontology": "",
+        "cui": "",
+        "synonyms": [],
+        "abbreviations": []
+      },
+      {
+        "surface_form": "surgical repair techniques",
+        "base_concept": "surgical repair techniques",
+        "modifiers": [],
+        "role": "target",
+        "preferred_name": "",
+        "ontology": "",
+        "cui": "",
+        "synonyms": [],
+        "abbreviations": []
+      }
+    ],
+    "conditions": [
+      "recurrent coarctation"
+    ],
+    "populations": [],
+    "query_targets": [
+      "surgical repair techniques"
+    ],
+    "requested_fields": [
+      "percentage",
+      "p-value"
+    ],
+    "relationships": [
+      "recurrent coarctation associated with surgical repair techniques"
+    ],
+    "target": "surgical repair techniques",
+    "outcome": "clinical outcomes",
+    "comparisons": [],
+    "n_hops": 1,
+    "requirements": [
+      {
+        "id": "H1",
+        "topic": "recurrent coarctation",
+        "population": "",
+        "target": "surgical repair techniques",
+        "focus": "comparative_numerical",
+        "outcome": "",
+        "condition": "recurrent coarctation",
+        "required_concepts": [
+          "coarctation",
+          "recurrent coarctation"
+        ],
+        "preferred_evidence_types": [
+          "table_row",
+          "table_summary",
+          "table_footnotes",
+          "results",
+          "figure"
+        ],
+        "requested_fields": [
+          "percentage",
+          "p-value"
+        ],
+        "terms": [
+          {
+            "original_term": "recurrent coarctation",
+            "canonical_term": "coarctation",
+            "synonyms": []
+          }
+        ],
+        "entities": [
+          {
+            "surface_form": "recurrent coarctation",
+            "base_concept": "coarctation",
+            "modifiers": [
+              "recurrent"
+            ],
+            "role": "condition",
+            "preferred_name": "",
+            "ontology": "",
+            "cui": "",
+            "synonyms": [],
+            "abbreviations": []
+          }
+        ],
+        "retrieval_variants": [
+          {
+            "id": "V0",
+            "text": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values",
+            "source": "original",
+            "requirement_ids": [
+              "H1"
+            ]
+          },
+          {
+            "id": "V1",
+            "text": "surgical repair techniques recurrent coarctation",
+            "source": "target+concept",
+            "requirement_ids": [
+              "H1"
+            ]
+          },
+          {
+            "id": "V2",
+            "text": "surgical repair techniques coarctation",
+            "source": "base_concept",
+            "requirement_ids": [
+              "H1"
+            ]
+          },
+          {
+            "id": "V3",
+            "text": "surgical repair techniques recurrent coarctation percentage p-value",
+            "source": "focus+fields",
+            "requirement_ids": [
+              "H1"
+            ]
+          }
+        ],
+        "navigation_objective": "Find the Results sections, tables, and table footnotes that report surgical repair techniques associated with recurrent coarctation including percentage, p-value.",
+        "hop_label": "recurrent coarctation -> adults -> surgical repair techniques",
+        "hop_dependencies": [],
+        "comparison": false,
+        "n_hops": 1
+      }
+    ],
+    "queries": [
+      {
+        "id": "q1",
+        "requirement_ids": [
+          "H1"
+        ],
+        "text": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values",
+        "variant_id": "V0",
+        "variant_source": "original",
+        "intended_population": "",
+        "intended_outcome": "",
+        "branch": "hybrid"
+      },
+      {
+        "id": "q2",
+        "requirement_ids": [
+          "H1"
+        ],
+        "text": "surgical repair techniques recurrent coarctation",
+        "variant_id": "V1",
+        "variant_source": "target+concept",
+        "intended_population": "",
+        "intended_outcome": "",
+        "branch": "hybrid"
+      },
+      {
+        "id": "q3",
+        "requirement_ids": [
+          "H1"
+        ],
+        "text": "surgical repair techniques coarctation",
+        "variant_id": "V2",
+        "variant_source": "base_concept",
+        "intended_population": "",
+        "intended_outcome": "",
+        "branch": "hybrid"
+      },
+      {
+        "id": "q4",
+        "requirement_ids": [
+          "H1"
+        ],
+        "text": "surgical repair techniques recurrent coarctation percentage p-value",
+        "variant_id": "V3",
+        "variant_source": "focus+fields",
+        "intended_population": "",
+        "intended_outcome": "",
+        "branch": "hybrid"
+      }
+    ],
+    "retrieval_variants": [
+      {
+        "id": "V0",
+        "text": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values",
+        "source": "original",
+        "requirement_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "V1",
+        "text": "surgical repair techniques recurrent coarctation",
+        "source": "target+concept",
+        "requirement_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "V2",
+        "text": "surgical repair techniques coarctation",
+        "source": "base_concept",
+        "requirement_ids": [
+          "H1"
+        ]
+      },
+      {
+        "id": "V3",
+        "text": "surgical repair techniques recurrent coarctation percentage p-value",
+        "source": "focus+fields",
+        "requirement_ids": [
+          "H1"
+        ]
+      }
+    ],
+    "reranker_intent": {
+      "question_type": "numerical",
+      "focus": "comparative_numerical",
+      "target": "surgical repair techniques",
+      "outcome": "",
+      "requested_fields": [
+        "percentage",
+        "p-value"
+      ]
+    },
+    "terminology_guard": {
+      "concepts_detected": [
+        {
+          "original": "recurrent coarctation",
+          "preserved": true
+        },
+        {
+          "original": "surgical repair techniques",
+          "preserved": true
+        }
+      ],
+      "preserved": [
+        "recurrent coarctation",
+        "surgical repair techniques"
+      ],
+      "violations": [],
+      "note": "Medical terms are never silently replaced by different concepts. Synonyms may be added for search only."
+    },
+    "planner_method": "deterministic",
+    "warnings": []
+  },
+  "papers": [
+    {
+      "paper_id": "PMC11743609",
+      "paper_score": 0.99,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11743609_0",
+        "PMC11743609_5",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_42",
+        "PMC11743609_T2_row_0"
+      ],
+      "sections": [
+        "Abstract",
+        "Discussion",
+        "Introduction",
+        "Material and methods",
+        "Results"
+      ],
+      "evidence_types": [
+        "paragraph",
+        "table_footnotes",
+        "table_row",
+        "table_summary"
+      ],
+      "per_requirement_scores": {
+        "H1": 1.0
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC11997790",
+      "paper_score": 0.852042,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11997790_ivaf042-T2_row_0",
+        "PMC11997790_ivaf042-T3_row_20",
+        "PMC11997790_ivaf042-T2_row_0",
+        "PMC11997790_4",
+        "PMC11997790_0"
+      ],
+      "sections": [
+        "Abstract",
+        "RESULTS"
+      ],
+      "evidence_types": [
+        "paragraph",
+        "table_row"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.8534
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12009809",
+      "paper_score": 0.809314,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12009809_7",
+        "PMC12009809_15",
+        "PMC12009809_6",
+        "PMC12009809_7",
+        "PMC12009809_15"
+      ],
+      "sections": [
+        "Diagnosis and grading of aortic coarctation",
+        "Hypertension in operated AoC patients",
+        "Introduction",
+        "Treatment for AoC"
+      ],
+      "evidence_types": [
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.7655
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12014972",
+      "paper_score": 0.793847,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12014972_3",
+        "PMC12014972_3",
+        "PMC12014972_0",
+        "PMC12014972_3",
+        "PMC12014972_0"
+      ],
+      "sections": [
+        "Abstract",
+        "Background",
+        "Conclusions"
+      ],
+      "evidence_types": [
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.7564
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC11970464",
+      "paper_score": 0.786519,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11970464_TB0920247337pcc-1_row_13",
+        "PMC11970464_TB0920247337pcc-1_row_7",
+        "PMC11970464_TB0920247337pcc-1_row_10",
+        "PMC11970464_TB0920247337pcc-1_row_9",
+        "PMC11970464_TB0920247337pcc-1_row_2"
+      ],
+      "sections": [
+        "Patients and Methods",
+        "Results"
+      ],
+      "evidence_types": [
+        "paragraph",
+        "table_row",
+        "table_summary"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.7275
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12028424",
+      "paper_score": 0.77376,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12028424_0",
+        "PMC12028424_2",
+        "PMC12028424_0",
+        "PMC12028424_20",
+        "PMC12028424_0"
+      ],
+      "sections": [
+        "2. Subjects and Method",
+        "5. Conclusions",
+        "Abstract",
+        "Figures and Tables"
+      ],
+      "evidence_types": [
+        "paragraph",
+        "table_row"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.6896
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12082946",
+      "paper_score": 0.746973,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12082946_17",
+        "PMC12082946_16",
+        "PMC12082946_24",
+        "PMC12082946_17",
+        "PMC12082946_24"
+      ],
+      "sections": [
+        "Conclusion",
+        "Discussion",
+        "Results"
+      ],
+      "evidence_types": [
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.6783
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12055418",
+      "paper_score": 0.617664,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12055418_6",
+        "PMC12055418_6",
+        "PMC12055418_7",
+        "PMC12055418_1",
+        "PMC12055418_6"
+      ],
+      "sections": [
+        "Conclusions",
+        "Discussion",
+        "Introduction"
+      ],
+      "evidence_types": [
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.4628
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC12028279",
+      "paper_score": 0.615476,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC12028279_jcm-14-02817-f001",
+        "PMC12028279_0",
+        "PMC12028279_12",
+        "PMC12028279_jcm-14-02817-f001",
+        "PMC12028279_jcm-14-02817-f001"
+      ],
+      "sections": [
+        "3. Results",
+        "Abstract",
+        "Figures and Tables"
+      ],
+      "evidence_types": [
+        "figure",
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.4425
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC11697624",
+      "paper_score": 0.601393,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11697624_0",
+        "PMC11697624_3",
+        "PMC11697624_3",
+        "PMC11697624_0",
+        "PMC11697624_0"
+      ],
+      "sections": [
+        "Abstract",
+        "Background"
+      ],
+      "evidence_types": [
+        "paragraph"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.4523
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC11955238",
+      "paper_score": 0.561614,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q2",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11955238_ivaf067-T4_footnotes",
+        "PMC11955238_18",
+        "PMC11955238_ivaf067-T4_footnotes",
+        "PMC11955238_18",
+        "PMC11955238_24"
+      ],
+      "sections": [
+        "DISCUSSION",
+        "RESULTS"
+      ],
+      "evidence_types": [
+        "paragraph",
+        "table_footnotes",
+        "table_row"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.3527
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    },
+    {
+      "paper_id": "PMC11997764",
+      "paper_score": 0.557872,
+      "supported_requirements": [
+        "H1"
+      ],
+      "query_branches": [
+        "q1",
+        "q4"
+      ],
+      "best_chunks": [
+        "PMC11997764_ivaf020-T1_footnotes",
+        "PMC11997764_ivaf020-T1_row_11",
+        "PMC11997764_ivaf020-T1_row_8",
+        "PMC11997764_ivaf020-T1_row_11",
+        "PMC11997764_ivaf020-T1_row_8"
+      ],
+      "sections": [
+        "RESULTS"
+      ],
+      "evidence_types": [
+        "table_footnotes",
+        "table_row"
+      ],
+      "per_requirement_scores": {
+        "H1": 0.3798
+      },
+      "reason": "ranked",
+      "bridge": false,
+      "guarantee": false
+    }
+  ],
+  "coverage": {
+    "all_requirements_covered": true,
+    "covered": [
+      "H1"
+    ],
+    "uncovered": [],
+    "coverage_fraction": 1.0,
+    "per_requirement": {
+      "H1": {
+        "covered": true,
+        "n_evidence": 17,
+        "best_chunks": [
+          "PMC11743609_T1_row_5",
+          "PMC11997790_ivaf042-T2_row_0",
+          "PMC11743609_T1_row_3"
+        ],
+        "node_types": [
+          "paragraph",
+          "table_row"
+        ],
+        "table_ids": [
+          "T1",
+          "T2",
+          "ivaf042-T2"
+        ],
+        "detected_fields": {
+          "PMC11743609_T1_row_5": {
+            "percentage": true,
+            "p-value": false,
+            "confidence_interval": false,
+            "effect_estimate": false,
+            "sample_size": false
+          },
+          "PMC11997790_ivaf042-T2_row_0": {
+            "percentage": true,
+            "p-value": false,
+            "confidence_interval": false,
+            "effect_estimate": false,
+            "sample_size": false
+          },
+          "PMC11743609_T1_row_3": {
+            "percentage": true,
+            "p-value": false,
+            "confidence_interval": false,
+            "effect_estimate": false,
+            "sample_size": false
+          }
+        },
+        "requirement": "recurrent coarctation"
+      }
+    }
+  },
+  "metrics": {
+    "per_query_paper_metrics": {
+      "q1": {
+        "known_papers": [],
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "recall@20": 0.0,
+        "mrr": 0.0,
+        "found_in_ranking": [],
+        "paper_ranking_top10": [
+          "PMC11743609",
+          "PMC12028424",
+          "PMC12082946",
+          "PMC12028279",
+          "PMC12009809",
+          "PMC11702069",
+          "PMC11997764",
+          "PMC12087259",
+          "PMC11749030",
+          "PMC11818419"
+        ]
+      },
+      "q2": {
+        "known_papers": [],
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "recall@20": 0.0,
+        "mrr": 0.0,
+        "found_in_ranking": [],
+        "paper_ranking_top10": [
+          "PMC11743609",
+          "PMC12009809",
+          "PMC12014972",
+          "PMC11997790",
+          "PMC11970464",
+          "PMC12055418",
+          "PMC11885197",
+          "PMC11955238",
+          "PMC11697624",
+          "PMC12063084"
+        ]
+      },
+      "q3": {
+        "known_papers": [],
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "recall@20": 0.0,
+        "mrr": 0.0,
+        "found_in_ranking": [],
+        "paper_ranking_top10": [
+          "PMC11743609",
+          "PMC11997790",
+          "PMC11970464",
+          "PMC12009809",
+          "PMC12055418",
+          "PMC11697624",
+          "PMC12014972",
+          "PMC12028424",
+          "PMC12034379",
+          "PMC11914319"
+        ]
+      },
+      "q4": {
+        "known_papers": [],
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "recall@20": 0.0,
+        "mrr": 0.0,
+        "found_in_ranking": [],
+        "paper_ranking_top10": [
+          "PMC11743609",
+          "PMC11997790",
+          "PMC11970464",
+          "PMC12009809",
+          "PMC11854409",
+          "PMC11702069",
+          "PMC11955238",
+          "PMC12063084",
+          "PMC12014972",
+          "PMC12028279"
+        ]
+      }
+    },
+    "final_paper_recall": 0.0,
+    "known_papers_found": [],
+    "known_papers_missing": [],
+    "branch_papers_preserved_in_selection": true,
+    "requirement_recall": 1.0,
+    "coverage_fraction": 1.0,
+    "hop_coverage": {
+      "H1": {
+        "covered": true
+      }
+    },
+    "final_evidence_chunk_recall": {},
+    "n_final_evidence": 18,
+    "pageindex_evidence_count": 15,
+    "table_context_evidence_count": 13,
+    "pageindex_status": {
+      "PMC11743609": "success",
+      "PMC11997790": "success",
+      "PMC12009809": "success",
+      "PMC12014972": "success",
+      "PMC11970464": "success",
+      "PMC12028424": "success",
+      "PMC12082946": "success",
+      "PMC12055418": "success",
+      "PMC12028279": "success"
+    },
+    "note": "Paper recall and MRR are computed against branch-level known papers (spec 40-41); requirement recall is the fraction of hops with evidence in the final set."
+  },
+  "timings": {
+    "plan_ms": 8,
+    "global_retrieval_ms": 20202,
+    "paper_aggregation_ms": 788,
+    "paper_selection_ms": 5,
+    "local_search_ms": 6851,
+    "medcpt_ms": 67540,
+    "intent_ms": 43,
+    "selection_ms": 3,
+    "repair_ms": 3,
+    "total_ms": 95496
+  },
+  "final_evidence": [
+    {
+      "chunk_id": "PMC11743609_T1_row_5",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Results > Table T1",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 32,
+      "table_id": "T1",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T1_summary",
+      "token_count": 10,
+      "context_node_ids": [
+        "PMC11743609_T1_summary",
+        "PMC11743609_T1_row_0",
+        "PMC11743609_T1_row_1",
+        "PMC11743609_T1_row_2",
+        "PMC11743609_T1_row_3",
+        "PMC11743609_T1_row_4",
+        "PMC11743609_T1_row_5",
+        "PMC11743609_T1_row_6",
+        "PMC11743609_T1_row_7",
+        "PMC11743609_T1_row_8",
+        "PMC11743609_T1_row_9",
+        "PMC11743609_T1_row_10",
+        "PMC11743609_T1_row_11",
+        "PMC11743609_T1_row_12",
+        "PMC11743609_T1_row_13",
+        "PMC11743609_T1_row_14",
+        "PMC11743609_T1_row_15",
+        "PMC11743609_T1_row_16",
+        "PMC11743609_T1_row_17",
+        "PMC11743609_T1_row_18",
+        "PMC11743609_T1_row_19",
+        "PMC11743609_T1_row_20",
+        "PMC11743609_T1_row_21",
+        "PMC11743609_T1_row_22",
+        "PMC11743609_T1_row_23",
+        "PMC11743609_T1_row_24",
+        "PMC11743609_T1_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T1",
+        "caption": "Table 1: Patient characteristics.",
+        "headers": [
+          "Variables",
+          "Median [IQR] or n (%)"
+        ],
+        "variable": "VSD (%)",
+        "row_values": {
+          "Median [IQR] or n (%)": "14 (50)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T1_row_0",
+            "text": "Row: Postnatal data\nMedian [IQR] or n (%): Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nMedian [IQR] or n (%): 39.6 [2.2]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_2",
+            "text": "Row: Weight at birth (grams)\nMedian [IQR] or n (%): 3,270 [739]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_3",
+            "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_4",
+            "text": "Row: Associated cardiac anomalies\nMedian [IQR] or n (%): Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_5",
+            "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_6",
+            "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_7",
+            "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_8",
+            "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_9",
+            "text": "Row: CoA repair\nMedian [IQR] or n (%): CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_10",
+            "text": "Row: Age at repair (days)\nMedian [IQR] or n (%): 9 [11]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nMedian [IQR] or n (%): 12 (43)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_12",
+            "text": "Row: Type of repair (%)\nMedian [IQR] or n (%): Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_13",
+            "text": "Row: End-to-end\nMedian [IQR] or n (%): 4 (14)"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+        ],
+        "section": "Results"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0048"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches associated, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 11.606819
+      },
+      "medcpt_norm": {
+        "H1": 1.0
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 1.0,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 1,
+      "selection_reason": {
+        "base": 1.0,
+        "new_requirements": [
+          "H1"
+        ],
+        "new_evid_type": true,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 1.26
+      },
+      "expanded_from": [
+        "PMC11743609_T1_row_9"
+      ],
+      "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)",
+      "context_text": "Section: Results\nTable: Table 1: Patient characteristics.\nHeaders: Variables | Median [IQR] or n (%)\nRow: VSD (%) | 14 (50)\nFootnotes: Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+    },
+    {
+      "chunk_id": "PMC11997790_ivaf042-T2_row_0",
+      "paper_id": "PMC11997790",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "RESULTS",
+      "subsection": "Surgical technique",
+      "breadcrumb": [
+        "RESULTS",
+        "Surgical technique"
+      ],
+      "position": 46,
+      "table_id": "ivaf042-T2",
+      "figure_id": null,
+      "parent_id": "PMC11997790_ivaf042-T2_summary",
+      "token_count": 17,
+      "context_node_ids": [
+        "PMC11997790_ivaf042-T2_summary",
+        "PMC11997790_ivaf042-T2_row_0",
+        "PMC11997790_ivaf042-T2_row_1",
+        "PMC11997790_ivaf042-T2_row_2",
+        "PMC11997790_ivaf042-T2_row_3",
+        "PMC11997790_ivaf042-T2_row_4",
+        "PMC11997790_ivaf042-T2_row_5",
+        "PMC11997790_ivaf042-T2_row_6",
+        "PMC11997790_ivaf042-T2_row_7",
+        "PMC11997790_ivaf042-T2_row_8",
+        "PMC11997790_ivaf042-T2_row_9",
+        "PMC11997790_ivaf042-T2_row_10",
+        "PMC11997790_ivaf042-T2_row_11",
+        "PMC11997790_ivaf042-T2_row_12",
+        "PMC11997790_ivaf042-T2_row_13",
+        "PMC11997790_ivaf042-T2_row_14",
+        "PMC11997790_ivaf042-T2_row_15",
+        "PMC11997790_ivaf042-T2_row_16",
+        "PMC11997790_ivaf042-T2_row_17",
+        "PMC11997790_ivaf042-T2_row_18",
+        "PMC11997790_ivaf042-T2_row_19",
+        "PMC11997790_ivaf042-T2_row_20",
+        "PMC11997790_ivaf042-T2_row_21",
+        "PMC11997790_ivaf042-T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "ivaf042-T2",
+        "caption": "Table 2: Operative variables",
+        "headers": [
+          "Aortic arch reconstruction",
+          "n (%)"
+        ],
+        "variable": "Aortic arch roof-plasty plus coarctation repair",
+        "row_values": {
+          "n (%)": "30 (100)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_0",
+            "text": "Row: Aortic arch roof-plasty plus coarctation repair\nn (%): 30 (100)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_1",
+            "text": "Row: Aortic arch roof-plasty using direct anastomosis between LCCA and LSA\nn (%): 05 (16.7)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_2",
+            "text": "Row: Aortic arch roof-plasty using a patch between LCCA and LSA\nn (%): 19 (63.3)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_3",
+            "text": "Row: Aortic arch roof-plasty: transection and reimplantation of LSA\nn (%): 06 (20.0)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_4",
+            "text": "Group: Type of patch material\nRow: No patch\nn (%): 05 (16.7)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_5",
+            "text": "Group: Type of patch material\nRow: Glutaraldehyde treated autologous pericardium\nn (%): 06 (20.0)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_6",
+            "text": "Group: Type of patch material\nRow: Decellularized xenopericardium (Equine P. 17, Porcine P. 1, Bovine P. 1)\nn (%): 19 (63.3)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_7",
+            "text": "Group: Associated operation\nRow: PA banding\nn (%): 19 (63.3)"
+          },
+          {
+            "chunk_id": "PMC11997790_ivaf042-T2_row_8",
+            "text": "Group: Operative strategy and type\nRow: Single stage CoA plus hypoplastic-arch repair\nn (%): 03 (10.0)"
+          }
+        ],
+        "footnotes": [
+          "PA: pulmonary artery."
+        ],
+        "section": "RESULTS > Surgical technique"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0032"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches repair, associated, coarctation, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.032787,
+        "bm25": 0.016393,
+        "dense": 0.016393
+      },
+      "local_rank": 1,
+      "retrieval_methods": [
+        "bm25",
+        "dense",
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 8.906523
+      },
+      "medcpt_norm": {
+        "H1": 0.867872
+      },
+      "slot_matches": {
+        "concept": 0.5,
+        "clinical_condition": 0.5,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.5465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 0.8534,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.873627,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 2,
+      "selection_reason": {
+        "base": 0.8736,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 0.9136
+      },
+      "expanded_from": [],
+      "text": "Row: Aortic arch roof-plasty plus coarctation repair\nn (%): 30 (100)",
+      "context_text": "Section: RESULTS > Surgical technique\nTable: Table 2: Operative variables\nHeaders: Aortic arch reconstruction | n (%)\nRow: Aortic arch roof-plasty plus coarctation repair | 30 (100)\nFootnotes: PA: pulmonary artery."
+    },
+    {
+      "chunk_id": "PMC11743609_T1_row_3",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Results > Table T1",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 30,
+      "table_id": "T1",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T1_summary",
+      "token_count": 12,
+      "context_node_ids": [
+        "PMC11743609_T1_summary",
+        "PMC11743609_T1_row_0",
+        "PMC11743609_T1_row_1",
+        "PMC11743609_T1_row_2",
+        "PMC11743609_T1_row_3",
+        "PMC11743609_T1_row_4",
+        "PMC11743609_T1_row_5",
+        "PMC11743609_T1_row_6",
+        "PMC11743609_T1_row_7",
+        "PMC11743609_T1_row_8",
+        "PMC11743609_T1_row_9",
+        "PMC11743609_T1_row_10",
+        "PMC11743609_T1_row_11",
+        "PMC11743609_T1_row_12",
+        "PMC11743609_T1_row_13",
+        "PMC11743609_T1_row_14",
+        "PMC11743609_T1_row_15",
+        "PMC11743609_T1_row_16",
+        "PMC11743609_T1_row_17",
+        "PMC11743609_T1_row_18",
+        "PMC11743609_T1_row_19",
+        "PMC11743609_T1_row_20",
+        "PMC11743609_T1_row_21",
+        "PMC11743609_T1_row_22",
+        "PMC11743609_T1_row_23",
+        "PMC11743609_T1_row_24",
+        "PMC11743609_T1_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T1",
+        "caption": "Table 1: Patient characteristics.",
+        "headers": [
+          "Variables",
+          "Median [IQR] or n (%)"
+        ],
+        "variable": "Female sex (%)",
+        "row_values": {
+          "Median [IQR] or n (%)": "14 (50)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T1_row_0",
+            "text": "Row: Postnatal data\nMedian [IQR] or n (%): Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nMedian [IQR] or n (%): 39.6 [2.2]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_2",
+            "text": "Row: Weight at birth (grams)\nMedian [IQR] or n (%): 3,270 [739]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_3",
+            "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_4",
+            "text": "Row: Associated cardiac anomalies\nMedian [IQR] or n (%): Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_5",
+            "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_6",
+            "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_7",
+            "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_8",
+            "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_9",
+            "text": "Row: CoA repair\nMedian [IQR] or n (%): CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_10",
+            "text": "Row: Age at repair (days)\nMedian [IQR] or n (%): 9 [11]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nMedian [IQR] or n (%): 12 (43)"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+        ],
+        "section": "Results"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0048"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches associated, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 11.39854
+      },
+      "medcpt_norm": {
+        "H1": 0.989809
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.994362,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 3,
+      "selection_reason": {
+        "base": 0.9944,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 0.25,
+        "marginal": 0.9069
+      },
+      "expanded_from": [
+        "PMC11743609_T1_row_9"
+      ],
+      "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)",
+      "context_text": "Section: Results\nTable: Table 1: Patient characteristics.\nHeaders: Variables | Median [IQR] or n (%)\nRow: Female sex (%) | 14 (50)\nFootnotes: Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+    },
+    {
+      "chunk_id": "PMC11743609_T1_row_6",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Results > Table T1",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 33,
+      "table_id": "T1",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T1_summary",
+      "token_count": 10,
+      "context_node_ids": [
+        "PMC11743609_T1_summary",
+        "PMC11743609_T1_row_0",
+        "PMC11743609_T1_row_1",
+        "PMC11743609_T1_row_2",
+        "PMC11743609_T1_row_3",
+        "PMC11743609_T1_row_4",
+        "PMC11743609_T1_row_5",
+        "PMC11743609_T1_row_6",
+        "PMC11743609_T1_row_7",
+        "PMC11743609_T1_row_8",
+        "PMC11743609_T1_row_9",
+        "PMC11743609_T1_row_10",
+        "PMC11743609_T1_row_11",
+        "PMC11743609_T1_row_12",
+        "PMC11743609_T1_row_13",
+        "PMC11743609_T1_row_14",
+        "PMC11743609_T1_row_15",
+        "PMC11743609_T1_row_16",
+        "PMC11743609_T1_row_17",
+        "PMC11743609_T1_row_18",
+        "PMC11743609_T1_row_19",
+        "PMC11743609_T1_row_20",
+        "PMC11743609_T1_row_21",
+        "PMC11743609_T1_row_22",
+        "PMC11743609_T1_row_23",
+        "PMC11743609_T1_row_24",
+        "PMC11743609_T1_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T1",
+        "caption": "Table 1: Patient characteristics.",
+        "headers": [
+          "Variables",
+          "Median [IQR] or n (%)"
+        ],
+        "variable": "BAV (%)",
+        "row_values": {
+          "Median [IQR] or n (%)": "19 (68)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T1_row_0",
+            "text": "Row: Postnatal data\nMedian [IQR] or n (%): Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nMedian [IQR] or n (%): 39.6 [2.2]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_2",
+            "text": "Row: Weight at birth (grams)\nMedian [IQR] or n (%): 3,270 [739]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_3",
+            "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_4",
+            "text": "Row: Associated cardiac anomalies\nMedian [IQR] or n (%): Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_5",
+            "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_6",
+            "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_7",
+            "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_8",
+            "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_9",
+            "text": "Row: CoA repair\nMedian [IQR] or n (%): CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_10",
+            "text": "Row: Age at repair (days)\nMedian [IQR] or n (%): 9 [11]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nMedian [IQR] or n (%): 12 (43)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_12",
+            "text": "Row: Type of repair (%)\nMedian [IQR] or n (%): Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_13",
+            "text": "Row: End-to-end\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_14",
+            "text": "Row: Extended end-to-end\nMedian [IQR] or n (%): 7 (25)"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+        ],
+        "section": "Results"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0048"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches associated, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 11.097666
+      },
+      "medcpt_norm": {
+        "H1": 0.975087
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.986217,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 4,
+      "selection_reason": {
+        "base": 0.9862,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 0.5,
+        "marginal": 0.8112
+      },
+      "expanded_from": [
+        "PMC11743609_T1_row_9"
+      ],
+      "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)",
+      "context_text": "Section: Results\nTable: Table 1: Patient characteristics.\nHeaders: Variables | Median [IQR] or n (%)\nRow: BAV (%) | 19 (68)\nFootnotes: Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+    },
+    {
+      "chunk_id": "PMC11743609_T1_row_7",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Results > Table T1",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 34,
+      "table_id": "T1",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T1_summary",
+      "token_count": 15,
+      "context_node_ids": [
+        "PMC11743609_T1_summary",
+        "PMC11743609_T1_row_0",
+        "PMC11743609_T1_row_1",
+        "PMC11743609_T1_row_2",
+        "PMC11743609_T1_row_3",
+        "PMC11743609_T1_row_4",
+        "PMC11743609_T1_row_5",
+        "PMC11743609_T1_row_6",
+        "PMC11743609_T1_row_7",
+        "PMC11743609_T1_row_8",
+        "PMC11743609_T1_row_9",
+        "PMC11743609_T1_row_10",
+        "PMC11743609_T1_row_11",
+        "PMC11743609_T1_row_12",
+        "PMC11743609_T1_row_13",
+        "PMC11743609_T1_row_14",
+        "PMC11743609_T1_row_15",
+        "PMC11743609_T1_row_16",
+        "PMC11743609_T1_row_17",
+        "PMC11743609_T1_row_18",
+        "PMC11743609_T1_row_19",
+        "PMC11743609_T1_row_20",
+        "PMC11743609_T1_row_21",
+        "PMC11743609_T1_row_22",
+        "PMC11743609_T1_row_23",
+        "PMC11743609_T1_row_24",
+        "PMC11743609_T1_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T1",
+        "caption": "Table 1: Patient characteristics.",
+        "headers": [
+          "Variables",
+          "Median [IQR] or n (%)"
+        ],
+        "variable": "Aortic arch hypoplasia (%)",
+        "row_values": {
+          "Median [IQR] or n (%)": "20 (71)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T1_row_0",
+            "text": "Row: Postnatal data\nMedian [IQR] or n (%): Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nMedian [IQR] or n (%): 39.6 [2.2]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_2",
+            "text": "Row: Weight at birth (grams)\nMedian [IQR] or n (%): 3,270 [739]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_3",
+            "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_4",
+            "text": "Row: Associated cardiac anomalies\nMedian [IQR] or n (%): Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_5",
+            "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_6",
+            "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_7",
+            "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_8",
+            "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_9",
+            "text": "Row: CoA repair\nMedian [IQR] or n (%): CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_10",
+            "text": "Row: Age at repair (days)\nMedian [IQR] or n (%): 9 [11]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nMedian [IQR] or n (%): 12 (43)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_12",
+            "text": "Row: Type of repair (%)\nMedian [IQR] or n (%): Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_13",
+            "text": "Row: End-to-end\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_14",
+            "text": "Row: Extended end-to-end\nMedian [IQR] or n (%): 7 (25)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_15",
+            "text": "Row: End-to-side\nMedian [IQR] or n (%): 6 (21)"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+        ],
+        "section": "Results"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0048"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches associated, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 10.976609
+      },
+      "medcpt_norm": {
+        "H1": 0.969163
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.982939,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 5,
+      "selection_reason": {
+        "base": 0.9829,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 0.75,
+        "marginal": 0.7204
+      },
+      "expanded_from": [
+        "PMC11743609_T1_row_9"
+      ],
+      "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)",
+      "context_text": "Section: Results\nTable: Table 1: Patient characteristics.\nHeaders: Variables | Median [IQR] or n (%)\nRow: Aortic arch hypoplasia (%) | 20 (71)\nFootnotes: Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+    },
+    {
+      "chunk_id": "PMC12028424_0",
+      "paper_id": "PMC12028424",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "paragraph",
+      "section": "Abstract",
+      "subsection": null,
+      "breadcrumb": [
+        "Abstract"
+      ],
+      "position": 0,
+      "table_id": null,
+      "figure_id": null,
+      "parent_id": null,
+      "token_count": 368,
+      "context_node_ids": [
+        "PMC12028424_0"
+      ],
+      "table_context": null,
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": true,
+        "effect_estimate": true,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [],
+      "pageindex_reasons": [],
+      "local_scores": {
+        "rrf": 0.032787,
+        "bm25": 0.016393,
+        "dense": 0.016393
+      },
+      "local_rank": 1,
+      "retrieval_methods": [
+        "bm25",
+        "dense"
+      ],
+      "medcpt_scores": {
+        "H1": 0.021756
+      },
+      "medcpt_norm": {
+        "H1": 0.433131
+      },
+      "slot_matches": {
+        "concept": 0.5,
+        "clinical_condition": 0.5,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.08,
+        "population": 1.0
+      },
+      "requirement_match": 0.5696,
+      "evidence_type_bonus": 0.08,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 0.6896,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.628886,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 6,
+      "selection_reason": {
+        "base": 0.6289,
+        "new_requirements": [],
+        "new_evid_type": true,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 0.7089
+      },
+      "expanded_from": [],
+      "text": "Background: Coarctation of the aorta (CoA) represents 5% to 7% of all congenital heart diseases. Surgery and interventional methods offer great short-term results, but the occurrence of postoperative hypertension associated with cardiovascular and cerebral vascular disease increases mortality and morbidity in the long term. This study aims to investigate risk factors associated with postoperative hypertension in pediatric patients with early repair of isolated aortic coarctation. Subjects and Methods: A total of 41 patients with isolated aortic coarctation were included. The mean age was 35.3 ",
+      "context_text": "Background: Coarctation of the aorta (CoA) represents 5% to 7% of all congenital heart diseases. Surgery and interventional methods offer great short-term results, but the occurrence of postoperative hypertension associated with cardiovascular and cerebral vascular disease increases mortality and morbidity in the long term. This study aims to investigate risk factors associated with postoperative hypertension in pediatric patients with early repair of isolated aortic coarctation. Subjects and Methods: A total of 41 patients with isolated aortic coarctation were included. The mean age was 35.3 ± 46.34 days. Early repair under one month was performed in 65.9% of patients. In all except two patients, end-to-end anastomosis was used. A follow-up at two years revealed an incidence of 58.5% of hypertension. Using logistic regression, preoperative renin plasma concentration above the upper normal level (46.1 μUI/mL) was independently associated with the occurrence of hypertension (OR = 2.49, 95% CI = 2.001–5.03, p = 0.001). Conclusion: Coarctation of the aorta is not just a simple mechanical obstruction of the aorta and should be seen and managed as a systemic disease. Abnormal preoperati"
+    },
+    {
+      "chunk_id": "PMC12082946_18",
+      "paper_id": "PMC12082946",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "paragraph",
+      "section": "Results",
+      "subsection": "Results > Table 6 compares the demographics, anthropometrics,...",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 18,
+      "table_id": null,
+      "figure_id": null,
+      "parent_id": null,
+      "token_count": 406,
+      "context_node_ids": [
+        "PMC12082946_18"
+      ],
+      "table_context": null,
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": true,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0033"
+      ],
+      "pageindex_reasons": [
+        "title matches table, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.03009,
+        "bm25": 0.015385,
+        "dense": 0.014706
+      },
+      "local_rank": 7,
+      "retrieval_methods": [
+        "bm25",
+        "dense",
+        "pageindex"
+      ],
+      "medcpt_scores": {},
+      "medcpt_norm": {
+        "H1": 0.432066
+      },
+      "slot_matches": {
+        "concept": 0.0,
+        "clinical_condition": 0.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.18,
+        "population": 1.0
+      },
+      "requirement_match": 0.3816,
+      "evidence_type_bonus": 0.18,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 0.6783,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.600751,
+      "covered_requirements": [],
+      "selection_rank": 7,
+      "selection_reason": {
+        "base": 0.6008,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 0.6408
+      },
+      "expanded_from": [
+        "PMC12082946_17"
+      ],
+      "text": "Table 6 compares the demographics, anthropometrics, SC lesions, and interventions of surviving and deceased patients. Although the patient's weight was not significantly lower in the deceased group at presentation, the median Z-score did not differ. However, the patient's age, height, weight, and weight Z-score on the last follow-up were significantly lower in the deceased group. Such a pronounced difference seems expected due to the mortality in infancy for the three cases in the deceased category. Moreover, based on FS at the initial presentation, the proportion of cases with suppressed myoc",
+      "context_text": "Table 6 compares the demographics, anthropometrics, SC lesions, and interventions of surviving and deceased patients. Although the patient's weight was not significantly lower in the deceased group at presentation, the median Z-score did not differ. However, the patient's age, height, weight, and weight Z-score on the last follow-up were significantly lower in the deceased group. Such a pronounced difference seems expected due to the mortality in infancy for the three cases in the deceased category. Moreover, based on FS at the initial presentation, the proportion of cases with suppressed myocardial contractility was statistically significant in the deceased group (p = 0.03). Nevertheless, age at presentation, patient sex, lesions comprising the complex, presence of pulmonary hypertension, and percentage of cases that underwent interventions did not yield statistically significant differences between the two groups. However, a Kaplan–Meier survival analysis for patients who underwent intervention and those without intervention demonstrated a mean survival time for the intervention group of 90.2 months (SE = 4.7, 95% CI [80.9, 99.4]) and the non-intervention group 0.8 months (SE = 0"
+    },
+    {
+      "chunk_id": "PMC12014972_3",
+      "paper_id": "PMC12014972",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "paragraph",
+      "section": "Background",
+      "subsection": "Background > Coarctation of the aorta (CoA) accounts for 5–8% of...",
+      "breadcrumb": [
+        "Background"
+      ],
+      "position": 3,
+      "table_id": null,
+      "figure_id": null,
+      "parent_id": null,
+      "token_count": 129,
+      "context_node_ids": [
+        "PMC12014972_3"
+      ],
+      "table_context": null,
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0009"
+      ],
+      "pageindex_reasons": [
+        "title matches coarctation; text matches recurrent, p"
+      ],
+      "local_scores": {
+        "rrf": 0.032787,
+        "bm25": 0.016393,
+        "dense": 0.016393
+      },
+      "local_rank": 1,
+      "retrieval_methods": [
+        "bm25",
+        "dense",
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 0.386081
+      },
+      "medcpt_norm": {
+        "H1": 0.450958
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.5,
+        "evidence_type": 0.08,
+        "population": 1.0
+      },
+      "requirement_match": 0.6796,
+      "evidence_type_bonus": 0.08,
+      "requested_field_bonus": 0.5,
+      "paper_relevance": 0.7564,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.593431,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 8,
+      "selection_reason": {
+        "base": 0.5934,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 0.6334
+      },
+      "expanded_from": [],
+      "text": "Coarctation of the aorta (CoA) accounts for 5–8% of all congenital heart defects. Transcatheter stent implantation has become the standard of care for native or recurrent coarctation [1]. Stent migration is a potential procedure complication observed in approximately 5% of cases [2]. Although proximal stent migration usually requires surgical intervention [3, 4], transcatheter management has been described in few cases [5, 6]. We describe a case of successful transcatheter management of this unusual complication.",
+      "context_text": "Coarctation of the aorta (CoA) accounts for 5–8% of all congenital heart defects. Transcatheter stent implantation has become the standard of care for native or recurrent coarctation [1]. Stent migration is a potential procedure complication observed in approximately 5% of cases [2]. Although proximal stent migration usually requires surgical intervention [3, 4], transcatheter management has been described in few cases [5, 6]. We describe a case of successful transcatheter management of this unusual complication."
+    },
+    {
+      "chunk_id": "PMC11743609_T1_row_8",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Results > Table T1",
+      "breadcrumb": [
+        "Results"
+      ],
+      "position": 35,
+      "table_id": "T1",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T1_summary",
+      "token_count": 12,
+      "context_node_ids": [
+        "PMC11743609_T1_summary",
+        "PMC11743609_T1_row_0",
+        "PMC11743609_T1_row_1",
+        "PMC11743609_T1_row_2",
+        "PMC11743609_T1_row_3",
+        "PMC11743609_T1_row_4",
+        "PMC11743609_T1_row_5",
+        "PMC11743609_T1_row_6",
+        "PMC11743609_T1_row_7",
+        "PMC11743609_T1_row_8",
+        "PMC11743609_T1_row_9",
+        "PMC11743609_T1_row_10",
+        "PMC11743609_T1_row_11",
+        "PMC11743609_T1_row_12",
+        "PMC11743609_T1_row_13",
+        "PMC11743609_T1_row_14",
+        "PMC11743609_T1_row_15",
+        "PMC11743609_T1_row_16",
+        "PMC11743609_T1_row_17",
+        "PMC11743609_T1_row_18",
+        "PMC11743609_T1_row_19",
+        "PMC11743609_T1_row_20",
+        "PMC11743609_T1_row_21",
+        "PMC11743609_T1_row_22",
+        "PMC11743609_T1_row_23",
+        "PMC11743609_T1_row_24",
+        "PMC11743609_T1_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T1",
+        "caption": "Table 1: Patient characteristics.",
+        "headers": [
+          "Variables",
+          "Median [IQR] or n (%)"
+        ],
+        "variable": "Bovine arch (%)",
+        "row_values": {
+          "Median [IQR] or n (%)": "4 (14)"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T1_row_0",
+            "text": "Row: Postnatal data\nMedian [IQR] or n (%): Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nMedian [IQR] or n (%): 39.6 [2.2]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_2",
+            "text": "Row: Weight at birth (grams)\nMedian [IQR] or n (%): 3,270 [739]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_3",
+            "text": "Row: Female sex (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_4",
+            "text": "Row: Associated cardiac anomalies\nMedian [IQR] or n (%): Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_5",
+            "text": "Row: VSD (%)\nMedian [IQR] or n (%): 14 (50)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_6",
+            "text": "Row: BAV (%)\nMedian [IQR] or n (%): 19 (68)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_7",
+            "text": "Row: Aortic arch hypoplasia (%)\nMedian [IQR] or n (%): 20 (71)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_8",
+            "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_9",
+            "text": "Row: CoA repair\nMedian [IQR] or n (%): CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_10",
+            "text": "Row: Age at repair (days)\nMedian [IQR] or n (%): 9 [11]"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nMedian [IQR] or n (%): 12 (43)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_12",
+            "text": "Row: Type of repair (%)\nMedian [IQR] or n (%): Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_13",
+            "text": "Row: End-to-end\nMedian [IQR] or n (%): 4 (14)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_14",
+            "text": "Row: Extended end-to-end\nMedian [IQR] or n (%): 7 (25)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_15",
+            "text": "Row: End-to-side\nMedian [IQR] or n (%): 6 (21)"
+          },
+          {
+            "chunk_id": "PMC11743609_T1_row_16",
+            "text": "Row: Arch repair with homograft patch\nMedian [IQR] or n (%): 11 (39)"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+        ],
+        "section": "Results"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0048"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches associated, p; tabular evidence region"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 10.773857
+      },
+      "medcpt_norm": {
+        "H1": 0.959242
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.977451,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 9,
+      "selection_reason": {
+        "base": 0.9775,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.6275
+      },
+      "expanded_from": [
+        "PMC11743609_T1_row_9"
+      ],
+      "text": "Row: Bovine arch (%)\nMedian [IQR] or n (%): 4 (14)",
+      "context_text": "Section: Results\nTable: Table 1: Patient characteristics.\nHeaders: Variables | Median [IQR] or n (%)\nRow: Bovine arch (%) | 4 (14)\nFootnotes: Data are presented as median [IQR] or n/N (%).\nn, number of patients for given variable; N, total number of patients; n = 28; *, n = 27; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect."
+    },
+    {
+      "chunk_id": "PMC12009809_7",
+      "paper_id": "PMC12009809",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "paragraph",
+      "section": "Treatment for AoC",
+      "subsection": "Surgery",
+      "breadcrumb": [
+        "Treatment for AoC",
+        "Surgery"
+      ],
+      "position": 8,
+      "table_id": null,
+      "figure_id": null,
+      "parent_id": null,
+      "token_count": 138,
+      "context_node_ids": [
+        "PMC12009809_7"
+      ],
+      "table_context": null,
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [],
+      "pageindex_reasons": [],
+      "local_scores": {
+        "rrf": 0.032522,
+        "bm25": 0.016393,
+        "dense": 0.016393
+      },
+      "local_rank": 1,
+      "retrieval_methods": [
+        "bm25",
+        "dense"
+      ],
+      "medcpt_scores": {
+        "H1": -0.628197
+      },
+      "medcpt_norm": {
+        "H1": 0.401328
+      },
+      "slot_matches": {
+        "concept": 0.75,
+        "clinical_condition": 0.75,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.5,
+        "evidence_type": 0.08,
+        "population": 1.0
+      },
+      "requirement_match": 0.5796,
+      "evidence_type_bonus": 0.08,
+      "requested_field_bonus": 0.5,
+      "paper_relevance": 0.7655,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.544402,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 10,
+      "selection_reason": {
+        "base": 0.5444,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": true,
+        "doc_penalty": 0.0,
+        "marginal": 0.5844
+      },
+      "expanded_from": [],
+      "text": "Complications, including left recurrent laryngeal nerve injury, bronchial compression, early re-coarctation, and paradoxical hypertension, occur in approximately 5% of patients. Older age at repair (>20 years) and preoperative hypertension are associated with decreased survival rates (10). Patients younger than 9 years at the time of repair showed significantly lower rates of hypertension at 5–15 years of follow-up. Additionally, younger age at repair and end-to-end anastomosis correction are linked to fewer reintervention on the descending aorta.",
+      "context_text": "Complications, including left recurrent laryngeal nerve injury, bronchial compression, early re-coarctation, and paradoxical hypertension, occur in approximately 5% of patients. Older age at repair (>20 years) and preoperative hypertension are associated with decreased survival rates (10). Patients younger than 9 years at the time of repair showed significantly lower rates of hypertension at 5–15 years of follow-up. Additionally, younger age at repair and end-to-end anastomosis correction are linked to fewer reintervention on the descending aorta."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_7",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 67,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 31,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "Preoperative arch hypoplasia (%)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "19 (79)",
+          "re-CoA (n = 4) [IQR] or n (%)": "1 (25)",
+          "p": "0.058"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_12",
+            "text": "Row: Type of repair (%)\nNo re-CoA (n = 24) [IQR] or n (%): Type of repair (%)\nre-CoA (n = 4) [IQR] or n (%): Type of repair (%)\np: Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_13",
+            "text": "Row: End-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 2 (8)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.04"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_14",
+            "text": "Row: Extended end-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 5 (21)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_15",
+            "text": "Row: End-to side\nNo re-CoA (n = 24) [IQR] or n (%): 6 (25)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np:"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 6.278279
+      },
+      "medcpt_norm": {
+        "H1": 0.739269
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.814,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.926013,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 11,
+      "selection_reason": {
+        "base": 0.926,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.576
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: Preoperative arch hypoplasia (%) | 19 (79) | 1 (25) | 0.058\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_8",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 68,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 26,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "Bovine arch (%)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "3 (13)",
+          "re-CoA (n = 4) [IQR] or n (%)": "1 (25)",
+          "p": "0.5"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_12",
+            "text": "Row: Type of repair (%)\nNo re-CoA (n = 24) [IQR] or n (%): Type of repair (%)\nre-CoA (n = 4) [IQR] or n (%): Type of repair (%)\np: Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_13",
+            "text": "Row: End-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 2 (8)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.04"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_14",
+            "text": "Row: Extended end-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 5 (21)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_15",
+            "text": "Row: End-to side\nNo re-CoA (n = 24) [IQR] or n (%): 6 (25)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_16",
+            "text": "Row: Aortic arch repair\nNo re-CoA (n = 24) [IQR] or n (%): 11 (46)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np:"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 6.167856
+      },
+      "medcpt_norm": {
+        "H1": 0.733866
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.814,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.923024,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 12,
+      "selection_reason": {
+        "base": 0.923,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.573
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: Bovine arch (%) | 3 (13) | 1 (25) | 0.5\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_3",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 63,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 26,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "Female sex (%)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "12 (50)",
+          "re-CoA (n = 4) [IQR] or n (%)": "2 (50)",
+          "p": "0.7"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 5.971085
+      },
+      "medcpt_norm": {
+        "H1": 0.724238
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.814,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.917697,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 13,
+      "selection_reason": {
+        "base": 0.9177,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5677
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: Female sex (%) | 12 (50) | 2 (50) | 0.7\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_6",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 66,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 24,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "VSD (%)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "12 (50)",
+          "re-CoA (n = 4) [IQR] or n (%)": "2 (50)",
+          "p": "1"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_12",
+            "text": "Row: Type of repair (%)\nNo re-CoA (n = 24) [IQR] or n (%): Type of repair (%)\nre-CoA (n = 4) [IQR] or n (%): Type of repair (%)\np: Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_13",
+            "text": "Row: End-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 2 (8)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.04"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_14",
+            "text": "Row: Extended end-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 5 (21)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np:"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 5.54923
+      },
+      "medcpt_norm": {
+        "H1": 0.703596
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.814,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.906277,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 14,
+      "selection_reason": {
+        "base": 0.9063,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5563
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: VSD (%) | 12 (50) | 2 (50) | 1\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_5",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 65,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 25,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "BAV (%)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "18 (75)",
+          "re-CoA (n = 4) [IQR] or n (%)": "1 (25)",
+          "p": "0.08"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_12",
+            "text": "Row: Type of repair (%)\nNo re-CoA (n = 24) [IQR] or n (%): Type of repair (%)\nre-CoA (n = 4) [IQR] or n (%): Type of repair (%)\np: Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_13",
+            "text": "Row: End-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 2 (8)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.04"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": true,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.024394,
+        "bm25": 0.010309,
+        "dense": 0.014085
+      },
+      "local_rank": 20,
+      "retrieval_methods": [
+        "bm25",
+        "dense",
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 5.36455
+      },
+      "medcpt_norm": {
+        "H1": 0.694559
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 1.0,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.814,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 1.0,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.901277,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 15,
+      "selection_reason": {
+        "base": 0.9013,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5513
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: BAV (%) | 18 (75) | 1 (25) | 0.08\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_0",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "paragraph",
+      "section": "Abstract",
+      "subsection": "Background",
+      "breadcrumb": [
+        "Abstract",
+        "Background"
+      ],
+      "position": 0,
+      "table_id": null,
+      "figure_id": null,
+      "parent_id": null,
+      "token_count": 49,
+      "context_node_ids": [
+        "PMC11743609_0"
+      ],
+      "table_context": null,
+      "detected_fields": {
+        "percentage": true,
+        "p-value": false,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [],
+      "pageindex_reasons": [],
+      "local_scores": {
+        "rrf": 0.032522,
+        "bm25": 0.016393,
+        "dense": 0.016129
+      },
+      "local_rank": 1,
+      "retrieval_methods": [
+        "bm25",
+        "dense"
+      ],
+      "medcpt_scores": {
+        "H1": 11.091403
+      },
+      "medcpt_norm": {
+        "H1": 0.97478
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.5,
+        "evidence_type": 0.08,
+        "population": 1.0
+      },
+      "requirement_match": 0.6796,
+      "evidence_type_bonus": 0.08,
+      "requested_field_bonus": 0.5,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.898212,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 16,
+      "selection_reason": {
+        "base": 0.8982,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5482
+      },
+      "expanded_from": [],
+      "text": "Recurrent coarctation of the aorta (re-CoA) is a well-known although not fully understood complication after surgical repair, typically occurring in 10%–20% of cases within months after discharge.",
+      "context_text": "Recurrent coarctation of the aorta (re-CoA) is a well-known although not fully understood complication after surgical repair, typically occurring in 10%–20% of cases within months after discharge."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_10",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 70,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 28,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "Age at repair (days)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "9 [11]",
+          "re-CoA (n = 4) [IQR] or n (%)": "5.5 [6]",
+          "p": "0.12"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_11",
+            "text": "Row: Lateral thoracotomy (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 4 (100)\np: 0.02"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_12",
+            "text": "Row: Type of repair (%)\nNo re-CoA (n = 24) [IQR] or n (%): Type of repair (%)\nre-CoA (n = 4) [IQR] or n (%): Type of repair (%)\np: Type of repair (%)"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_13",
+            "text": "Row: End-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 2 (8)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.04"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_14",
+            "text": "Row: Extended end-to-end\nNo re-CoA (n = 24) [IQR] or n (%): 5 (21)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_15",
+            "text": "Row: End-to side\nNo re-CoA (n = 24) [IQR] or n (%): 6 (25)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_16",
+            "text": "Row: Aortic arch repair\nNo re-CoA (n = 24) [IQR] or n (%): 11 (46)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np:"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_17",
+            "text": "Row: Associated VSD-operation (%)\nNo re-CoA (n = 24) [IQR] or n (%): 8 (33)\nre-CoA (n = 4) [IQR] or n (%): 0 (0)\np: 0.3"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_18",
+            "text": "Row: MRI and echo assessment\nNo re-CoA (n = 24) [IQR] or n (%): MRI and echo assessment\nre-CoA (n = 4) [IQR] or n (%): MRI and echo assessment\np: MRI and echo assessment"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": false,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.029762,
+        "bm25": 0.013889,
+        "dense": 0.015873
+      },
+      "local_rank": 8,
+      "retrieval_methods": [
+        "bm25",
+        "dense",
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 7.462844
+      },
+      "medcpt_norm": {
+        "H1": 0.797231
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.887817,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 17,
+      "selection_reason": {
+        "base": 0.8878,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5378
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_9"
+      ],
+      "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: Age at repair (days) | 9 [11] | 5.5 [6] | 0.12\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    },
+    {
+      "chunk_id": "PMC11743609_T2_row_2",
+      "paper_id": "PMC11743609",
+      "requirement_ids": [
+        "H1"
+      ],
+      "source_queries": [
+        "q1",
+        "q2",
+        "q3",
+        "q4"
+      ],
+      "node_type": "table_row",
+      "section": "Results",
+      "subsection": "Recurrent coarctation (re-CoA)",
+      "breadcrumb": [
+        "Results",
+        "MRI assessment",
+        "Recurrent coarctation (re-CoA)"
+      ],
+      "position": 62,
+      "table_id": "T2",
+      "figure_id": null,
+      "parent_id": "PMC11743609_T2_summary",
+      "token_count": 31,
+      "context_node_ids": [
+        "PMC11743609_T2_summary",
+        "PMC11743609_T2_row_0",
+        "PMC11743609_T2_row_1",
+        "PMC11743609_T2_row_2",
+        "PMC11743609_T2_row_3",
+        "PMC11743609_T2_row_4",
+        "PMC11743609_T2_row_5",
+        "PMC11743609_T2_row_6",
+        "PMC11743609_T2_row_7",
+        "PMC11743609_T2_row_8",
+        "PMC11743609_T2_row_9",
+        "PMC11743609_T2_row_10",
+        "PMC11743609_T2_row_11",
+        "PMC11743609_T2_row_12",
+        "PMC11743609_T2_row_13",
+        "PMC11743609_T2_row_14",
+        "PMC11743609_T2_row_15",
+        "PMC11743609_T2_row_16",
+        "PMC11743609_T2_row_17",
+        "PMC11743609_T2_row_18",
+        "PMC11743609_T2_row_19",
+        "PMC11743609_T2_row_20",
+        "PMC11743609_T2_row_21",
+        "PMC11743609_T2_row_22",
+        "PMC11743609_T2_footnotes"
+      ],
+      "table_context": {
+        "table_id": "T2",
+        "caption": "Table 2: Characteristics of patients with and without early re-CoA.",
+        "headers": [
+          "Variables",
+          "No re-CoA (n = 24) [IQR] or n (%)",
+          "re-CoA (n = 4) [IQR] or n (%)",
+          "p"
+        ],
+        "variable": "Weight at birth (grams)",
+        "row_values": {
+          "No re-CoA (n = 24) [IQR] or n (%)": "3,337 [681]",
+          "re-CoA (n = 4) [IQR] or n (%)": "2,850 [953]",
+          "p": "0.12"
+        },
+        "context_rows": [
+          {
+            "chunk_id": "PMC11743609_T2_row_0",
+            "text": "Row: Postnatal data\nNo re-CoA (n = 24) [IQR] or n (%): Postnatal data\nre-CoA (n = 4) [IQR] or n (%): Postnatal data\np: Postnatal data"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_1",
+            "text": "Row: Gestational age at birth (weeks)\nNo re-CoA (n = 24) [IQR] or n (%): 39.6 [2.2]\nre-CoA (n = 4) [IQR] or n (%): 39.3 [3.5]\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_2",
+            "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_3",
+            "text": "Row: Female sex (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 0.7"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_4",
+            "text": "Row: Associated cardiac anomalies\nNo re-CoA (n = 24) [IQR] or n (%): Associated cardiac anomalies\nre-CoA (n = 4) [IQR] or n (%): Associated cardiac anomalies\np: Associated cardiac anomalies"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_5",
+            "text": "Row: BAV (%)\nNo re-CoA (n = 24) [IQR] or n (%): 18 (75)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.08"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_6",
+            "text": "Row: VSD (%)\nNo re-CoA (n = 24) [IQR] or n (%): 12 (50)\nre-CoA (n = 4) [IQR] or n (%): 2 (50)\np: 1"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_7",
+            "text": "Row: Preoperative arch hypoplasia (%)\nNo re-CoA (n = 24) [IQR] or n (%): 19 (79)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.058"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_8",
+            "text": "Row: Bovine arch (%)\nNo re-CoA (n = 24) [IQR] or n (%): 3 (13)\nre-CoA (n = 4) [IQR] or n (%): 1 (25)\np: 0.5"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_9",
+            "text": "Row: CoA repair\nNo re-CoA (n = 24) [IQR] or n (%): CoA repair\nre-CoA (n = 4) [IQR] or n (%): CoA repair\np: CoA repair"
+          },
+          {
+            "chunk_id": "PMC11743609_T2_row_10",
+            "text": "Row: Age at repair (days)\nNo re-CoA (n = 24) [IQR] or n (%): 9 [11]\nre-CoA (n = 4) [IQR] or n (%): 5.5 [6]\np: 0.12"
+          }
+        ],
+        "footnotes": [
+          "Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+        ],
+        "section": "Results > MRI assessment > Recurrent coarctation (re-CoA)"
+      },
+      "detected_fields": {
+        "percentage": false,
+        "p-value": true,
+        "confidence_interval": false,
+        "effect_estimate": false,
+        "sample_size": false
+      },
+      "pageindex_node_ids": [
+        "0060",
+        "0058"
+      ],
+      "pageindex_reasons": [
+        "title matches table; text matches p; tabular evidence region",
+        "title matches recurrent, coarctation; Results section"
+      ],
+      "local_scores": {
+        "rrf": 0.0
+      },
+      "local_rank": 999,
+      "retrieval_methods": [
+        "pageindex"
+      ],
+      "medcpt_scores": {
+        "H1": 7.103153
+      },
+      "medcpt_norm": {
+        "H1": 0.779631
+      },
+      "slot_matches": {
+        "concept": 1.0,
+        "clinical_condition": 1.0,
+        "target": 0.0,
+        "outcome": 1.0,
+        "requested_fields": 0.625,
+        "evidence_type": 0.45,
+        "population": 1.0
+      },
+      "requirement_match": 0.7465,
+      "evidence_type_bonus": 0.45,
+      "requested_field_bonus": 0.625,
+      "paper_relevance": 1.0,
+      "penalties": {},
+      "penalty_total": 0.0,
+      "final_score": 0.87808,
+      "covered_requirements": [
+        "H1"
+      ],
+      "selection_rank": 18,
+      "selection_reason": {
+        "base": 0.8781,
+        "new_requirements": [],
+        "new_evid_type": false,
+        "new_paper": false,
+        "doc_penalty": 1.0,
+        "marginal": 0.5281
+      },
+      "expanded_from": [
+        "PMC11743609_T2_row_12"
+      ],
+      "text": "Row: Weight at birth (grams)\nNo re-CoA (n = 24) [IQR] or n (%): 3,337 [681]\nre-CoA (n = 4) [IQR] or n (%): 2,850 [953]\np: 0.12",
+      "context_text": "Section: Results > MRI assessment > Recurrent coarctation (re-CoA)\nTable: Table 2: Characteristics of patients with and without early re-CoA.\nHeaders: Variables | No re-CoA (n = 24) [IQR] or n (%) | re-CoA (n = 4) [IQR] or n (%) | p\nRow: Weight at birth (grams) | 3,337 [681] | 2,850 [953] | 0.12\nFootnotes: Data are presented as median [IQR], n/N (%).\nn, number of patients for given variable; N, total number of patients; AAo, ascending aorta; DAo, descending aorta; LCCA, left common carotid artery; LSA, left subclavian artery; S-to-D, systole-to-diastole; BAV, bicuspid aortic valve; re-CoA, recurrent coarctation; VSD, ventricular septal defect; No re-CoA: n = 24 (except for blood pressure gradient: n = 23); re-CoA, n = 4 (except for angle between the proximal arch and brachiocephalic artery n = 3)."
+    }
+  ]
+}
