@@ -335,6 +335,18 @@ wheels = [
 ]
 
 [[package]]
+name = "jats"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "lxml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/05/d2386cd01e551d206742fe09da3ef63c54f254273ec7e9c091780b5e1080/jats-0.2.2.tar.gz", hash = "sha256:b9938285861a47e46d2aa49fc5f1b838be5076109fba0565f386c9eb55c618aa", size = 32942, upload-time = "2025-11-18T16:20:51.318Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/fd/7000562e10db9075b938b703f4a6e82166f3496cec8ccb7756e44a5d64ad/jats-0.2.2-py3-none-any.whl", hash = "sha256:f38830bf480e56c0b2719638b240293d06cb23991747500267c7c7ee76161b28", size = 30634, upload-time = "2025-11-18T16:20:50.229Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -548,6 +560,7 @@ source = { editable = "." }
 dependencies = [
     { name = "boto3" },
     { name = "faiss-cpu" },
+    { name = "jats" },
     { name = "langchain-core" },
     { name = "langchain-text-splitters" },
     { name = "lxml" },
@@ -573,6 +586,7 @@ dev = [
 requires-dist = [
     { name = "boto3", specifier = "==1.43.70" },
     { name = "faiss-cpu", specifier = ">=1.15.0" },
+    { name = "jats", specifier = "==0.2.2" },
     { name = "langchain-core", specifier = ">=1.5.6" },
     { name = "langchain-text-splitters", specifier = ">=1.1.2" },
     { name = "lxml", specifier = "==7.0.0a3" },

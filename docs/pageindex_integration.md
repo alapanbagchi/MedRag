@@ -72,3 +72,41 @@ PAGEINDEX_NODE_RESOLVED for Table T2 maps onto chunk ids:
 If the pageindex package is not installed, artifacts are absent, or a search
 fails, the local retriever continues with BM25 + pgvector + the logical
 document index. pageindex_status records what happened per paper.
+
+## JATS XML -> Markdown -> PageIndex (V2.3)
+
+The PageIndex tree can now be generated from the ORIGINAL ARTICLE XML using the
+installed jats-to-markdown parser, instead of reconstructing hierarchy from
+chunks:
+
+    ORIGINAL XML  ->  jats (parse_jats_xml + convert_to_markdown)
+                  ->  Markdown folder  (index/pageindex_md/{paper_id}.md)
+                  ->  official pageindex.page_index_md.md_to_tree
+                  ->  index/pageindex/{paper_id}.json
+
+Convert the XML corpus to Markdown (one command):
+
+    python -m medrag.retrieval_v2.jats_convert --all
+    python -m medrag.retrieval_v2.jats_convert --papers PMC11743609 PMC11092466
+    python -m medrag.retrieval_v2.jats_convert --paper PMC11743609 --rebuild
+
+Markdown is saved to `index/pageindex_md`. The converter:
+
+- keeps real XML section/subsection titles as headings (never paragraph
+  first-sentences),
+- keeps tables and figures at their source XML location,
+- re-adds floats-group tables/figures (JATS end-of-document floats) without
+  inventing a "Figures and Tables" branch: figures are placed at their first
+  in-text citation, tables stay under the XML `Floats-group` element in
+  document order,
+- normalizes bold table/figure labels into `#### Table N / Figure N` headings
+  so PageIndex's md_to_tree nests them correctly.
+
+Then build the PageIndex artifacts from the Markdown folder:
+
+    python -m medrag.retrieval_v2.pageindex_build --from-md --papers PMC11743609 PMC11092466
+
+Known limit of MD mode: tables are rendered as HTML blocks, so row-level chunk
+mapping (PMC..._T2_row_*) is not re-attached in this mode; paragraphs that
+match exactly are mapped (chunk_to_node). The XML-tree builder
+(medrag.retrieval_v2.xml_tree) retains full row/chunk mapping when needed.

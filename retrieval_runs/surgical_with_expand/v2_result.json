@@ -2,7 +2,7 @@
   "query": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values?",
   "plan": {
     "query": "Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values",
-    "question_type": "numerical",
+    "question_type": "comparative_numerical",
     "entities": [
       "recurrent coarctation",
       "surgical repair techniques"
@@ -38,7 +38,9 @@
     ],
     "populations": [],
     "query_targets": [
-      "surgical repair techniques"
+      "surgical repair techniques",
+      "percentages",
+      "p-values"
     ],
     "requested_fields": [
       "percentage",
@@ -223,13 +225,27 @@
       }
     ],
     "reranker_intent": {
-      "question_type": "numerical",
+      "question_type": "comparative_numerical",
       "focus": "comparative_numerical",
       "target": "surgical repair techniques",
       "outcome": "",
       "requested_fields": [
         "percentage",
         "p-value"
+      ],
+      "condition": "recurrent coarctation",
+      "required_evidence": [
+        "surgical repair techniques",
+        "recurrent coarctation",
+        "percentage",
+        "p-value"
+      ],
+      "preferred_evidence_types": [
+        "table_row",
+        "table_summary",
+        "table_footnotes",
+        "results",
+        "paragraph"
       ]
     },
     "terminology_guard": {
@@ -250,7 +266,7 @@
       "violations": [],
       "note": "Medical terms are never silently replaced by different concepts. Synonyms may be added for search only."
     },
-    "planner_method": "deterministic",
+    "planner_method": "expand+plan",
     "warnings": []
   },
   "papers": [
@@ -831,16 +847,16 @@
     "note": "Paper recall and MRR are computed against branch-level known papers (spec 40-41); requirement recall is the fraction of hops with evidence in the final set."
   },
   "timings": {
-    "plan_ms": 8,
-    "global_retrieval_ms": 20202,
-    "paper_aggregation_ms": 788,
-    "paper_selection_ms": 5,
-    "local_search_ms": 6851,
-    "medcpt_ms": 67540,
-    "intent_ms": 43,
+    "plan_ms": 28850,
+    "global_retrieval_ms": 17412,
+    "paper_aggregation_ms": 541,
+    "paper_selection_ms": 4,
+    "local_search_ms": 5724,
+    "medcpt_ms": 46579,
+    "intent_ms": 28,
     "selection_ms": 3,
     "repair_ms": 3,
-    "total_ms": 95496
+    "total_ms": 99173
   },
   "final_evidence": [
     {

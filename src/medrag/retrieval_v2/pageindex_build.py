@@ -309,6 +309,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--rebuild", action="store_true", help="rebuild even if artifact exists")
     parser.add_argument("--index-dir", type=Path, default=Path("index"))
     parser.add_argument("--pageindex-dir", type=Path, default=None)
+    parser.add_argument("--md-dir", type=Path, default=Path("index/pageindex_md"),
+                        help="folder with jats-converted Markdown (pageindex_build per paper)")
+    parser.add_argument("--from-md", action="store_true",
+                        help="build the tree from the jats-converted Markdown folder "
+                             "(XML -> jats -> MD -> official pageindex md_to_tree)")
+    parser.add_argument("--from-chunks", action="store_true",
+                        help="build the legacy chunk-derived tree (comparison only)")
     args = parser.parse_args(argv)
 
     cfg = DEFAULT_CONFIG
@@ -330,13 +337,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         parser.error("provide --paper, --papers, --limit, or --all")
 
-    from medrag.retrieval_v2.pageindex_adapter import PageIndexAdapter
-    adapter = PageIndexAdapter(doc_index, pageindex_dir=pageindex_dir, config=cfg)
-
     built, skipped, failed = 0, 0, 0
     t0 = time.perf_counter()
     for pid in paper_ids:
         try:
+            if args.from_md:
+                artifact = build_from_md(
+                    pid, args.md_dir, pageindex_dir,
+                    Path(args.index_dir) / "corpus.parquet", cfg)
+                built += 1
+                print(f"  built(md) {pid}  nodes={len(artifact['node_map'])}  mapped_chunks={artifact['metadata']['mapped_chunks']}/{artifact['metadata']['total_existing_chunks']}")
+                continue
+            if args.from_chunks:
+                from medrag.retrieval_v2.document_index import LogicalDocumentIndex
+                from medrag.retrieval.corpus import CORPUS_FILENAME
+                doc_index2 = LogicalDocumentIndex(Path(args.index_dir) / CORPUS_FILENAME)
+                artifact = build_pageindex_artifact(doc_index2, pid, pageindex_dir, cfg)
+                built += 1
+                print(f"  built(chunks) {pid}  nodes={len(artifact['node_map'])}")
+                continue
+            from medrag.retrieval_v2.pageindex_adapter import PageIndexAdapter
+            adapter = PageIndexAdapter(doc_index, pageindex_dir=pageindex_dir, config=cfg)
             existed = adapter.build_or_load(pid, force=args.rebuild)
             if existed == "built":
                 built += 1
@@ -351,6 +372,144 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"Done: built={built} skipped={skipped} failed={failed} in {dt:.1f}s")
     print(f"Artifacts: {pageindex_dir}")
     return 0 if failed == 0 else 1
+
+
+# ---------------------------------------------------------------------------
+# Build from the JATS->Markdown folder (V2.3): XML -> jats -> MD -> md_to_tree
+# ---------------------------------------------------------------------------
+def build_from_md(
+    paper_id: str,
+    md_dir: Path,
+    pageindex_dir: Path,
+    corpus_path: Path,
+    config: Optional[V2Config] = None,
+) -> Dict[str, Any]:
+    """Build the PageIndex artifact from the jats-converted Markdown using the
+    OFFICIAL PageIndex library (pageindex.page_index_md.md_to_tree).
+
+    The Markdown was produced from the ORIGINAL ARTICLE XML by the installed
+    jats package (see medrag.retrieval_v2.jats_convert), so the tree hierarchy
+    comes from the XML structure; existing chunk ids are re-attached to leaf
+    nodes by exact text matching (expectation: paragraphs match 1:1; table HTML
+    blocks and rows are reported as md-unmapped in this mode).
+    """
+    import asyncio
+
+    from medrag.retrieval_v2.xml_tree import load_paper_chunks, normalize_text
+
+    cfg = config or DEFAULT_CONFIG
+    md_path = Path(md_dir) / f"{paper_id}.md"
+    if not md_path.exists():
+        raise RuntimeError(f"no markdown for {paper_id} at {md_path} (run medrag.retrieval_v2.jats_convert first)")
+
+    pageindex_dir = Path(pageindex_dir)
+    pageindex_dir.mkdir(parents=True, exist_ok=True)
+
+    from pageindex.page_index_md import md_to_tree as _md_to_tree
+    tree = asyncio.run(_md_to_tree(
+        md_path=str(md_path),
+        if_thinning=False,
+        min_token_threshold=None,
+        if_add_node_summary="no",
+        if_add_node_text="yes",
+        if_add_node_id="yes",
+    ))
+
+    chunks = load_paper_chunks(paper_id, corpus_path)
+    structure = tree.get("structure") or []
+
+    node_map: Dict[str, Dict[str, Any]] = {}
+    chunk_to_node: Dict[str, str] = {}
+    counter = [0]
+    used_chunks: set = set()
+
+    def ident() -> str:
+        i = counter[0]
+        counter[0] += 1
+        return f"{i:04d}"
+
+    def leaf_text(node: Dict[str, Any]) -> str:
+        text = node.get("text") or ""
+        lines = text.split("\n")
+        if lines and lines[0].startswith("#"):
+            lines = lines[1:]
+        return normalize_text("\n".join(lines))
+
+    def walk(nodes, ancestors) -> None:
+        for node in nodes:
+            nid = node.get("node_id", "")
+            title = node.get("title") or ""
+            children = node.get("nodes") or []
+            crumbs = [a.get("title") or "" for a in ancestors] + ([title] if title else [])
+            is_leaf = not children
+            low = title.lower()
+            if low.startswith("table"):
+                ntype = "table"
+            elif low.startswith("figure"):
+                ntype = "figure"
+            elif is_leaf:
+                ntype = "paragraph"
+            elif len(ancestors) == 0:
+                ntype = "document"
+            elif len(ancestors) == 1:
+                ntype = "section"
+            else:
+                ntype = "subsection"
+            rec = {
+                "node_id": nid,
+                "node_type": ntype,
+                "title": title,
+                "section": " > ".join([paper_id] + crumbs),
+                "breadcrumb": crumbs,
+                "level": len(ancestors) + 1,
+                "chunk_ids": [],
+                "page_refs": None,
+                "text": node.get("text") or "",
+                "mapping_status": "md-unmapped",
+            }
+            node_map[nid] = rec
+            if is_leaf:
+                want = leaf_text(node)
+                if want:
+                    for cid in sorted(chunks, key=lambda c: chunks[c]["position"]):
+                        if cid in used_chunks:
+                            continue
+                        if chunks[cid]["text"] == want:
+                            rec["chunk_ids"] = [cid]
+                            rec["mapping_status"] = "mapped-text"
+                            used_chunks.add(cid)
+                            chunk_to_node[cid] = nid
+                            break
+            walk(children, ancestors + [node])
+
+    walk(structure, [])
+
+    artifact = {
+        "paper_id": paper_id,
+        "metadata": {
+            "source_md": str(md_path),
+            "source_xml": "originated from ORIGINAL ARTICLE XML (jats converter: medrag.retrieval_v2.jats_convert)",
+            "builder_version": "xml-md-tree-v2.3",
+            "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "total_existing_chunks": len(chunks),
+            "mapped_chunks": len(chunk_to_node),
+            "unmapped_chunks": len(chunks) - len(chunk_to_node),
+            "format": "pageindex md_to_tree over jats-converted markdown",
+        },
+        "tree": structure,
+        "node_map": node_map,
+        "chunk_to_node": chunk_to_node,
+        "mapping_log": [
+            {"node_id": nid, "node_type": rec["node_type"], "chunk_ids": [],
+             "status": "md-unmapped",
+             "note": "leaf text did not exactly match any corpus chunk (tables/rows are HTML in MD mode)"}
+            for nid, rec in node_map.items()
+            if rec["node_type"] in ("table", "figure") and rec["mapping_status"] == "md-unmapped"
+        ],
+    }
+    out_path = pageindex_dir / f"{paper_id}.json"
+    out_path.write_text(json.dumps(artifact, indent=1, ensure_ascii=False), encoding="utf-8")
+    return artifact
 
 
 if __name__ == "__main__":

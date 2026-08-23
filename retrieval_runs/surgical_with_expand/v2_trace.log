@@ -1,14 +1,27 @@
 ====================================================================================================
 MEDRAG EXECUTION TRACE
-Started:  2026-08-23T17:20:10
-Events:   134
-Duration: 104211 ms (104.2s)
+Started:  2026-08-23T20:00:28
+Events:   135
+Duration: 105257 ms (105.3s)
 ====================================================================================================
 
-[   1] [2026-08-23T17:20:19.644]  +  8735.9ms  (     8.0 ms)  PLANNER
+[   1] [2026-08-23T20:01:03.464]  + 34942.0ms  (       —)  EXPAND_PLAN
+        ┌─── REQUEST ───────────────────────────────────────────
+        │ url: https://appreciate-architectural-documentation-drill.trycloudflare.com/
+        └──────────────────────────────────────────────────────
+        ┌─── RESPONSE ──────────────────────────────────────────
+        │ method: expand+plan
+        │ n_requirements: 1
+        │ n_queries: 4
+        │ conditions: ['recurrent coarctation']
+        │ populations: []
+        │ warnings: []
+        └──────────────────────────────────────────────────────
+
+[   2] [2026-08-23T20:01:03.464]  + 34942.0ms  ( 28850.0 ms)  PLANNER
         ┌─── REQUEST ───────────────────────────────────────────
         │ query: Which surgical repair techniques were associated with recurrent coarctation and what are the percentages and p-values?
-        │ question_type: numerical
+        │ question_type: comparative_numerical
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ conditions: ['recurrent coarctation']
@@ -40,7 +53,7 @@ Duration: 104211 ms (104.2s)
         │ terminology_guard: }
         └──────────────────────────────────────────────────────
 
-[   2] [2026-08-23T17:20:19.644]  +  8736.0ms  (       —)  q1_retrieval_start
+[   3] [2026-08-23T20:01:03.464]  + 34942.1ms  (       —)  q1_retrieval_start
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q1
         │ requirement_ids: ['H1']
@@ -49,7 +62,7 @@ Duration: 104211 ms (104.2s)
         │ dense_depth: 100
         └──────────────────────────────────────────────────────
 
-[   3] [2026-08-23T17:20:32.026]  + 21118.0ms  (       —)  q1_retrieval_done
+[   4] [2026-08-23T20:01:14.147]  + 45625.4ms  (       —)  q1_retrieval_done
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q1
         └──────────────────────────────────────────────────────
@@ -64,7 +77,7 @@ Duration: 104211 ms (104.2s)
         │ top10:     743609', 'rrf_score': 0.016129, 'rank': 8, 'methods': ['dense']}, {'chunk_id': 'PMC11743609_T2_row_0', 'paper_id': 'PMC11743609', 'rrf_score': 0.015873, 'rank': 9, 'methods': ['dense']}, {'chunk_id': 'PMC12009809_7', 'paper_id': 'PMC12009809', 'rrf_score': 0.015625, 'rank': 10, 'methods': ['bm25']}]
         └──────────────────────────────────────────────────────
 
-[   4] [2026-08-23T17:20:32.026]  + 21118.1ms  (       —)  q2_retrieval_start
+[   5] [2026-08-23T20:01:14.147]  + 45625.4ms  (       —)  q2_retrieval_start
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q2
         │ requirement_ids: ['H1']
@@ -73,7 +86,7 @@ Duration: 104211 ms (104.2s)
         │ dense_depth: 100
         └──────────────────────────────────────────────────────
 
-[   5] [2026-08-23T17:20:34.687]  + 23778.6ms  (       —)  q2_retrieval_done
+[   6] [2026-08-23T20:01:16.324]  + 47802.1ms  (       —)  q2_retrieval_done
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q2
         └──────────────────────────────────────────────────────
@@ -88,7 +101,7 @@ Duration: 104211 ms (104.2s)
         │ top10:     8, 'methods': ['bm25', 'dense']}, {'chunk_id': 'PMC11743609_T2_row_12', 'paper_id': 'PMC11743609', 'rrf_score': 0.016393, 'rank': 9, 'methods': ['dense']}, {'chunk_id': 'PMC11970464_TB0920247337pcc-1_row_9', 'paper_id': 'PMC11970464', 'rrf_score': 0.016202, 'rank': 10, 'methods': ['bm25', 'dense']}]
         └──────────────────────────────────────────────────────
 
-[   6] [2026-08-23T17:20:34.687]  + 23778.7ms  (       —)  q3_retrieval_start
+[   7] [2026-08-23T20:01:16.324]  + 47802.1ms  (       —)  q3_retrieval_start
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q3
         │ requirement_ids: ['H1']
@@ -97,7 +110,7 @@ Duration: 104211 ms (104.2s)
         │ dense_depth: 100
         └──────────────────────────────────────────────────────
 
-[   7] [2026-08-23T17:20:37.283]  + 26374.3ms  (       —)  q3_retrieval_done
+[   8] [2026-08-23T20:01:18.527]  + 50005.5ms  (       —)  q3_retrieval_done
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q3
         └──────────────────────────────────────────────────────
@@ -112,7 +125,7 @@ Duration: 104211 ms (104.2s)
         │ top10:     'dense']}, {'chunk_id': 'PMC11970464_TB0920247337pcc-1_row_15', 'paper_id': 'PMC11970464', 'rrf_score': 0.020548, 'rank': 9, 'methods': ['bm25', 'dense']}, {'chunk_id': 'PMC11970464_TB0920247337pcc-1_row_14', 'paper_id': 'PMC11970464', 'rrf_score': 0.02041, 'rank': 10, 'methods': ['bm25', 'dense']}]
         └──────────────────────────────────────────────────────
 
-[   8] [2026-08-23T17:20:37.283]  + 26374.3ms  (       —)  q4_retrieval_start
+[   9] [2026-08-23T20:01:18.527]  + 50005.5ms  (       —)  q4_retrieval_start
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q4
         │ requirement_ids: ['H1']
@@ -121,7 +134,7 @@ Duration: 104211 ms (104.2s)
         │ dense_depth: 100
         └──────────────────────────────────────────────────────
 
-[   9] [2026-08-23T17:20:39.846]  + 28938.0ms  (       —)  q4_retrieval_done
+[  10] [2026-08-23T20:01:20.876]  + 52354.5ms  (       —)  q4_retrieval_done
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q4
         └──────────────────────────────────────────────────────
@@ -136,7 +149,7 @@ Duration: 104211 ms (104.2s)
         │ top10:     re': 0.015873, 'rank': 8, 'methods': ['dense']}, {'chunk_id': 'PMC12028279_jcm-14-02817-f001', 'paper_id': 'PMC12028279', 'rrf_score': 0.015625, 'rank': 9, 'methods': ['bm25']}, {'chunk_id': 'PMC11743609_T2_row_16', 'paper_id': 'PMC11743609', 'rrf_score': 0.015625, 'rank': 10, 'methods': ['dense']}]
         └──────────────────────────────────────────────────────
 
-[  10] [2026-08-23T17:20:40.470]  + 29562.0ms  (       —)  q1_paper_aggregation
+[  11] [2026-08-23T20:01:21.276]  + 52754.0ms  (       —)  q1_paper_aggregation
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q1
         │ requirement_ids: ['H1']
@@ -146,7 +159,7 @@ Duration: 104211 ms (104.2s)
         │ top_papers: [{'paper_id': 'PMC11743609', 'score': 0.9}, {'paper_id': 'PMC12082946', 'score': 0.6386}, {'paper_id': 'PMC12028424', 'score': 0.6478}, {'paper_id': 'PMC12087259', 'score': 0.3778}, {'paper_id': 'PMC11749030', 'score': 0.3706}, {'paper_id': 'PMC12009809', 'score': 0.4153}, {'paper_id': 'PMC11702069', 'score': 0.3988}, {'paper_id': 'PMC12055418', 'score': 0.3438}, {'paper_id': 'PMC11989269', 'score': 0.3186}, {'paper_id': 'PMC12074746', 'score': 0.3201}]
         └──────────────────────────────────────────────────────
 
-[  11] [2026-08-23T17:20:40.530]  + 29622.1ms  (       —)  q2_paper_aggregation
+[  12] [2026-08-23T20:01:21.321]  + 52798.8ms  (       —)  q2_paper_aggregation
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q2
         │ requirement_ids: ['H1']
@@ -156,7 +169,7 @@ Duration: 104211 ms (104.2s)
         │ top_papers: [{'paper_id': 'PMC11743609', 'score': 0.8687}, {'paper_id': 'PMC12014972', 'score': 0.7021}, {'paper_id': 'PMC12009809', 'score': 0.7095}, {'paper_id': 'PMC11997790', 'score': 0.5628}, {'paper_id': 'PMC11970464', 'score': 0.4895}, {'paper_id': 'PMC12028279', 'score': 0.3061}, {'paper_id': 'PMC11702069', 'score': 0.3008}, {'paper_id': 'PMC12074746', 'score': 0.2956}, {'paper_id': 'PMC12055418', 'score': 0.4384}, {'paper_id': 'PMC11749030', 'score': 0.281}]
         └──────────────────────────────────────────────────────
 
-[  12] [2026-08-23T17:20:40.582]  + 29673.7ms  (       —)  q3_paper_aggregation
+[  13] [2026-08-23T20:01:21.365]  + 52843.1ms  (       —)  q3_paper_aggregation
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q3
         │ requirement_ids: ['H1']
@@ -166,7 +179,7 @@ Duration: 104211 ms (104.2s)
         │ top_papers: [{'paper_id': 'PMC11997790', 'score': 0.7809}, {'paper_id': 'PMC11743609', 'score': 0.8333}, {'paper_id': 'PMC11970464', 'score': 0.6786}, {'paper_id': 'PMC12009809', 'score': 0.5126}, {'paper_id': 'PMC12014972', 'score': 0.4112}, {'paper_id': 'PMC11702069', 'score': 0.3551}, {'paper_id': 'PMC12074746', 'score': 0.3265}, {'paper_id': 'PMC12055418', 'score': 0.4635}, {'paper_id': 'PMC11856853', 'score': 0.3254}, {'paper_id': 'PMC11697624', 'score': 0.455}]
         └──────────────────────────────────────────────────────
 
-[  13] [2026-08-23T17:20:40.644]  + 29735.4ms  (       —)  q4_paper_aggregation
+[  14] [2026-08-23T20:01:21.419]  + 52896.8ms  (       —)  q4_paper_aggregation
         ┌─── REQUEST ───────────────────────────────────────────
         │ query_id: q4
         │ requirement_ids: ['H1']
@@ -176,7 +189,7 @@ Duration: 104211 ms (104.2s)
         │ top_papers: [{'paper_id': 'PMC11743609', 'score': 0.868}, {'paper_id': 'PMC11997790', 'score': 0.661}, {'paper_id': 'PMC12009809', 'score': 0.4243}, {'paper_id': 'PMC11970464', 'score': 0.4861}, {'paper_id': 'PMC12028279', 'score': 0.3534}, {'paper_id': 'PMC11702069', 'score': 0.3875}, {'paper_id': 'PMC12074746', 'score': 0.3402}, {'paper_id': 'PMC12055418', 'score': 0.3339}, {'paper_id': 'PMC11898404', 'score': 0.3438}, {'paper_id': 'PMC11854409', 'score': 0.3936}]
         └──────────────────────────────────────────────────────
 
-[  14] [2026-08-23T17:20:40.649]  + 29740.3ms  (       —)  paper_selection
+[  15] [2026-08-23T20:01:21.423]  + 52901.1ms  (       —)  paper_selection
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_requirements: 1
         │ top_papers: 12
@@ -189,51 +202,51 @@ Duration: 104211 ms (104.2s)
         │ selected:     ... [440 chars truncated] ...
         │ selected:     upported': ['H1'], 'reason': 'ranked'}, {'paper_id': 'PMC11697624', 'score': 0.6014, 'supported': ['H1'], 'reason': 'ranked'}, {'paper_id': 'PMC11955238', 'score': 0.5616, 'supported': ['H1'], 'reason': 'ranked'}, {'paper_id': 'PMC11997764', 'score': 0.5579, 'supported': ['H1'], 'reason': 'ranked'}]
         │ matrix: {
-        │ matrix: "PMC11956399": {
-        │ matrix: "H1": 0.04047599599507076
+        │ matrix: "PMC11729957": {
+        │ matrix: "H1": 0.13627058739469505
         │ matrix: },
-        │ matrix: "PMC11836018": {
-        │ matrix: "H1": 0.05590711311412717
+        │ matrix: "PMC11787011": {
+        │ matrix: "H1": 0.2679043551415435
         │ matrix: },
-        │ matrix: "PMC12038168": {
-        │ matrix: "H1": 0.10854439249800979
+        │ matrix: "PMC11880889": {
+        │ matrix: "H1": 0.07880853523105721
         │ matrix: },
-        │ matrix: "PMC12084126": {
-        │ matrix: "H1": 0.05228767933998538
+        │ matrix: "PMC12014311": {
+        │ matrix: "H1": 0.1810711265957942
         │ matrix: },
-        │ matrix: "PMC11745653": {
-        │ matrix: "H1": 0.029474557234342676
+        │ matrix: "PMC12051097": {
+        │ matrix: "H1": 0.058201192709455445
         │ matrix: },
-        │ matrix: "PMC11865737": {
-        │ matrix: "H1": 0.18351235869474586
+        │ matrix: "PMC11906458": {
+        │ matrix: "H1": 0.22612527508235739
         │ matrix: },
-        │ matrix: "PMC11970461": {
-        │ matrix: "H1"
+        │ matrix: "PMC12090330": {
+        │ matrix: "H1": 
         │ matrix:     ... [5665 chars truncated] ...
-        │ matrix:     ": 0.24830392747123123
+        │ matrix:      0.03831345652446301
         │ matrix: },
-        │ matrix: "PMC12032625": {
-        │ matrix: "H1": 0.08802122953483203
+        │ matrix: "PMC11822299": {
+        │ matrix: "H1": 0.2846167527056578
         │ matrix: },
-        │ matrix: "PMC11955238": {
-        │ matrix: "H1": 0.3526906980600856
+        │ matrix: "PMC11818419": {
+        │ matrix: "H1": 0.32483709406887934
         │ matrix: },
-        │ matrix: "PMC12013758": {
-        │ matrix: "H1": 0.13890308792134376
+        │ matrix: "PMC12060135": {
+        │ matrix: "H1": 0.033544568901822065
         │ matrix: },
-        │ matrix: "PMC12046885": {
-        │ matrix: "H1": 0.07228287676588327
+        │ matrix: "PMC11872280": {
+        │ matrix: "H1": 0.01675321699619617
         │ matrix: },
-        │ matrix: "PMC11898404": {
-        │ matrix: "H1": 0.3154479278332739
+        │ matrix: "PMC12046865": {
+        │ matrix: "H1": 0.26026066288061583
         │ matrix: },
-        │ matrix: "PMC11856853": {
-        │ matrix: "H1": 0.29279047836120914
+        │ matrix: "PMC11900382": {
+        │ matrix: "H1": 0.09286379961758552
         │ matrix: }
         │ matrix: }
         └──────────────────────────────────────────────────────
 
-[  15] [2026-08-23T17:20:40.649]  + 29740.6ms  (     5.0 ms)  PAPER_SELECTION
+[  16] [2026-08-23T20:01:21.423]  + 52901.2ms  (     4.0 ms)  PAPER_SELECTION
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_requirements: 1
         │ top_papers: 12
@@ -244,10 +257,10 @@ Duration: 104211 ms (104.2s)
         │ selected:     97764_ivaf020-T1_row_11', 'PMC11997764_ivaf020-T1_row_8', 'PMC11997764_ivaf020-T1_row_11', 'PMC11997764_ivaf020-T1_row_8'], 'sections': ['RESULTS'], 'evidence_types': ['table_footnotes', 'table_row'], 'per_requirement_scores': {'H1': 0.3798}, 'reason': 'ranked', 'bridge': False, 'guarantee': False}]
         └──────────────────────────────────────────────────────
 
-[  16] [2026-08-23T17:20:40.661]  + 29753.1ms  (       —)  PAGEINDEX_LOAD
+[  17] [2026-08-23T20:01:21.428]  + 52905.9ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
-        │ artifact: index/pageindex/PMC11743609.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC11743609.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -256,7 +269,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  17] [2026-08-23T17:20:40.664]  + 29756.0ms  (       —)  PAGEINDEX_SEARCH
+[  18] [2026-08-23T20:01:21.430]  + 52908.3ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ requirement_id: H1
@@ -271,7 +284,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  18] [2026-08-23T17:20:40.664]  + 29756.1ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  19] [2026-08-23T20:01:21.430]  + 52908.3ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0060
@@ -283,7 +296,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  19] [2026-08-23T17:20:40.664]  + 29756.1ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  20] [2026-08-23T20:01:21.430]  + 52908.3ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0048
@@ -295,7 +308,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches associated, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  20] [2026-08-23T17:20:40.664]  + 29756.1ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  21] [2026-08-23T20:01:21.430]  + 52908.3ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0067
@@ -307,7 +320,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; text matches repair; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  21] [2026-08-23T17:20:40.664]  + 29756.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  22] [2026-08-23T20:01:21.430]  + 52908.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0059
@@ -319,7 +332,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches table, repair, associated; Results section
         └──────────────────────────────────────────────────────
 
-[  22] [2026-08-23T17:20:40.664]  + 29756.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  23] [2026-08-23T20:01:21.430]  + 52908.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0062
@@ -331,7 +344,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches repair, p; text matches table, associated; Results section
         └──────────────────────────────────────────────────────
 
-[  23] [2026-08-23T17:20:40.664]  + 29756.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  24] [2026-08-23T20:01:21.430]  + 52908.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0055
@@ -343,7 +356,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  24] [2026-08-23T17:20:40.664]  + 29756.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  25] [2026-08-23T20:01:21.430]  + 52908.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0065
@@ -355,7 +368,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  25] [2026-08-23T17:20:40.664]  + 29756.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  26] [2026-08-23T20:01:21.430]  + 52908.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ pageindex_node_id: 0058
@@ -367,7 +380,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches recurrent, coarctation; Results section
         └──────────────────────────────────────────────────────
 
-[  26] [2026-08-23T17:20:40.665]  + 29756.3ms  (       —)  local_pageindex
+[  27] [2026-08-23T20:01:21.430]  + 52908.5ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ requirement_id: H1
@@ -379,7 +392,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 57
         └──────────────────────────────────────────────────────
 
-[  27] [2026-08-23T17:20:41.539]  + 30631.1ms  (       —)  local_evidence_boost
+[  28] [2026-08-23T20:01:22.003]  + 53481.4ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ requirement_id: H1
@@ -389,7 +402,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC11743609_T1_row_9', 'PMC11743609_T2_row_5']
         └──────────────────────────────────────────────────────
 
-[  28] [2026-08-23T17:20:46.558]  + 35649.8ms  (       —)  local_search_PMC11743609_H1
+[  29] [2026-08-23T20:01:26.269]  + 57747.5ms  (       —)  local_search_PMC11743609_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11743609
         │ requirement_id: H1
@@ -407,10 +420,10 @@ Duration: 104211 ms (104.2s)
         │ top:     609_T2_row_9', 'type': 'table_row', 'rank': 6, 'pageindex': True, 'table_id': 'T2'}, {'chunk_id': 'PMC11743609_T2_row_16', 'type': 'table_row', 'rank': 7, 'pageindex': True, 'table_id': 'T2'}, {'chunk_id': 'PMC11743609_T2_row_10', 'type': 'table_row', 'rank': 8, 'pageindex': True, 'table_id': 'T2'}]
         └──────────────────────────────────────────────────────
 
-[  29] [2026-08-23T17:20:46.559]  + 35650.9ms  (       —)  PAGEINDEX_LOAD
+[  30] [2026-08-23T20:01:26.279]  + 57757.4ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
-        │ artifact: index/pageindex/PMC11997790.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC11997790.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -419,7 +432,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  30] [2026-08-23T17:20:46.560]  + 35652.2ms  (       —)  PAGEINDEX_SEARCH
+[  31] [2026-08-23T20:01:26.281]  + 57758.8ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ requirement_id: H1
@@ -434,7 +447,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  31] [2026-08-23T17:20:46.560]  + 35652.2ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  32] [2026-08-23T20:01:26.281]  + 57758.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0032
@@ -446,7 +459,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches repair, associated, coarctation, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  32] [2026-08-23T17:20:46.561]  + 35652.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  33] [2026-08-23T20:01:26.281]  + 57758.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0027
@@ -458,7 +471,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches repair, associated, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  33] [2026-08-23T17:20:46.561]  + 35652.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  34] [2026-08-23T20:01:26.281]  + 57758.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0035
@@ -470,7 +483,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  34] [2026-08-23T17:20:46.561]  + 35652.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  35] [2026-08-23T20:01:26.281]  + 57758.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0040
@@ -482,7 +495,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  35] [2026-08-23T17:20:46.561]  + 35652.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  36] [2026-08-23T20:01:26.281]  + 57758.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0030
@@ -494,7 +507,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches table, coarctation, p; figure region
         └──────────────────────────────────────────────────────
 
-[  36] [2026-08-23T17:20:46.561]  + 35652.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  37] [2026-08-23T20:01:26.281]  + 57758.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0043
@@ -506,7 +519,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  37] [2026-08-23T17:20:46.561]  + 35652.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  38] [2026-08-23T20:01:26.281]  + 57758.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0044
@@ -518,7 +531,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  38] [2026-08-23T17:20:46.561]  + 35652.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  39] [2026-08-23T20:01:26.281]  + 57758.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ pageindex_node_id: 0011
@@ -530,7 +543,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches results, p; Results section
         └──────────────────────────────────────────────────────
 
-[  39] [2026-08-23T17:20:46.561]  + 35652.6ms  (       —)  local_pageindex
+[  40] [2026-08-23T20:01:26.281]  + 57759.0ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ requirement_id: H1
@@ -542,7 +555,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 99
         └──────────────────────────────────────────────────────
 
-[  40] [2026-08-23T17:20:46.652]  + 35744.0ms  (       —)  local_evidence_boost
+[  41] [2026-08-23T20:01:26.368]  + 57845.7ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ requirement_id: H1
@@ -552,7 +565,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC11997790_ivaf042-T2_row_9', 'PMC11997790_ivaf042-T2_row_12', 'PMC11997790_ivaf042-F1']
         └──────────────────────────────────────────────────────
 
-[  41] [2026-08-23T17:20:46.697]  + 35788.9ms  (       —)  local_search_PMC11997790_H1
+[  42] [2026-08-23T20:01:26.410]  + 57888.2ms  (       —)  local_search_PMC11997790_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11997790
         │ requirement_id: H1
@@ -570,10 +583,10 @@ Duration: 104211 ms (104.2s)
         │ top:     nk': 6, 'pageindex': True, 'table_id': 'ivaf042-T2'}, {'chunk_id': 'PMC11997790_ivaf042-T2_row_8', 'type': 'table_row', 'rank': 7, 'pageindex': True, 'table_id': 'ivaf042-T2'}, {'chunk_id': 'PMC11997790_ivaf042-T1_row_13', 'type': 'table_row', 'rank': 8, 'pageindex': True, 'table_id': 'ivaf042-T1'}]
         └──────────────────────────────────────────────────────
 
-[  42] [2026-08-23T17:20:46.699]  + 35790.4ms  (       —)  PAGEINDEX_LOAD
+[  43] [2026-08-23T20:01:26.412]  + 57889.7ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
-        │ artifact: index/pageindex/PMC12009809.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12009809.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -582,7 +595,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  43] [2026-08-23T17:20:46.701]  + 35792.3ms  (       —)  PAGEINDEX_SEARCH
+[  44] [2026-08-23T20:01:26.413]  + 57891.5ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ requirement_id: H1
@@ -597,7 +610,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  44] [2026-08-23T17:20:46.701]  + 35792.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  45] [2026-08-23T20:01:26.413]  + 57891.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0070
@@ -609,7 +622,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  45] [2026-08-23T17:20:46.701]  + 35792.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  46] [2026-08-23T20:01:26.413]  + 57891.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0071
@@ -621,7 +634,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  46] [2026-08-23T17:20:46.701]  + 35792.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  47] [2026-08-23T20:01:26.413]  + 57891.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0075
@@ -633,7 +646,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  47] [2026-08-23T17:20:46.701]  + 35792.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  48] [2026-08-23T20:01:26.413]  + 57891.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0076
@@ -645,7 +658,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  48] [2026-08-23T17:20:46.701]  + 35792.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  49] [2026-08-23T20:01:26.414]  + 57891.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0079
@@ -657,7 +670,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  49] [2026-08-23T17:20:46.701]  + 35792.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  50] [2026-08-23T20:01:26.414]  + 57891.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0080
@@ -669,7 +682,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  50] [2026-08-23T17:20:46.701]  + 35792.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  51] [2026-08-23T20:01:26.414]  + 57891.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0082
@@ -681,7 +694,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  51] [2026-08-23T17:20:46.701]  + 35792.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  52] [2026-08-23T20:01:26.414]  + 57891.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ pageindex_node_id: 0054
@@ -693,7 +706,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches surgical, associated, coarctation, p; figure region
         └──────────────────────────────────────────────────────
 
-[  52] [2026-08-23T17:20:46.701]  + 35792.5ms  (       —)  local_pageindex
+[  53] [2026-08-23T20:01:26.414]  + 57891.8ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ requirement_id: H1
@@ -705,7 +718,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 96
         └──────────────────────────────────────────────────────
 
-[  53] [2026-08-23T17:20:46.796]  + 35887.4ms  (       —)  local_evidence_boost
+[  54] [2026-08-23T20:01:26.513]  + 57990.7ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ requirement_id: H1
@@ -715,7 +728,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC12009809_F1']
         └──────────────────────────────────────────────────────
 
-[  54] [2026-08-23T17:20:46.822]  + 35913.4ms  (       —)  local_search_PMC12009809_H1
+[  55] [2026-08-23T20:01:26.535]  + 58012.7ms  (       —)  local_search_PMC12009809_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12009809
         │ requirement_id: H1
@@ -733,10 +746,10 @@ Duration: 104211 ms (104.2s)
         │ top:     }, {'chunk_id': 'PMC12009809_0', 'type': 'paragraph', 'rank': 6, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12009809_F4', 'type': 'figure', 'rank': 7, 'pageindex': True, 'table_id': None}, {'chunk_id': 'PMC12009809_F3', 'type': 'figure', 'rank': 8, 'pageindex': False, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[  55] [2026-08-23T17:20:46.822]  + 35913.8ms  (       —)  PAGEINDEX_LOAD
+[  56] [2026-08-23T20:01:26.535]  + 58013.2ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
-        │ artifact: index/pageindex/PMC12014972.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12014972.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -745,7 +758,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  56] [2026-08-23T17:20:46.823]  + 35914.5ms  (       —)  PAGEINDEX_SEARCH
+[  57] [2026-08-23T20:01:26.536]  + 58013.9ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ requirement_id: H1
@@ -760,7 +773,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  57] [2026-08-23T17:20:46.823]  + 35914.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  58] [2026-08-23T20:01:26.536]  + 58013.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0003
@@ -772,7 +785,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches surgical, recurrent, coarctation
         └──────────────────────────────────────────────────────
 
-[  58] [2026-08-23T17:20:46.823]  + 35914.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  59] [2026-08-23T20:01:26.536]  + 58014.0ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0009
@@ -784,7 +797,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches coarctation; text matches recurrent, p
         └──────────────────────────────────────────────────────
 
-[  59] [2026-08-23T17:20:46.823]  + 35914.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  60] [2026-08-23T20:01:26.536]  + 58014.0ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0007
@@ -796,7 +809,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches surgical, p
         └──────────────────────────────────────────────────────
 
-[  60] [2026-08-23T17:20:46.823]  + 35914.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  61] [2026-08-23T20:01:26.536]  + 58014.0ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0015
@@ -808,7 +821,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches surgical, coarctation; Discussion section
         └──────────────────────────────────────────────────────
 
-[  61] [2026-08-23T17:20:46.823]  + 35914.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  62] [2026-08-23T20:01:26.536]  + 58014.1ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0020
@@ -820,7 +833,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches coarctation, p
         └──────────────────────────────────────────────────────
 
-[  62] [2026-08-23T17:20:46.823]  + 35914.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  63] [2026-08-23T20:01:26.536]  + 58014.1ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0018
@@ -832,7 +845,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches techniques, coarctation
         └──────────────────────────────────────────────────────
 
-[  63] [2026-08-23T17:20:46.823]  + 35914.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  64] [2026-08-23T20:01:26.536]  + 58014.1ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0016
@@ -844,7 +857,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches surgical; Discussion section
         └──────────────────────────────────────────────────────
 
-[  64] [2026-08-23T17:20:46.823]  + 35914.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  65] [2026-08-23T20:01:26.536]  + 58014.1ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ pageindex_node_id: 0006
@@ -856,7 +869,7 @@ Duration: 104211 ms (104.2s)
         │ reason: structural navigation candidate
         └──────────────────────────────────────────────────────
 
-[  65] [2026-08-23T17:20:46.823]  + 35914.7ms  (       —)  local_pageindex
+[  66] [2026-08-23T20:01:26.536]  + 58014.1ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ requirement_id: H1
@@ -868,7 +881,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 7
         └──────────────────────────────────────────────────────
 
-[  66] [2026-08-23T17:20:46.910]  + 36001.3ms  (       —)  local_search_PMC12014972_H1
+[  67] [2026-08-23T20:01:26.618]  + 58096.6ms  (       —)  local_search_PMC12014972_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12014972
         │ requirement_id: H1
@@ -886,10 +899,10 @@ Duration: 104211 ms (104.2s)
         │ top:     'chunk_id': 'PMC12014972_2', 'type': 'paragraph', 'rank': 6, 'pageindex': True, 'table_id': None}, {'chunk_id': 'PMC12014972_1', 'type': 'paragraph', 'rank': 7, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12014972_6', 'type': 'paragraph', 'rank': 8, 'pageindex': False, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[  67] [2026-08-23T17:20:46.911]  + 36002.5ms  (       —)  PAGEINDEX_LOAD
+[  68] [2026-08-23T20:01:26.619]  + 58097.5ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
-        │ artifact: index/pageindex/PMC11970464.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC11970464.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -898,7 +911,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  68] [2026-08-23T17:20:46.912]  + 36003.7ms  (       —)  PAGEINDEX_SEARCH
+[  69] [2026-08-23T20:01:26.620]  + 58098.5ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ requirement_id: H1
@@ -913,7 +926,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  69] [2026-08-23T17:20:46.912]  + 36003.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  70] [2026-08-23T20:01:26.620]  + 58098.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0036
@@ -925,7 +938,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; text matches surgical, repair, value; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  70] [2026-08-23T17:20:46.912]  + 36003.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  71] [2026-08-23T20:01:26.620]  + 58098.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0019
@@ -937,7 +950,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; text matches repair; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  71] [2026-08-23T17:20:46.912]  + 36003.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  72] [2026-08-23T20:01:26.620]  + 58098.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0033
@@ -949,7 +962,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches value; figure region
         └──────────────────────────────────────────────────────
 
-[  72] [2026-08-23T17:20:46.912]  + 36003.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  73] [2026-08-23T20:01:26.620]  + 58098.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0018
@@ -961,7 +974,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches surgical, repair; figure region
         └──────────────────────────────────────────────────────
 
-[  73] [2026-08-23T17:20:46.912]  + 36003.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  74] [2026-08-23T20:01:26.621]  + 58098.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0032
@@ -973,7 +986,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  74] [2026-08-23T17:20:46.912]  + 36003.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  75] [2026-08-23T20:01:26.621]  + 58098.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0034
@@ -985,7 +998,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; figure region
         └──────────────────────────────────────────────────────
 
-[  75] [2026-08-23T17:20:46.912]  + 36003.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  76] [2026-08-23T20:01:26.621]  + 58098.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0040
@@ -997,7 +1010,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches results, p; text matches repair; Results section
         └──────────────────────────────────────────────────────
 
-[  76] [2026-08-23T17:20:46.912]  + 36003.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  77] [2026-08-23T20:01:26.621]  + 58098.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ pageindex_node_id: 0007
@@ -1009,7 +1022,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches repair; Results section
         └──────────────────────────────────────────────────────
 
-[  77] [2026-08-23T17:20:46.912]  + 36004.0ms  (       —)  local_pageindex
+[  78] [2026-08-23T20:01:26.621]  + 58098.8ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ requirement_id: H1
@@ -1021,7 +1034,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 41
         └──────────────────────────────────────────────────────
 
-[  78] [2026-08-23T17:20:47.008]  + 36099.8ms  (       —)  local_evidence_boost
+[  79] [2026-08-23T20:01:26.705]  + 58183.3ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ requirement_id: H1
@@ -1031,7 +1044,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC11970464_TB0920247337pcc-1_row_17', 'PMC11970464_TB0920247337pcc-1_row_3']
         └──────────────────────────────────────────────────────
 
-[  79] [2026-08-23T17:20:47.043]  + 36135.2ms  (       —)  local_search_PMC11970464_H1
+[  80] [2026-08-23T20:01:26.742]  + 58219.8ms  (       —)  local_search_PMC11970464_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC11970464
         │ requirement_id: H1
@@ -1049,10 +1062,10 @@ Duration: 104211 ms (104.2s)
         │ top:     ': 'TB0920247337pcc-1'}, {'chunk_id': 'PMC11970464_TB0920247337pcc-1_row_14', 'type': 'table_row', 'rank': 7, 'pageindex': True, 'table_id': 'TB0920247337pcc-1'}, {'chunk_id': 'PMC11970464_TB0920247337pcc-1_row_15', 'type': 'table_row', 'rank': 8, 'pageindex': True, 'table_id': 'TB0920247337pcc-1'}]
         └──────────────────────────────────────────────────────
 
-[  80] [2026-08-23T17:20:47.045]  + 36136.6ms  (       —)  PAGEINDEX_LOAD
+[  81] [2026-08-23T20:01:26.742]  + 58220.5ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
-        │ artifact: index/pageindex/PMC12028424.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12028424.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -1061,7 +1074,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  81] [2026-08-23T17:20:47.046]  + 36137.7ms  (       —)  PAGEINDEX_SEARCH
+[  82] [2026-08-23T20:01:26.743]  + 58221.5ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ requirement_id: H1
@@ -1076,7 +1089,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  82] [2026-08-23T17:20:47.046]  + 36137.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  83] [2026-08-23T20:01:26.743]  + 58221.5ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0019
@@ -1088,7 +1101,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches results, table; text matches p, value; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  83] [2026-08-23T17:20:47.046]  + 36137.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  84] [2026-08-23T20:01:26.743]  + 58221.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0036
@@ -1100,7 +1113,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches associated, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  84] [2026-08-23T17:20:47.046]  + 36137.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  85] [2026-08-23T20:01:26.743]  + 58221.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0037
@@ -1112,7 +1125,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches repair, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  85] [2026-08-23T17:20:47.046]  + 36137.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  86] [2026-08-23T20:01:26.743]  + 58221.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0034
@@ -1124,7 +1137,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  86] [2026-08-23T17:20:47.046]  + 36137.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  87] [2026-08-23T20:01:26.744]  + 58221.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0035
@@ -1136,7 +1149,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  87] [2026-08-23T17:20:47.046]  + 36137.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  88] [2026-08-23T20:01:26.744]  + 58221.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0033
@@ -1148,7 +1161,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  88] [2026-08-23T17:20:47.046]  + 36137.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  89] [2026-08-23T20:01:26.744]  + 58221.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0032
@@ -1160,7 +1173,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches tables, table; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  89] [2026-08-23T17:20:47.046]  + 36138.0ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  90] [2026-08-23T20:01:26.744]  + 58221.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ pageindex_node_id: 0014
@@ -1172,7 +1185,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches coarctation; Results section
         └──────────────────────────────────────────────────────
 
-[  90] [2026-08-23T17:20:47.046]  + 36138.0ms  (       —)  local_pageindex
+[  91] [2026-08-23T20:01:26.744]  + 58221.8ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ requirement_id: H1
@@ -1184,7 +1197,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 62
         └──────────────────────────────────────────────────────
 
-[  91] [2026-08-23T17:20:47.148]  + 36239.7ms  (       —)  local_evidence_boost
+[  92] [2026-08-23T20:01:26.830]  + 58308.6ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ requirement_id: H1
@@ -1194,7 +1207,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC12028424_life-15-00656-t004_row_5', 'PMC12028424_life-15-00656-t004_summary']
         └──────────────────────────────────────────────────────
 
-[  92] [2026-08-23T17:20:47.179]  + 36270.5ms  (       —)  local_search_PMC12028424_H1
+[  93] [2026-08-23T20:01:26.854]  + 58332.0ms  (       —)  local_search_PMC12028424_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028424
         │ requirement_id: H1
@@ -1212,10 +1225,10 @@ Duration: 104211 ms (104.2s)
         │ top:     hunk_id': 'PMC12028424_1', 'type': 'paragraph', 'rank': 6, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12028424_6', 'type': 'paragraph', 'rank': 7, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12028424_20', 'type': 'paragraph', 'rank': 8, 'pageindex': False, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[  93] [2026-08-23T17:20:47.180]  + 36271.4ms  (       —)  PAGEINDEX_LOAD
+[  94] [2026-08-23T20:01:26.855]  + 58332.7ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
-        │ artifact: index/pageindex/PMC12082946.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12082946.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -1224,7 +1237,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[  94] [2026-08-23T17:20:47.181]  + 36272.5ms  (       —)  PAGEINDEX_SEARCH
+[  95] [2026-08-23T20:01:26.856]  + 58333.8ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ requirement_id: H1
@@ -1239,7 +1252,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[  95] [2026-08-23T17:20:47.181]  + 36272.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  96] [2026-08-23T20:01:26.856]  + 58333.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0030
@@ -1251,7 +1264,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; text matches value; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  96] [2026-08-23T17:20:47.181]  + 36272.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  97] [2026-08-23T20:01:26.856]  + 58333.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0028
@@ -1263,7 +1276,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  97] [2026-08-23T17:20:47.181]  + 36272.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  98] [2026-08-23T20:01:26.856]  + 58333.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0029
@@ -1275,7 +1288,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  98] [2026-08-23T17:20:47.181]  + 36272.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[  99] [2026-08-23T20:01:26.856]  + 58333.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0033
@@ -1287,7 +1300,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[  99] [2026-08-23T17:20:47.181]  + 36272.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 100] [2026-08-23T20:01:26.856]  + 58333.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0007
@@ -1299,7 +1312,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches coarctation, p; Results section
         └──────────────────────────────────────────────────────
 
-[ 100] [2026-08-23T17:20:47.181]  + 36272.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 101] [2026-08-23T20:01:26.856]  + 58333.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0006
@@ -1311,7 +1324,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches results; Results section
         └──────────────────────────────────────────────────────
 
-[ 101] [2026-08-23T17:20:47.181]  + 36272.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 102] [2026-08-23T20:01:26.856]  + 58334.0ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0031
@@ -1323,7 +1336,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches table, surgical; Results section
         └──────────────────────────────────────────────────────
 
-[ 102] [2026-08-23T17:20:47.181]  + 36272.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 103] [2026-08-23T20:01:26.856]  + 58334.0ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ pageindex_node_id: 0040
@@ -1335,7 +1348,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches surgical, p; text matches repair; Discussion section
         └──────────────────────────────────────────────────────
 
-[ 103] [2026-08-23T17:20:47.181]  + 36272.7ms  (       —)  local_pageindex
+[ 104] [2026-08-23T20:01:26.856]  + 58334.0ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ requirement_id: H1
@@ -1347,7 +1360,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 7
         └──────────────────────────────────────────────────────
 
-[ 104] [2026-08-23T17:20:47.291]  + 36383.2ms  (       —)  local_search_PMC12082946_H1
+[ 105] [2026-08-23T20:01:26.949]  + 58427.3ms  (       —)  local_search_PMC12082946_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12082946
         │ requirement_id: H1
@@ -1365,10 +1378,10 @@ Duration: 104211 ms (104.2s)
         │ top:     hunk_id': 'PMC12082946_10', 'type': 'paragraph', 'rank': 6, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12082946_18', 'type': 'paragraph', 'rank': 7, 'pageindex': True, 'table_id': None}, {'chunk_id': 'PMC12082946_14', 'type': 'paragraph', 'rank': 8, 'pageindex': True, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[ 105] [2026-08-23T17:20:47.292]  + 36383.7ms  (       —)  PAGEINDEX_LOAD
+[ 106] [2026-08-23T20:01:26.950]  + 58427.8ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
-        │ artifact: index/pageindex/PMC12055418.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12055418.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -1377,7 +1390,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[ 106] [2026-08-23T17:20:47.293]  + 36384.3ms  (       —)  PAGEINDEX_SEARCH
+[ 107] [2026-08-23T20:01:26.950]  + 58428.4ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ requirement_id: H1
@@ -1392,7 +1405,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[ 107] [2026-08-23T17:20:47.293]  + 36384.3ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 108] [2026-08-23T20:01:26.950]  + 58428.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0013
@@ -1404,7 +1417,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches surgical, repair, p; text matches associated, coarctation; Discussion section
         └──────────────────────────────────────────────────────
 
-[ 108] [2026-08-23T17:20:47.293]  + 36384.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 109] [2026-08-23T20:01:26.950]  + 58428.4ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0007
@@ -1416,7 +1429,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[ 109] [2026-08-23T17:20:47.293]  + 36384.4ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 110] [2026-08-23T20:01:26.950]  + 58428.5ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0009
@@ -1428,7 +1441,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches p; figure region
         └──────────────────────────────────────────────────────
 
-[ 110] [2026-08-23T17:20:47.293]  + 36384.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 111] [2026-08-23T20:01:26.950]  + 58428.5ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0004
@@ -1440,7 +1453,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches coarctation; text matches p
         └──────────────────────────────────────────────────────
 
-[ 111] [2026-08-23T17:20:47.293]  + 36384.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 112] [2026-08-23T20:01:26.950]  + 58428.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0002
@@ -1452,7 +1465,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches recurrent
         └──────────────────────────────────────────────────────
 
-[ 112] [2026-08-23T17:20:47.293]  + 36384.5ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 113] [2026-08-23T20:01:26.950]  + 58428.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0012
@@ -1464,7 +1477,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches coarctation, p; Discussion section
         └──────────────────────────────────────────────────────
 
-[ 113] [2026-08-23T17:20:47.293]  + 36384.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 114] [2026-08-23T20:01:26.950]  + 58428.6ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0015
@@ -1476,7 +1489,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches coarctation
         └──────────────────────────────────────────────────────
 
-[ 114] [2026-08-23T17:20:47.293]  + 36384.6ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 115] [2026-08-23T20:01:26.951]  + 58428.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ pageindex_node_id: 0008
@@ -1488,7 +1501,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; Discussion section
         └──────────────────────────────────────────────────────
 
-[ 115] [2026-08-23T17:20:47.293]  + 36384.6ms  (       —)  local_pageindex
+[ 116] [2026-08-23T20:01:26.951]  + 58428.7ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ requirement_id: H1
@@ -1500,7 +1513,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 8
         └──────────────────────────────────────────────────────
 
-[ 116] [2026-08-23T17:20:47.393]  + 36484.5ms  (       —)  local_search_PMC12055418_H1
+[ 117] [2026-08-23T20:01:27.036]  + 58513.7ms  (       —)  local_search_PMC12055418_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12055418
         │ requirement_id: H1
@@ -1518,10 +1531,10 @@ Duration: 104211 ms (104.2s)
         │ top:     PMC12055418_3', 'type': 'paragraph', 'rank': 6, 'pageindex': True, 'table_id': None}, {'chunk_id': 'PMC12055418_4', 'type': 'paragraph', 'rank': 7, 'pageindex': False, 'table_id': None}, {'chunk_id': 'PMC12055418_ehf214629-fig-0002', 'type': 'figure', 'rank': 8, 'pageindex': True, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[ 117] [2026-08-23T17:20:47.394]  + 36485.4ms  (       —)  PAGEINDEX_LOAD
+[ 118] [2026-08-23T20:01:27.036]  + 58514.5ms  (       —)  PAGEINDEX_LOAD
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
-        │ artifact: index/pageindex/PMC12028279.json
+        │ artifact: /home/alapanbagchi/PycharmProjects/MedRag/index/pageindex/PMC12028279.json
         └──────────────────────────────────────────────────────
         ┌─── RESPONSE ──────────────────────────────────────────
         │ status: success
@@ -1530,7 +1543,7 @@ Duration: 104211 ms (104.2s)
         │ format: pageindex md_to_tree (hierarchy-first)
         └──────────────────────────────────────────────────────
 
-[ 118] [2026-08-23T17:20:47.395]  + 36486.7ms  (       —)  PAGEINDEX_SEARCH
+[ 119] [2026-08-23T20:01:27.037]  + 58515.6ms  (       —)  PAGEINDEX_SEARCH
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ requirement_id: H1
@@ -1545,7 +1558,7 @@ Duration: 104211 ms (104.2s)
         │ status: success
         └──────────────────────────────────────────────────────
 
-[ 119] [2026-08-23T17:20:47.395]  + 36486.7ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 120] [2026-08-23T20:01:27.038]  + 58515.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0042
@@ -1557,7 +1570,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches surgical, repair, p, value; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[ 120] [2026-08-23T17:20:47.395]  + 36486.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 121] [2026-08-23T20:01:27.038]  + 58515.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0019
@@ -1569,7 +1582,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table, p; text matches surgical, repair; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[ 121] [2026-08-23T17:20:47.395]  + 36486.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 122] [2026-08-23T20:01:27.038]  + 58515.7ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0043
@@ -1581,7 +1594,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches table; text matches associated, p, value; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[ 122] [2026-08-23T17:20:47.395]  + 36486.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 123] [2026-08-23T20:01:27.038]  + 58515.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0041
@@ -1593,7 +1606,7 @@ Duration: 104211 ms (104.2s)
         │ reason: text matches surgical, repair, recurrent, p; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[ 123] [2026-08-23T17:20:47.395]  + 36486.8ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 124] [2026-08-23T20:01:27.038]  + 58515.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0040
@@ -1605,7 +1618,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches tables, table; tabular evidence region
         └──────────────────────────────────────────────────────
 
-[ 124] [2026-08-23T17:20:47.395]  + 36486.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 125] [2026-08-23T20:01:27.038]  + 58515.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0021
@@ -1617,7 +1630,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches table, associated; Results section
         └──────────────────────────────────────────────────────
 
-[ 125] [2026-08-23T17:20:47.395]  + 36486.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 126] [2026-08-23T20:01:27.038]  + 58515.8ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0023
@@ -1629,7 +1642,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches associated, recurrent; Results section
         └──────────────────────────────────────────────────────
 
-[ 126] [2026-08-23T17:20:47.395]  + 36486.9ms  (       —)  PAGEINDEX_NODE_SELECTED
+[ 127] [2026-08-23T20:01:27.038]  + 58515.9ms  (       —)  PAGEINDEX_NODE_SELECTED
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ pageindex_node_id: 0010
@@ -1641,7 +1654,7 @@ Duration: 104211 ms (104.2s)
         │ reason: title matches p; text matches surgical, repair
         └──────────────────────────────────────────────────────
 
-[ 127] [2026-08-23T17:20:47.395]  + 36487.0ms  (       —)  local_pageindex
+[ 128] [2026-08-23T20:01:27.038]  + 58515.9ms  (       —)  local_pageindex
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ requirement_id: H1
@@ -1653,7 +1666,7 @@ Duration: 104211 ms (104.2s)
         │ n_nav_chunks: 37
         └──────────────────────────────────────────────────────
 
-[ 128] [2026-08-23T17:20:47.479]  + 36570.3ms  (       —)  local_evidence_boost
+[ 129] [2026-08-23T20:01:27.125]  + 58603.3ms  (       —)  local_evidence_boost
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ requirement_id: H1
@@ -1663,7 +1676,7 @@ Duration: 104211 ms (104.2s)
         │ boosted: ['PMC12028279_jcm-14-02817-t001_row_19', 'PMC12028279_jcm-14-02817-t001_row_16']
         └──────────────────────────────────────────────────────
 
-[ 129] [2026-08-23T17:20:47.511]  + 36602.7ms  (       —)  local_search_PMC12028279_H1
+[ 130] [2026-08-23T20:01:27.150]  + 58628.6ms  (       —)  local_search_PMC12028279_H1
         ┌─── REQUEST ───────────────────────────────────────────
         │ paper_id: PMC12028279
         │ requirement_id: H1
@@ -1681,14 +1694,14 @@ Duration: 104211 ms (104.2s)
         │ top:     ank': 6, 'pageindex': True, 'table_id': 'jcm-14-02817-t001'}, {'chunk_id': 'PMC12028279_jcm-14-02817-t001_row_21', 'type': 'table_row', 'rank': 7, 'pageindex': True, 'table_id': 'jcm-14-02817-t001'}, {'chunk_id': 'PMC12028279_4', 'type': 'paragraph', 'rank': 8, 'pageindex': False, 'table_id': None}]
         └──────────────────────────────────────────────────────
 
-[ 130] [2026-08-23T17:20:47.512]  + 36604.2ms  (       —)  medcpt_rerank_start
+[ 131] [2026-08-23T20:01:27.152]  + 58630.1ms  (       —)  medcpt_rerank_start
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_pairs: 150
         │ n_requirements: 1
         │ cap: 150
         └──────────────────────────────────────────────────────
 
-[ 131] [2026-08-23T17:21:55.049]  +104140.9ms  (       —)  medcpt_rerank_done
+[ 132] [2026-08-23T20:02:14.649]  +105207.6ms  (       —)  medcpt_rerank_done
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_pairs: 150
         └──────────────────────────────────────────────────────
@@ -1697,7 +1710,7 @@ Duration: 104211 ms (104.2s)
         │ score_range: [-8.83011, 11.60682]
         └──────────────────────────────────────────────────────
 
-[ 132] [2026-08-23T17:21:55.112]  +104203.6ms  (       —)  intent_scoring
+[ 133] [2026-08-23T20:02:14.693]  +105250.8ms  (       —)  intent_scoring
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_requirements: 1
         └──────────────────────────────────────────────────────
@@ -1707,7 +1720,7 @@ Duration: 104211 ms (104.2s)
         │ covered_per_requirement: }
         └──────────────────────────────────────────────────────
 
-[ 133] [2026-08-23T17:21:55.118]  +104209.4ms  (       —)  greedy_selection
+[ 134] [2026-08-23T20:02:14.698]  +105256.4ms  (       —)  greedy_selection
         ┌─── REQUEST ───────────────────────────────────────────
         │ slots: 18
         │ n_candidates: 192
@@ -1719,7 +1732,7 @@ Duration: 104211 ms (104.2s)
         │ coverage_fraction: 1.000000
         └──────────────────────────────────────────────────────
 
-[ 134] [2026-08-23T17:21:55.119]  +104210.8ms  (       —)  FINAL_EVIDENCE
+[ 135] [2026-08-23T20:02:14.699]  +105257.2ms  (       —)  FINAL_EVIDENCE
         ┌─── REQUEST ───────────────────────────────────────────
         │ n_selected: 18
         └──────────────────────────────────────────────────────
