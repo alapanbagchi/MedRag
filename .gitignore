@@ -35,3 +35,12 @@ embeddings/
 
 # scratch / probes
 .pi_probe/
+
+# uv cache used during dev
+.cache/
+
+# generated run traces
+logs.txt
+
+# local secrets
+.env

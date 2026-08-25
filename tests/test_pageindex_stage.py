@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from medrag.retrieval_v2.pageindex_stage import (
+from src.retrieval_v2.pageindex_stage import (
     StageConfig,
     build_index,
     config_from_env,
@@ -97,7 +97,7 @@ class TestIndexing:
 
 class TestNavigation:
     def test_navigate_without_endpoint_fails_classified(self, cfg):
-        from medrag.retrieval_v2.pageindex_stage import MEDGEMMA_ENDPOINT_ERROR
+        from src.retrieval_v2.pageindex_stage import MEDGEMMA_ENDPOINT_ERROR
         obj = navigation_objective(requirement=REQUIREMENT)
         res = navigate(PAPER, objective=obj, config=cfg)
         assert res.paper_id == PAPER
@@ -109,7 +109,7 @@ class TestNavigation:
         assert res.selected_nodes == []
 
     def test_missing_paper_structured_error(self, tmp_path, cfg):
-        from medrag.retrieval_v2.pageindex_stage import TREE_LOAD_ERROR
+        from src.retrieval_v2.pageindex_stage import TREE_LOAD_ERROR
         bad = config_from_env({"md_dir": str(tmp_path)})
         res = navigate("PMC99999999", config=bad)
         assert res.status == "failed"
@@ -117,7 +117,7 @@ class TestNavigation:
 
 class TestAgentLoopParsing:
     def test_parses_tool_json_block_with_args(self):
-        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        from src.retrieval_v2.pageindex_stage import agent_loop
         content = (
             chr(96) * 3 + chr(10)
             + '{"tool": "get_document_structure", "args": {"doc_name": "PMC11743609.md"}}'
@@ -127,12 +127,12 @@ class TestAgentLoopParsing:
         assert calls == [("get_document_structure", {"doc_name": "PMC11743609.md"})]
 
     def test_parse_bare_browse_and_empty_content(self):
-        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        from src.retrieval_v2.pageindex_stage import agent_loop
         assert agent_loop._parse_tool_invocations('{"tool": "browse_documents"}') == [("browse_documents", {})]
         assert agent_loop._parse_tool_invocations("I found the evidence now.") == []
 
     def test_extract_matches_internal_sections_too(self, cfg):
-        from medrag.retrieval_v2.pageindex_stage import agent_loop
+        from src.retrieval_v2.pageindex_stage import agent_loop
         indexed = build_index(PAPER, config=cfg)
         picked = agent_loop.extract_from_response(
             "I select Results, Recurrent coarctation (re-CoA) and Table 2 as the evidence regions.",

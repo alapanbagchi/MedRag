@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from medrag.retrieval_v2.document_index import LogicalDocumentIndex
+from src.retrieval_v2.document_index import LogicalDocumentIndex
 
 CORPUS = Path("index/corpus.parquet")
 

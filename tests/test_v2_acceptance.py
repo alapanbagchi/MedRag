@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from medrag.retrieval_v2.config import V2Config, config_from_env
-from medrag.retrieval_v2.planner import plan_question
+from src.retrieval_v2.config import V2Config, config_from_env
+from src.retrieval_v2.planner import plan_question
 
 CORPUS = Path("index/corpus.parquet")
 PAGEINDEX_DIR = Path("index/pageindex")
@@ -158,7 +158,7 @@ class TestMultiHop:
 
 class TestExpandContract:
     def test_structured_payload_maps_to_one_requirement(self):
-        from medrag.retrieval_v2.llm_planner import plan_from_expand
+        from src.retrieval_v2.llm_planner import plan_from_expand
         payload = {
             "query": SURGICAL_Q,
             "clinical_entities": [
@@ -185,7 +185,7 @@ class TestExpandContract:
     def test_legacy_evidence_requirements_are_ignored(self):
         """The dead contract: even if a server still sends evidence_requirements,
         the planner must NOT turn them into H1..H4 statistical branches."""
-        from medrag.retrieval_v2.llm_planner import plan_from_expand
+        from src.retrieval_v2.llm_planner import plan_from_expand
         payload = {
             "query": SURGICAL_Q,
             "concepts": [{"name": "recurrent coarctation", "type": "disease"}],
@@ -209,7 +209,7 @@ class TestExpandContract:
 
 class TestTableFields:
     def test_table_aware_pvalue_and_percentage(self):
-        from medrag.retrieval_v2.table_context import (
+        from src.retrieval_v2.table_context import (
             parse_row, parse_summary_columns, detect_table_row_fields)
         headers = parse_summary_columns(
             "Table 2: X\n\nColumns:\n- Variables\n- No re-CoA (n=24) or n (%)\n- re-CoA (n=4) or n (%)\n- p")
@@ -221,7 +221,7 @@ class TestTableFields:
         assert fields["effect_estimate"] is False
 
     def test_row_without_p_value_is_flagged_accordingly(self):
-        from medrag.retrieval_v2.table_context import (
+        from src.retrieval_v2.table_context import (
             parse_row, parse_summary_columns, detect_table_row_fields)
         headers = parse_summary_columns(
             "Table 1\n\nColumns:\n- Variable\n- Group A\n- Group B\n- p")
@@ -241,8 +241,8 @@ class TestPageIndexAdapter:
     @pytest.fixture(scope="class")
     @classmethod
     def adapter(cls):
-        from medrag.retrieval_v2.document_index import LogicalDocumentIndex
-        from medrag.retrieval_v2.pageindex_adapter import PageIndexAdapter
+        from src.retrieval_v2.document_index import LogicalDocumentIndex
+        from src.retrieval_v2.pageindex_adapter import PageIndexAdapter
         idx = LogicalDocumentIndex(CORPUS)
         cfg = V2Config(pageindex_dir=str(PAGEINDEX_DIR))
         a = PageIndexAdapter(doc_index=idx, pageindex_dir=PAGEINDEX_DIR, config=cfg)
@@ -292,8 +292,8 @@ class TestPageIndexAdapter:
 @pytest.mark.skipif(not CORPUS.exists(), reason="corpus.parquet not available")
 class TestTableContextIntegration:
     def test_real_table_row_context(self):
-        from medrag.retrieval_v2.document_index import LogicalDocumentIndex
-        from medrag.retrieval_v2.table_context import build_table_context
+        from src.retrieval_v2.document_index import LogicalDocumentIndex
+        from src.retrieval_v2.table_context import build_table_context
         idx = LogicalDocumentIndex(CORPUS)
         tc, ctx, det = build_table_context(idx, "PMC11743609", "PMC11743609_T2_row_13", V2Config())
         assert tc is not None and tc["table_id"] == "T2"
@@ -311,14 +311,14 @@ class TestEndToEnd:
     @pytest.fixture(scope="class")
     @classmethod
     def components(cls):
-        from medrag.retrieval_v2.pipeline import load_components
+        from src.retrieval_v2.pipeline import load_components
         cfg = config_from_env({"enable_rerank": False})
         comp = load_components(Path("index"), cfg)
         yield comp
         comp.close()
 
     def test_surgical_question_end_to_end(self, components):
-        from medrag.retrieval_v2.pipeline import run_v2_pipeline
+        from src.retrieval_v2.pipeline import run_v2_pipeline
         cfg = config_from_env({"enable_rerank": False})
         result = run_v2_pipeline(
             SURGICAL_Q, config=cfg, index_dir=Path("index"),
@@ -346,7 +346,7 @@ class TestEndToEnd:
         assert any_fields, "some PMC11743609 table row must carry percentage/p-value fields"
 
     def test_missing_evidence_is_honest(self, components):
-        from medrag.retrieval_v2.pipeline import run_v2_pipeline
+        from src.retrieval_v2.pipeline import run_v2_pipeline
         cfg = config_from_env({"enable_rerank": False})
         q = ("Which lunar regolith minerals predicted survival in cardiac "
              "transplant patients, and what were the hazard ratios?")

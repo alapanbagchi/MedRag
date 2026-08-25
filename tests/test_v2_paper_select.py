@@ -6,10 +6,9 @@ must survive even when it is absent from every other branch.
 
 from __future__ import annotations
 
-import pytest
 
-from medrag.retrieval_v2.config import V2Config
-from medrag.retrieval_v2.models import PaperQueryScore, Requirement, SearchQuery
+from src.retrieval_v2.config import V2Config
+from src.retrieval_v2.models import PaperQueryScore, Requirement, SearchQuery
 
 
 def _pqs(qid, pid, score):
@@ -19,14 +18,14 @@ def _pqs(qid, pid, score):
 
 def test_branch_paper_survives_global_competition():
     """Six queries; paper INOCA is mediocre globally but best at q4."""
-    from medrag.retrieval_v2.paper_select import select_papers
+    from src.retrieval_v2.paper_select import select_papers
     reqs = [Requirement(id=f"H{i}", topic=f"topic{i}", population=f"pop{i}",
                         focus="outcome" if i > 3 else "mechanism") for i in range(1, 7)]
     qs = [SearchQuery(id=f"q{i}", requirement_ids=[f"H{i}"], text=f"query {i}") for i in range(1, 7)]
     scores = {}
     # per query, the branch paper ranks #1; global strong papers rank high everywhere
     for i in range(1, 7):
-        scores[(f"q{i}", f"INOCA_PAPER")] = _pqs(f"q{i}", "INOCA_PAPER", 1.0 if i == 4 else 0.1)
+        scores[(f"q{i}", "INOCA_PAPER")] = _pqs(f"q{i}", "INOCA_PAPER", 1.0 if i == 4 else 0.1)
         scores[(f"q{i}", f"GLOBAL_P{i}")] = _pqs(f"q{i}", f"GLOBAL_P{i}", 0.8)
         scores[(f"q{i}", f"RANDOM_P{i}")] = _pqs(f"q{i}", f"RANDOM_P{i}", 0.2)
     cfg = V2Config(per_requirement_shortlist=5, branch_guarantee_top=2, top_papers=8)
@@ -41,7 +40,7 @@ def test_branch_paper_survives_global_competition():
 
 
 def test_strongest_branch_dominates():
-    from medrag.retrieval_v2.paper_select import select_papers
+    from src.retrieval_v2.paper_select import select_papers
     reqs = [Requirement(id=f"H{i}", topic=f"t{i}") for i in range(1, 4)]
     qs = [SearchQuery(id=f"q{i}", requirement_ids=[f"H{i}"], text=f"q {i}") for i in range(1, 4)]
     scores = {}
@@ -59,9 +58,8 @@ def test_strongest_branch_dominates():
 
 def test_paper_query_score_uses_formula():
     """section 13 formula: score = 0.5*max + 0.2*mean_top3 + 0.1*support + ..."""
-    from medrag.retrieval_v2.paper_select import aggregate_papers
-    from medrag.retrieval_v2.models import QueryLocalResult
-    from medrag.retrieval_v2.retriever import rrf_fuse
+    from src.retrieval_v2.paper_select import aggregate_papers
+    from src.retrieval_v2.models import QueryLocalResult
     # build a mini QueryLocalResult with fused entries for one paper
     class _FakeNode:
         def get(self, k, d=None):

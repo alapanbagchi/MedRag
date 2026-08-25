@@ -4,9 +4,8 @@ the terminology-preservation rule (spec sections 6-9).
 
 from __future__ import annotations
 
-import pytest
 
-from medrag.retrieval_v2.planner import plan_question
+from src.retrieval_v2.planner import plan_question
 
 MULTI_HOP = (
     "How do metabolic syndrome, advanced CKD, and anemia affect cardiovascular "

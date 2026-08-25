@@ -2,8 +2,78 @@
 
 Structure-aware RAG pipeline for PMC/JATS biomedical articles.
 
-The code lives in a single `src/medrag` package. There is no plugin system;
-each pipeline stage is one module and is independently callable from the CLI.
+The code lives in a single `src` package. There is no plugin system; each
+pipeline stage is one module and is independently callable from the CLI.
+
+## Agentic RAG pipeline (`python -m src "question"`)
+
+A PydanticAI agent pipeline owns all query logic. Any OpenAI-compatible
+endpoint works as the LLM (Kaggle tunnel, Gemini, Ollama, vLLM — see
+`.env.example`).
+
+```
+src/agents + src/orchestration              any /v1/chat/completions
+  planner ──► UMLS terminology enrichment     +-----------------------+
+  per-subquery loop (parallel):               | planner · verifier    |
+    hybrid retrieve chunks ─► structural      | · evidence · synth    |
+    units ─► BATCHED LLM relevance verify     | · rewriter            |
+    └─ insufficient? coverage-driven          +-----------------------+
+       LLM rewrite (rejection reasons +
+       UMLS synonyms) & re-search
+  evidence extraction (bounded pool) ─► aggregation ─► synthesis
+```
+
+Key architectural properties:
+
+- **Batched verification** – all candidate units of a round go through as few
+  LLM calls as possible (`VERIFY_BATCH_MAX_DOCS`, `VERIFY_BATCH_MAX_TOKENS`);
+  duplicate units across subqueries are verified once via a memo.
+- **Failure ≠ irrelevance** – quota/timeouts/parse errors mark units `unknown`;
+  they are retried on later rounds and reported in `warnings`, never silently
+  dropped like judged rejections.
+- **One shared rate limiter** – every agent draws from a single token bucket
+  (`GLOBAL_TOKENS_PER_MIN`); 429 `Retry-After` hints penalize the bucket so
+  concurrent callers pause together.
+- **Singleton resources** – BM25/corpus/structural-unit indexes load once per
+  process, not once per tool call.
+- **Coverage-driven rewriting** – when a subquery finds too few DISTINCT
+  papers, the next query is an LLM rewrite conditioned on the verifier's
+  rejection reasons plus UMLS/MeSH synonyms (`REWRITE_ENABLED`).
+- **Balanced synthesis** – evidence is selected round-robin ACROSS subqueries,
+  prompts carry full provenance (doc/chunk/section/evidence ids), and citations
+  are repaired against real evidence ids.
+- **Funnel metrics** – every run returns counters for attrition per stage
+  (`funnel` in the result dict, printed by the CLI).
+
+### Run it
+
+```bash
+cp .env.example .env        # pick provider + key
+uv sync
+uv run python -m src "Which surgical repair techniques were \
+    associated with early recurrent coarctation, with percentages and p-values?"
+```
+
+**Run logging.** The terminal stays quiet by default; a full trace is written
+to `logs.txt` (`LOG_FILE` to change). Long chunk/unit texts are truncated to
+1500 chars unless `TRACE_FULL_TEXTS=1`.
+
+### Agent architecture
+
+| Component | File | Behaviour |
+| --- | --- | --- |
+| Query Planner | `src/agents/planner.py` | typed `QueryPlan` (subqueries); UMLS enrichment is deterministic, orchestrator-side |
+| Retrieval tool | `src/agents/retriever.py` | shared-service hybrid search (BM25/SPLADE + dense) |
+| Verifier | `src/agents/verifier_new.py` | batched unit↔intent classification; `unknown` on failure |
+| Evidence Extraction | `src/agents/evidence.py` | per (subquery, unit), tolerant verbatim-quote grounding |
+| Evidence Aggregator | `src/agents/evidence.py` | deterministic grouping/dedupe/contradictions |
+| Query Rewriter | `src/orchestration/orchestrator.py` | coverage-driven LLM rewrite + deterministic fallback |
+| Final Synthesis | `src/agents/synthesizer.py` | answer from balanced verified evidence only |
+| Orchestrator | `src/orchestration/orchestrator.py` | control flow, memoization, funnel metrics |
+| Shared runner | `src/llm/run.py` | structured output → text+JSON fallback, retries |
+| Rate limiting | `src/llm/ratelimit.py` | process-wide token bucket, Retry-After aware |
+
+Run the tests: `uv run pytest -q`.
 
 ## Layout
 
