@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic V2 — Trajectory</title>
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #0f0f12; --panel2: #14141a; --panel3: #1a1a22;
+    --border: #1f1f28; --border2: #2a2a35; --border3: #353544;
+    --text: #e8e8ec; --muted: #7c7c88; --dim: #56565e;
+    --input: #3b82f6; --model: #8b5cf6; --tools: #06b6d4; --subtool: #e8853a;
+    --green: #2fbf71; --red: #f04f4f; --amber: #ffb02e; --blue: #4da3ff;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 12.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #232328; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  header {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 16px; border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+  header .brand { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  header .brand .ptc { font-size: 10px; color: var(--muted); border: 1px solid var(--border3); padding: 1px 6px; border-radius: 6px; }
+  header .right { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .dot.running { background: var(--amber); animation: pulse 1s infinite; box-shadow: 0 0 6px var(--amber); }
+  .dot.done { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.failed { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 500;
+    cursor: pointer; transition: background .15s;
+  }
+  button:hover { background: var(--panel3); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.on { background: #1d3a5f; border-color: var(--blue); color: #cfe8ff; }
+
+  .toolbar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+  }
+  .toolbar .q { color: var(--muted); font-size: 11.5px; }
+  .search {
+    margin-left: auto; background: var(--panel2); border: 1px solid var(--border2);
+    color: var(--text); border-radius: 6px; padding: 5px 10px; width: 240px;
+    font-size: 11.5px; outline: none;
+  }
+  .search:focus { border-color: var(--blue); }
+
+  .legend {
+    flex: 0 0 auto; display: flex; gap: 16px; padding: 5px 16px 7px;
+    font-size: 10.5px; color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .timeline { flex: 0 0 auto; padding: 6px 0 2px; border-bottom: 1px solid var(--border); }
+  .lane { display: flex; align-items: center; height: 26px; }
+  .lane-label {
+    flex: 0 0 110px; padding: 0 16px; font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; font-weight: 600;
+  }
+  .lane-track { flex: 1 1 auto; position: relative; height: 100%; min-width: 400px; }
+  .tick { position: absolute; top: 6px; bottom: 6px; min-width: 2px; border-radius: 1px; opacity: .85; cursor: pointer; transition: opacity .15s; }
+  .tick:hover { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  .tick.input { background: var(--input); top: 9px; bottom: 9px; }
+  .tick.model { background: var(--model); }
+  .tick.tools { background: var(--tools); }
+  .tick.subtool { background: var(--subtool); top: 8px; bottom: 8px; }
+  .tick.failed { background: var(--red) !important; }
+  .tick.bar { top: 3px; bottom: 3px; border-radius: 3px; opacity: .92; min-width: 2px; }
+  .tick.bar.running { animation: barpulse 1.2s ease-in-out infinite; }
+  .tick.bar.keep { background: var(--green) !important; box-shadow: 0 0 6px var(--green); }
+  .tick.bar.reject { background: var(--red) !important; box-shadow: 0 0 6px var(--red); }
+  @keyframes barpulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+  #timelineAtlas { position: absolute; left: -9999px; width: 1400px; }
+
+  #logPane { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+  #log { flex: 1 1 auto; overflow: auto; padding: 4px 0; }
+  .log-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 16px; border-bottom: 1px solid #15151a; font-size: 11.5px; }
+  .log-row:hover { background: #15151a; }
+  .log-row.open { background: #17171e; }
+  .etag {
+    flex: 0 0 74px; display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .3px; padding-top: 1px;
+  }
+  .etag i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .etime { flex: 0 0 56px; font-family: var(--mono); font-size: 10.5px; color: var(--dim); padding-top: 1px; }
+  .ebody { flex: 1 1 auto; min-width: 0; cursor: pointer; }
+  .etitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .eprev { font-family: var(--mono); font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .estatus { margin-left: auto; flex: 0 0 auto; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 8px; white-space: nowrap; }
+  .estatus.done { background: #153324; color: var(--green); }
+  .estatus.failed { background: #3a1618; color: #ff7b72; }
+  .estatus.running { background: #33280f; color: var(--amber); }
+  /* nested documents list inside a retrieve step */
+  .doc-list { display: flex; flex-direction: column; gap: 6px; }
+  .doc-item { border: 1px solid var(--border); border-radius: 6px; background: #0c0c12; }
+  .doc-item summary {
+    cursor: pointer; padding: 7px 10px; font-size: 11.5px; color: var(--text);
+    list-style: none; display: flex; align-items: center; gap: 8px; user-select: none;
+  }
+  .doc-item summary::-webkit-details-marker { display: none; }
+  .doc-item summary:hover { background: #15151a; }
+  .doc-item summary .di { font-family: var(--mono); color: #c4c4d2; }
+  .doc-item summary .tag2 { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--panel3); color: var(--muted); white-space: nowrap; }
+  .doc-item summary .meta { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--dim); white-space: nowrap; }
+  .doc-item[open] summary { border-bottom: 1px solid var(--border); }
+  .doc-item pre { margin: 0; border: 0; border-radius: 0 0 6px 6px; max-height: 260px; }
+  .edetail { display: none; padding: 8px 0 4px; }
+  .log-row.open .edetail { display: block; }
+  .tabs-mini { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+  .tab-mini {
+    font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 6px;
+    background: var(--panel2); color: var(--muted); border: 1px solid var(--border); cursor: pointer;
+  }
+  .tab-mini.on { background: #1d3a5f; color: #cfe8ff; border-color: var(--blue); }
+  .pane-mini { display: none; }
+  .pane-mini.on { display: block; }
+  pre {
+    background: #060609; border: 1px solid var(--border); border-radius: 6px;
+    padding: 9px 11px; margin: 0; font: 11.5px/1.55 var(--mono);
+    color: #c4c4d2; white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto;
+  }
+  pre.thought { color: #c4a8f5; border-color: #3a2a5a; background: #0a0817; }
+  pre.dim { color: var(--dim); }
+  .spin {
+    display: inline-block; width: 10px; height: 10px; margin-right: 6px;
+    border: 2px solid var(--amber); border-top-color: transparent;
+    border-radius: 50%; animation: rot .7s linear infinite; vertical-align: -1px;
+  }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .input-bar { flex: 0 0 auto; padding: 8px 16px; border-top: 1px solid var(--border); }
+  .input-row { display: flex; align-items: flex-end; gap: 8px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 12px; }
+  .input-row:focus-within { border-color: var(--blue); }
+  .input-row textarea {
+    flex: 1 1 auto; background: transparent; border: 0; outline: 0; resize: none;
+    color: var(--text); font-size: 12.5px; line-height: 1.5; font-family: inherit;
+    min-height: 22px; max-height: 160px;
+  }
+  .input-row textarea::placeholder { color: var(--dim); }
+  .send-btn {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+    background: var(--blue); border: 0; color: #04121f; cursor: pointer;
+    font-size: 14px; line-height: 1; font-weight: 700;
+  }
+  .send-btn:disabled { background: var(--panel3); color: var(--muted); cursor: not-allowed; }
+
+  .stats {
+    flex: 0 0 auto; padding: 5px 16px; font-size: 10.5px; color: var(--dim);
+    border-top: 1px solid var(--border); display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .stats b { color: var(--text); font-weight: 600; font-family: var(--mono); }
+
+  /* objective master cards: H1/H2... group all related events under them */
+  .obj-master { border: 1px solid var(--border2); border-radius: 12px; margin-bottom: 10px; background: var(--panel); overflow: hidden; }
+  .obj-master[data-open="1"] { border-color: var(--blue); box-shadow: 0 4px 18px #00000040; }
+  .obj-head {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer;
+    background: linear-gradient(180deg, #161b28, #12161f); border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+  .obj-master[data-open="0"] .obj-head { border-bottom: 0; }
+  .obj-head:hover { background: #1a202f; }
+  .obj-head .chev { flex: 0 0 auto; color: var(--blue); font-size: 10px; }
+  .obj-id { font-weight: 800; font-size: 13.5px; color: var(--blue); flex: 0 0 auto; }
+  .obj-stmt { color: var(--muted); font-size: 11.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .obj-meta { margin-left: auto; color: var(--muted); font-size: 10.5px; font-family: var(--mono); white-space: nowrap; }
+  .obj-body { display: none; padding: 8px 10px 4px; }
+  .obj-master[data-open="1"] .obj-body { display: block; }
+  .obj-body .log-row { border-radius: 8px; border: 1px solid transparent; }
+  .obj-body .log-row:hover { border-color: var(--border2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Research Trace<span class="ptc">v2</span></div>
+  <div class="right">
+    <span class="dot" id="dot"></span>
+    <span id="statusText" style="font-size:11px;color:var(--muted)">idle</span>
+    <button id="clearBtn">Clear</button>
+    <button id="followBtn" class="on">Follow</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <span class="q" id="phaseLabel"></span>
+  <span class="q" id="counts"></span>
+  <input class="search" id="searchInput" placeholder="Search events…">
+</div>
+
+<div class="legend">
+  <span><i style="background:var(--input)"></i> Input</span>
+  <span><i style="background:var(--model)"></i> Model</span>
+  <span><i style="background:var(--tools)"></i> Tools</span>
+  <span><i style="background:var(--subtool)"></i> Subtool</span>
+</div>
+
+<div class="timeline" id="timeline">
+  <div class="lane"><div class="lane-label">Input</div><div class="lane-track" id="lane-input"></div></div>
+  <div class="lane"><div class="lane-label">Model</div><div class="lane-track" id="lane-model"></div></div>
+  <div class="lane"><div class="lane-label">Tools</div><div class="lane-track" id="lane-tools"></div></div>
+  <div class="lane"><div class="lane-label">Subtool</div><div class="lane-track" id="lane-subtool"></div></div>
+  <div id="timelineAtlas"></div>
+</div>
+
+<section id="logPane">
+  <div id="log"></div>
+</section>
+
+<div class="input-bar">
+  <div class="input-row">
+    <textarea id="question" rows="1" placeholder="Message the agent">How do genetic risk variants for essential hypertension in African-derived admixed populations influence medial arterial calcification?</textarea>
+    <button class="send-btn" id="runBtn" title="Run">▶</button>
+  </div>
+</div>
+
+<div class="stats">
+  <span><b id="stat-turns">0</b> turns</span>
+  <span>·</span>
+  <span><b id="stat-steps">0</b> steps</span>
+  <span>|</span>
+  <span>LLM <b id="stat-llm">0s</b></span>
+  <span>·</span>
+  <span>Tools <b id="stat-tool">0s</b></span>
+  <span>|</span>
+  <span>elapsed <b id="stat-elapsed">0s</b></span>
+</div>
+
+<script>
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+
+var allEvents = [];
+var latestIdx = -1;
+var t0 = 0;
+var lastTs = 0;
+var running = false;
+var follow = true;
+var queryText = "";
+var answer = null;
+var openRows = {};
+var rowTab = {};
+var openObjs = {};
+
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function trunc(s, n) { s = String(s == null ? "" : s); return s.length > n ? s.slice(0, n) + "…" : s; }
+function summarize(v) { if (v == null) return ""; if (typeof v === "string") return v; try { return JSON.stringify(v); } catch (e) { return String(v); } }
+function pretty(v) { if (v == null) return ""; if (typeof v === "string") return v; try { return JSON.stringify(v, null, 2); } catch (e) { return String(v); } }
+function fmtDur(ms) {
+  if (!isFinite(ms) || ms == null || ms < 0) return "0s";
+  if (ms < 1000) return Math.round(ms) + "ms";
+  if (ms < 60000) return (ms / 1000).toFixed(1) + "s";
+  return Math.floor(ms / 60000) + "m" + (Math.round(ms % 60000) < 10 ? "0" : "") + Math.round(ms % 60000) + "s";
+}
+function relTime(epoch) { if (!epoch || !t0) return "0.0s"; return (epoch - t0).toFixed(2) + "s"; }
+
+var TYPE_TAG = {
+  run_start: "INPUT", run_end: "END", phase_changed: "STATE", state: "STATE",
+  decision: "DECIDE", llm_call_start: "SUBTOOL", llm_call: "MODEL",
+  agent_spawn: "TOOL", document: "TOOL", step: "TOOL",
+  verdict: "TOOL", agent_output: "TOOL", action_done: "TOOL", action_start: "TOOL",
+  failure: "FAILED", timeout: "FAILED",
+  no_progress: "STATE", strategy_exhausted: "STATE", policy_repair: "STATE", progress: "STATE"
+};
+var TYPE_LANE = {
+  run_start: "input", run_end: "input", decision: "input",
+  llm_call: "model", llm_call_start: "model",
+  agent_spawn: "tools", document: "tools", step: "tools",
+  verdict: "tools", agent_output: "tools", action_done: "tools", action_start: "tools",
+  failure: "subtool", timeout: "subtool",
+  no_progress: "subtool", strategy_exhausted: "subtool", policy_repair: "subtool", phase_changed: "subtool", state: "subtool"
+};
+
+function verifierParts(label) {
+  // labels look like objective_verifier:<idx>:<docKey>
+  var parts = String(label || "").split(":");
+  if (parts[0] !== "objective_verifier") return null;
+  return { idx: parts[1] || "", doc: parts.slice(2).join(":") || "" };
+}
+function stepGroupKey(ev) {
+  // group all events of one executed action (and its docs) per iteration
+  return (ev.iteration || 0) + ":" + (ev.action || ev.agent || "?");
+}
+function docsListHtml(docs) {
+  var h = '<div class="doc-list">';
+  for (var i = 0; i < docs.length; i++) {
+    var d = docs[i];
+    var head = esc(d.document_id || d.chunk_id || "?") +
+      '<span class="tag2">' + esc(d.unit_kind || "chunk") + "</span>" +
+      '<span class="meta">' + esc((d.chunk_id ? "chunk " + d.chunk_id : "") + (d.section ? " · " + d.section : "")) + "</span>";
+    h += '<details class="doc-item"><summary>' + head + "</summary><pre>" + esc(d.text || "") + "</pre></details>";
+  }
+  return h + "</div>";
+}
+function extractPassage(input) {
+  var m = String(input || "").match(/CANDIDATE PASSAGE \(([^)]*)\):\n([\s\S]*?)\n\nIs this single passage relevant/);
+  return m ? m[2] : "";
+}
+
+function buildEntry(ev) {
+  var t = ev.type;
+  var lane = TYPE_LANE[t] || "subtool";
+  var tag = TYPE_TAG[t] || "STATE";
+  var title = "";
+  var prev = "";
+  var status = "";
+  var tabs = [];
+  var canvas = null;
+
+  if (t === "run_start") {
+    title = "RUN · " + trunc(ev.question || "", 220);
+  } else if (t === "run_end") {
+    title = "DONE · " + trunc(ev.stop_reason || "complete", 200);
+    status = (ev.stop_reason || "").indexOf("failed") >= 0 ? "failed" : "done";
+    tabs.push({ id: "a", label: "Answer", content: pretty(ev.answer) });
+  } else if (t === "phase_changed") {
+    title = "PHASE · " + (ev.phase || "?");
+  } else if (t === "state") {
+    title = "STATE · iter " + ev.iteration + " · " + (ev.documents || 0) + " docs · " + (ev.evidence || 0) + " evidence";
+  } else if (t === "decision") {
+    title = "DECIDE · " + (ev.action || "?") + (ev.objective_id ? " [" + ev.objective_id + "]" : "");
+    prev = trunc(ev.rationale || ev.query || ev.instructions || "", 200);
+    tabs.push({ id: "r", label: "Rationale", content: ev.rationale || ev.query || ev.instructions || "(empty)" });
+    if (ev.query) tabs.push({ id: "q", label: "Query", content: ev.query });
+    if (ev.instructions) tabs.push({ id: "i", label: "Instructions", content: ev.instructions });
+  } else if (t === "agent_spawn") {
+    title = "SPAWN · " + (ev.agent || ev.action || "?");
+    prev = summarize(ev.input);
+    tabs.push({ id: "in", label: "Input", content: pretty(ev.input) });
+  } else if (t === "action_start") {
+    title = "START · " + (ev.action || "?");
+  } else if (t === "document") {
+    title = "FETCH · " + (ev.document_id || ev.chunk_id || "?") + " · " + (ev.unit_kind || "chunk");
+    prev = trunc(ev.text || "", 200);
+    tabs.push({ id: "doc", label: "Chunk text", content: ev.text || "(empty)" });
+  } else if (t === "llm_call_start") {
+    var vp = verifierParts(ev.label);
+    title = (vp ? "VERIFYING · passage " + vp.idx + " · " + vp.doc : "START · " + (ev.label || "model"));
+    status = "running";
+  } else if (t === "llm_call") {
+    var vp2 = verifierParts(ev.label);
+    title = "MODEL · " + (ev.label || "call") + (ev.agent ? " (" + ev.agent + ")" : "");
+    if (vp2) {
+      var out = (ev.output && typeof ev.output === "object") ? ev.output : {};
+      var rel = out.relevance || "";
+      var conf = (typeof out.confidence === "number") ? out.confidence : 0;
+      if (rel === "relevant" || rel === "partially_relevant") {
+        status = "done";
+        prev = "✓ " + rel + " · conf " + conf.toFixed(2);
+      } else if (rel === "not_relevant") {
+        status = "failed";
+        prev = "✗ not_relevant · conf " + conf.toFixed(2);
+      } else {
+        prev = "prompt " + (ev.input ? ev.input.length : 0) + " chars";
+      }
+    } else {
+      prev = "prompt " + (ev.input ? ev.input.length : 0) + " chars";
+    }
+    if (ev.input) {
+      tabs.push({ id: "p", label: "Prompt (" + String(ev.input.length) + ")", content: ev.input });
+      var psg = vp2 ? extractPassage(ev.input) : "";
+      if (psg) tabs.push({ id: "psg", label: "Passage text", content: psg });
+    }
+    if (ev.thought) tabs.push({ id: "t", label: "Thinking", content: ev.thought });
+    tabs.push({ id: "o", label: "Response", content: pretty(ev.output) });
+  } else if (t === "verdict") {
+    title = "VERDICT · " + (ev.document_id || ev.chunk_id || "?") + " · " + (ev.relevance || "?");
+    prev = trunc("quality=" + (ev.quality || "?") + " conf=" + (ev.confidence != null ? Number(ev.confidence).toFixed(2) : "—"), 160);
+    tabs.push({ id: "v", label: "Verdict", content: pretty(ev) });
+    if (ev.relevance === "not_relevant") status = "failed";
+  } else if (t === "agent_output") {
+    title = "OUTPUT · " + (ev.agent || ev.action || "?");
+    prev = trunc(pretty(ev.output), 160);
+    tabs.push({ id: "out", label: "Output", content: pretty(ev.output) });
+    if (ev.status === "failed") status = "failed";
+  } else if (t === "action_done") {
+    title = "DONE · " + (ev.action || "?");
+    prev = trunc(ev.outcome || "", 160);
+    tabs.push({ id: "out", label: "Outcome", content: ev.outcome || "(empty)" });
+    if (ev.status === "failed") status = "failed";
+  } else if (t === "failure" || t === "timeout") {
+    title = (t === "failure" ? "FAIL · " : "TIMEOUT · ") + (ev.action || "?");
+    prev = trunc(ev.error || "", 200);
+    status = "failed";
+    tabs.push({ id: "e", label: "Error", content: ev.error || "(empty)" });
+  } else if (t === "no_progress") {
+    title = "NO PROGRESS · " + (ev.action || "?");
+    prev = trunc(ev.reason || "", 160);
+  } else if (t === "strategy_exhausted") {
+    title = "EXHAUSTED · " + (ev.action || "?");
+  } else if (t === "policy_repair") {
+    title = "REPAIR · " + (ev.original_action || "?") + " → " + (ev.repaired_action || "?");
+    prev = trunc(ev.reason || "", 160);
+  } else {
+    title = (t || "?").toUpperCase();
+  }
+  var failed = status === "failed";
+  return { ev: ev, lane: lane, tag: tag, title: title, prev: prev, status: status, tabs: tabs, failed: failed };
+}
+
+/* ===== timeline ===== */
+function renderTimeline() {
+  var tStart = t0 > 0 ? t0 : (function () {
+    var m = Infinity;
+    for (var i0 = 0; i0 < allEvents.length; i0++) if (allEvents[i0].ts < m) m = allEvents[i0].ts;
+    return isFinite(m) ? m : Date.now() / 1000;
+  })();
+  var tEnd = running ? Math.max(lastTs, Date.now() / 1000) : (lastTs || tStart + 0.4);
+  var span = Math.max(tEnd - tStart, 0.4);
+  var trackW = Math.max(600, $("timeline").clientWidth - 126);
+  var pps = trackW / span;
+  var now = Date.now() / 1000;
+  var lanes = ["input", "model", "tools", "subtool"];
+  for (var li = 0; li < lanes.length; li++) $("lane-" + lanes[li]).innerHTML = "";
+  if (allEvents.length === 0) return;
+
+  function addBar(laneK, start, end, cls, title, idx) {
+    var x = Math.max(0, Math.round((start - tStart) * pps));
+    var w = Math.max(2, Math.round((end - start) * pps));
+    var div = document.createElement("div");
+    div.className = "tick bar " + cls;
+    div.style.left = x + "px";
+    div.style.width = w + "px";
+    div.title = title;
+    if (idx != null) div.onclick = (function (i) { return function () { jumpToLog(i); }; })(idx);
+    $("lane-" + laneK).appendChild(div);
+  }
+  function addTick(laneK, ts, cls, title, idx) {
+    var x = Math.max(0, Math.round((ts - tStart) * pps));
+    var div = document.createElement("div");
+    div.className = "tick " + cls;
+    div.style.left = x + "px";
+    div.title = title;
+    if (idx != null) div.onclick = (function (i) { return function () { jumpToLog(i); }; })(idx);
+    $("lane-" + laneK).appendChild(div);
+  }
+
+  // ---- LLM calls as duration spans (model lane): llm_call_start -> llm_call ----
+  var llmStart = {}, llmEnd = {};
+  for (var i = 0; i < allEvents.length; i++) {
+    var e = allEvents[i];
+    if (e.type === "llm_call_start") {
+      var k = (e.iteration || 0) + ":" + e.label;
+      if (!llmStart[k] || e.ts < llmStart[k].ts) llmStart[k] = { ts: e.ts, idx: e._idx };
+    } else if (e.type === "llm_call") {
+      var k2 = (e.iteration || 0) + ":" + e.label;
+      llmEnd[k2] = { ts: e.ts, idx: e._idx, agent: e.agent, label: e.label, verdict: verdictOf(e.output) };
+    }
+  }
+  var spanKeys = {};
+  for (var ks in llmStart) spanKeys[ks] = 1;
+  for (var ke in llmEnd) spanKeys[ke] = 1;
+  for (var k3 in spanKeys) {
+    var st = llmStart[k3], en = llmEnd[k3];
+    if (en && st && en.ts < st.ts) en = null;
+    if (!st) {
+      addBar("model", Math.max(en.ts - 0.05, tStart), en.ts, "model", "MODEL · " + en.label, en.idx);
+      continue;
+    }
+    if (!en) {
+      addBar("model", st.ts, Math.max(st.ts + 0.05, now), "model running",
+             "MODEL · " + st.label + " (running)", st.idx);
+      continue;
+    }
+    var vp = verifierParts(en.label);
+    var labelTxt = vp ? ("passage " + vp.idx + " · " + vp.doc) : en.label;
+    var cls = "model";
+    if (en.agent === "verifier") {
+      if (en.verdict === "keep") cls += " keep";
+      else if (en.verdict === "reject") cls += " reject";
+    }
+    var dur = fmtDur((en.ts - st.ts) * 1000);
+    var title = "MODEL · " + labelTxt + "\n" + dur;
+    if (en.agent === "verifier" && en.verdict) title += "\n" + (en.verdict === "keep" ? "✓ relevant" : "✗ not_relevant");
+    addBar("model", st.ts, en.ts, cls, title, en.idx);
+  }
+
+  // ---- steps as duration spans (tools lane): earliest step event -> action_done ----
+  var actStart = {}, actEnd = {};
+  for (var j = 0; j < allEvents.length; j++) {
+    var a = allEvents[j];
+    if (a.type === "decision" || a.type === "action_start" || a.type === "agent_spawn") {
+      var ak = (a.iteration || 0) + ":" + (a.action || "?");
+      if (!actStart[ak] || a.ts < actStart[ak].ts) actStart[ak] = { ts: a.ts, idx: a._idx };
+      if (a.type === "agent_spawn") actStart[ak].idx = a._idx;
+    } else if (a.type === "action_done" || a.type === "agent_output") {
+      var ak2 = (a.iteration || 0) + ":" + (a.action || "?");
+      if (!actEnd[ak2] || a.ts > actEnd[ak2].ts) actEnd[ak2] = { ts: a.ts, idx: a._idx, status: a.status };
+      if (a.type === "action_done") actEnd[ak2].status = a.status;
+    } else if (a.type === "failure" || a.type === "timeout") {
+      var ak3 = (a.iteration || 0) + ":" + (a.action || "?");
+      if (actStart[ak3] && !actEnd[ak3]) actEnd[ak3] = { ts: a.ts, idx: a._idx, status: "failed" };
+    }
+  }
+  for (var akk in actStart) {
+    var st0 = actStart[akk], en0 = actEnd[akk];
+    if (en0 && en0.ts < st0.ts) en0 = null;
+    var start = st0.ts;
+    var end = en0 ? en0.ts : (running ? Math.max(st0.ts + 0.05, now) : st0.ts + 0.05);
+    var failed = en0 && en0.status === "failed";
+    var cls = "tools" + (failed ? " failed" : (en0 ? "" : " running"));
+    var durTxt = en0 ? fmtDur((end - start) * 1000) : "running";
+    addBar("tools", start, end, cls, "STEP · " + akk + "\n" + durTxt, st0.idx);
+  }
+
+  // ---- instantaneous events as thin ticks ----
+  var spawnIdxByStep = {};
+  for (var s = 0; s < allEvents.length; s++) {
+    var sv = allEvents[s];
+    if (sv.type === "agent_spawn") spawnIdxByStep[stepGroupKey(sv)] = sv._idx;
+  }
+  for (var q = 0; q < allEvents.length; q++) {
+    var v = allEvents[q];
+    if (v.type === "llm_call_start" || v.type === "llm_call") continue;
+    if (v.type === "decision") {
+      addTick("input", v.ts, "input", "DECIDE · " + (v.action || "?"), v._idx);
+    } else if (v.type === "run_start") {
+      addTick("input", v.ts, "input", "RUN START", v._idx);
+    } else if (v.type === "run_end") {
+      addTick("input", v.ts, "input", "RUN END", v._idx);
+    } else if (v.type === "document") {
+      var parentIdx = spawnIdxByStep[stepGroupKey(v)];
+      addTick("tools", v.ts, "tools", "FETCH · " + (v.document_id || v.chunk_id || "?"), parentIdx != null ? parentIdx : v._idx);
+    } else if (v.type === "verdict") {
+      addTick("tools", v.ts, "tools", "VERDICT · " + (v.relevance || "?"), v._idx);
+    } else if (v.type === "agent_spawn") {
+      addTick("tools", v.ts, "tools", "SPAWN · " + (v.agent || v.action || "?"), v._idx);
+    } else if (v.type === "action_start") {
+      addTick("tools", v.ts, "tools", "START · " + (v.action || "?"), v._idx);
+    } else if (v.type === "agent_output") {
+      addTick("tools", v.ts, "tools", "OUTPUT · " + (v.agent || v.action || "?"), v._idx);
+    } else if (v.type === "action_done") {
+      addTick("tools", v.ts, "tools", "DONE · " + (v.action || "?"), v._idx);
+    } else if (v.type === "failure" || v.type === "timeout") {
+      addTick("subtool", v.ts, "subtool failed", (v.type === "failure" ? "FAIL · " : "TIMEOUT · ") + (v.action || "?"), v._idx);
+    } else {
+      addTick("subtool", v.ts, "subtool", (v.type || "?").toUpperCase(), v._idx);
+    }
+  }
+}
+
+// helper: keep/reject styling for verifier verdicts on the timeline
+function verdictOf(output) {
+  var o = (output && typeof output === "object") ? output : {};
+  var rel = o.relevance || "";
+  if (rel === "relevant" || rel === "partially_relevant") return "keep";
+  if (rel === "not_relevant") return "reject";
+  return "";
+}
+
+/* ===== log (grouped by objective master) ===== */
+
+// iteration -> objective id, so llm_calls etc. resolve to their H
+function buildIterObj() {
+  var m = {};
+  var i, ev;
+  for (i = 0; i < allEvents.length; i++) {
+    ev = allEvents[i];
+    if (ev.objective_id && (ev.type === "decision" || ev.type === "action_start" ||
+        ev.type === "agent_spawn" || ev.type === "action_done" || ev.type === "document")) {
+      m[ev.iteration] = ev.objective_id;
+    }
+  }
+  return m;
+}
+
+function matches(entry) {
+  if (queryText) {
+    var blob = (entry.title + " " + entry.prev + " " + entry.tabs.map(function (t) { return t.content || ""; }).join(" ")).toLowerCase();
+    if (blob.indexOf(queryText) < 0) return false;
+  }
+  return true;
+}
+
+function objOfEvent(ev, iterObj) {
+  if (ev.objective_id) return ev.objective_id;
+  return iterObj[ev.iteration] || "global";
+}
+
+function objLabel(obj) { return obj === "global" ? "Orchestration" : obj; }
+
+function objStatement(obj, entries) {
+  // pull the objective statement from the first VERIFY spawn input if present
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    if (e.ev.type === "agent_spawn" && e.ev.input && e.ev.input.statement &&
+        (e.ev.input.objective || "") === obj) {
+      return e.ev.input.statement;
+    }
+  }
+  return "";
+}
+
+function renderLog() {
+  var list = $("log");
+  // Group document events under the retrieve step that fetched them so they
+  // render as a nested list inside that step, not as standalone rows.
+  var docsByStep = {};
+  for (var di = 0; di < allEvents.length; di++) {
+    var dev = allEvents[di];
+    if (dev.type !== "document") continue;
+    var dk = stepGroupKey(dev);
+    if (!docsByStep[dk]) docsByStep[dk] = [];
+    docsByStep[dk].push(dev);
+  }
+  var iterObj = buildIterObj();
+  var entries = [];
+  for (var i = 0; i < allEvents.length; i++) {
+    var ev = allEvents[i];
+    if (ev.type === "document") continue; // nested inside the retrieve step
+    var entry = buildEntry(ev);
+    if (ev.type === "agent_spawn") {
+      var sk = stepGroupKey(ev);
+      var docs = docsByStep[sk];
+      if (docs && docs.length) {
+        entry.docs = docs;
+        entry.tabs.push({ id: "docs", label: "Documents (" + docs.length + ")", html: true, content: docsListHtml(docs) });
+      }
+    }
+    entry.obj = objOfEvent(ev, iterObj);
+    if (matches(entry)) entries.push(entry);
+  }
+  if (entries.length === 0) {
+    list.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--dim)">No events yet — type a question below and press ▶.</div>';
+    return;
+  }
+  // group into objective masters, preserving first-seen order, global last
+  var groups = {};
+  var order = [];
+  var idx;
+  for (var j = 0; j < entries.length; j++) {
+    var obj = entries[j].obj;
+    if (!groups[obj]) {
+      groups[obj] = [];
+      if (obj !== "global") order.push(obj);
+    }
+    groups[obj].push(entries[j]);
+  }
+  if (groups.global) order.push("global");
+  var html = "";
+  if (answer && answer.summary) {
+    html += '<div id="answerBox"><h3>Final answer</h3><div class="asum">' + esc(summarize(answer.summary)) + "</div></div>";
+  }
+  for (var g = 0; g < order.length; g++) {
+    var gid = order[g];
+    var ge = groups[gid];
+    var isOpen = !!openObjs[gid];
+    var stmt = objStatement(gid, ge);
+    // status + counts for this objective
+    var ndone = 0, nfail = 0, nrunning = 0, nllm = 0, ndocs = 0;
+    for (var k = 0; k < ge.length; k++) {
+      var ee = ge[k];
+      if (ee.status === "done") ndone++;
+      else if (ee.status === "failed") nfail++;
+      else if (ee.status === "running") nrunning++;
+      if (ee.ev.type === "llm_call") nllm++;
+      if (ee.docs && ee.docs.length) ndocs += ee.docs.length;
+    }
+    var statusChip = nfail ? "failed" : (nrunning ? "running" : "done");
+    var meta = (nfail ? nfail + " fail · " : "") + nllm + " LLM call(s)" + 
+               (ndocs ? " · " + ndocs + " doc(s)" : "");
+    html += '<div class="obj-master" data-obj="' + esc(gid) + '" data-open="' + (isOpen ? "1" : "0") + '">';
+    html += '<div class="obj-head" data-master="1">';
+    html += '<span class="chev">' + (isOpen ? "▼" : "▶") + "</span>";
+    html += '<span class="obj-id">' + esc(objLabel(gid)) + "</span>";
+    if (stmt) html += '<span class="obj-stmt">' + esc(trunc(stmt, 120)) + "</span>";
+    html += '<span class="obj-meta">' + esc(meta) + "</span>";
+    html += '<span class="st ' + statusChip + '">' + esc(statusChip) + "</span>";
+    html += "</div>";
+    html += '<div class="obj-body">';
+    for (var e2 = 0; e2 < ge.length; e2++) html += rowHtml(ge[e2]);
+    html += "</div></div>";
+  }
+  list.innerHTML = html;
+  bindLog();
+  updateStats();
+}
+
+function rowHtml(e) {
+  var idx = e.ev._idx;
+  var open = !!openRows[idx];
+  var col = {
+    INPUT: "var(--input)", MODEL: "var(--model)", TOOL: "var(--tools)",
+    SUBTOOL: "var(--subtool)", FAILED: "var(--red)", DECIDE: "var(--blue)",
+    STATE: "var(--muted)", END: "var(--green)"
+  }[e.tag] || "var(--muted)";
+  var spin = (e.status === "running") ? '<span class="spin"></span>' : "";
+  var body = "";
+  if (open && e.tabs.length) {
+    var active = rowTab[idx] || e.tabs[0].id;
+    var tabsH = "", panesH = "";
+    for (var i = 0; i < e.tabs.length; i++) {
+      var tab = e.tabs[i];
+      var isOn = tab.id === active;
+      var cls = "pane-mini" + (isOn ? " on" : "");
+      tabsH += '<span class="tab-mini ' + (isOn ? "on" : "") + '" data-idx="' + idx + '" data-tab="' + tab.id + '">' + esc(tab.label) + "</span>";
+      var preCls = tab.id === "t" ? "thought" : "";
+      if (tab.html) {
+        panesH += '<div class="' + cls + '" data-idx="' + idx + '">' + tab.content + "</div>";
+      } else {
+        panesH += '<div class="' + cls + '" data-idx="' + idx + '"><pre class="' + preCls + '">' + esc(tab.content || "(empty)") + "</pre></div>";
+      }
+    }
+    body = '<div class="edetail"><div class="tabs-mini">' + tabsH + "</div>" + panesH + "</div>";
+  }
+  var st = e.status ? '<span class="estatus ' + e.status + '">' + e.status.toUpperCase() + "</span>" : "";
+  return '<div class="log-row ' + (open ? "open" : "") + '" data-idx="' + idx + '">' +
+    '<span class="etag" style="color:' + col + '"><i style="background:' + col + '"></i>' + esc(e.tag) + "</span>" +
+    '<span class="etime">' + esc(relTime(e.ev.ts)) + "</span>" +
+    '<div class="ebody" data-toggle="1">' +
+      '<div class="etitle">' + spin + esc(e.title) + "</div>" +
+      (e.prev ? '<div class="eprev">' + esc(e.prev) + "</div>" : "") +
+      body +
+    "</div>" +
+    st +
+  "</div>";
+}
+
+function bindLog() {
+  $("log").onclick = function (event) {
+    // clicks inside a nested document <details> are handled natively
+    if (event.target.closest(".doc-item")) return;
+    // master objective toggle
+    var master = event.target.closest(".obj-head");
+    if (master) {
+      var gid = master.parentElement.getAttribute("data-obj");
+      if (openObjs[gid]) delete openObjs[gid];
+      else openObjs[gid] = true;
+      renderLog();
+      var node = $("log").querySelector('.obj-master[data-obj="' + gid + '"]');
+      if (node && openObjs[gid]) node.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    var tab = event.target.closest(".tab-mini");
+    if (tab) {
+      rowTab[tab.getAttribute("data-idx")] = tab.getAttribute("data-tab");
+      renderLog();
+      return;
+    }
+    var row = event.target.closest(".log-row");
+    if (row) {
+      var idx = +row.getAttribute("data-idx");
+      if (openRows[idx]) delete openRows[idx];
+      else openRows[idx] = true;
+      renderLog();
+      if (follow && openRows[idx]) {
+        var node = $("log").querySelector('.log-row[data-idx="' + idx + '"]');
+        if (node) node.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  };
+}
+
+function openMasterOf(idx) {
+  // open the objective master containing the given event, and the row itself
+  var iterObj = buildIterObj();
+  for (var i = 0; i < allEvents.length; i++) {
+    if (allEvents[i]._idx === idx) {
+      openObjs[objOfEvent(allEvents[i], iterObj)] = true;
+      break;
+    }
+  }
+  openRows[idx] = true;
+}
+
+function jumpToLog(idx) {
+  openMasterOf(idx);
+  renderLog();
+  var node = $("log").querySelector('.log-row[data-idx="' + idx + '"]');
+  if (node) node.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+/* ===== stats ===== */
+function updateStats() {
+  var turns = 0, steps = 0, llmMs = 0, toolMs = 0;
+  var startByKey = {};
+  for (var k = 0; k < allEvents.length; k++) {
+    var e = allEvents[k];
+    if (e.type === "decision") turns++;
+    if (e.type === "llm_call_start") startByKey[e.iteration + ":" + e.label] = e.ts;
+  }
+  steps = allEvents.length;
+  for (var m = 0; m < allEvents.length; m++) {
+    var e2 = allEvents[m];
+    if (e2.type === "llm_call") {
+      var key = e2.iteration + ":" + e2.label;
+      var st = startByKey[key];
+      if (st && e2.ts > st) llmMs += (e2.ts - st) * 1000;
+    }
+    if (e2.type === "action_start") startByKey["act:" + e2.iteration + ":" + e2.action] = e2.ts;
+    if (e2.type === "action_done") {
+      var actKey = "act:" + e2.iteration + ":" + e2.action;
+      var actStart = startByKey[actKey];
+      if (actStart && e2.ts > actStart) toolMs += (e2.ts - actStart) * 1000;
+    }
+  }
+  $("stat-turns").textContent = turns;
+  $("stat-steps").textContent = steps;
+  $("stat-llm").textContent = fmtDur(llmMs);
+  $("stat-tool").textContent = fmtDur(toolMs);
+  $("stat-elapsed").textContent = t0 ? fmtDur((lastTs - t0) * 1000) : "0s";
+}
+
+/* ===== status / reset ===== */
+function setStatus(mode) {
+  var dot = $("dot"), txt = $("statusText");
+  if (mode === "running") { dot.className = "dot running"; txt.textContent = "running"; }
+  else if (mode === "done") { dot.className = "dot done"; txt.textContent = "done"; $("runBtn").disabled = false; }
+  else if (mode === "failed") { dot.className = "dot failed"; txt.textContent = "failed"; $("runBtn").disabled = false; }
+  else { dot.className = "dot"; txt.textContent = "idle"; }
+}
+
+function resetBoard() {
+  allEvents = []; latestIdx = -1; t0 = 0; lastTs = 0; running = false;
+  answer = null;
+  openRows = {}; rowTab = {}; openObjs = {}; queryText = "";
+  $("searchInput").value = "";
+  $("phaseLabel").textContent = ""; $("counts").textContent = "";
+  renderTimeline(); renderLog(); setStatus("idle");
+}
+
+/* ===== polling ===== */
+async function poll() {
+  try {
+    var resp = await fetch("/events?after=" + latestIdx);
+    var data = await resp.json();
+    var es = data.events || [];
+    var changed = false;
+    for (var i = 0; i < es.length; i++) {
+      if (es[i]._idx <= latestIdx) continue;
+      latestIdx = es[i]._idx;
+      allEvents.push(es[i]);
+      var t = es[i].type;
+      if (t === "run_start") { running = true; t0 = es[i].ts; lastTs = es[i].ts; setStatus("running"); }
+      if (t === "run_end") {
+        running = false; lastTs = es[i].ts;
+        answer = es[i].answer || null;
+        setStatus((es[i].stop_reason || "").indexOf("failed") >= 0 ? "failed" : "done");
+      }
+      if (es[i].ts > lastTs) lastTs = es[i].ts;
+      if (t === "phase_changed") { $("phaseLabel").textContent = "phase · " + (es[i].phase || ""); }
+      if (t === "state") { $("counts").textContent = "iter " + es[i].iteration + " · " + es[i].documents + " docs · " + es[i].evidence + " evidence"; }
+      changed = true;
+    }
+    if (changed) { renderTimeline(); renderLog(); if (follow) autoscroll(); }
+    else if (running) renderTimeline();
+  } catch (err) { /* server not up */ }
+}
+
+function autoscroll() {
+  var list = $("log");
+  var rows = list.querySelectorAll(".log-row");
+  if (rows.length) rows[rows.length - 1].scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/* ===== actions ===== */
+async function run() {
+  var q = $("question").value.trim();
+  if (!q) return;
+  $("runBtn").disabled = true;
+  resetBoard();
+  setStatus("running");
+  try {
+    await fetch("/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+  } catch (err) { setStatus("failed"); }
+}
+$("runBtn").onclick = run;
+$("question").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
+$("clearBtn").onclick = async function () {
+  try { await fetch("/clear", { method: "POST" }); } catch (err) {}
+  resetBoard();
+};
+$("followBtn").onclick = function () { follow = !follow; $("followBtn").classList.toggle("on", follow); };
+$("searchInput").addEventListener("input", function (e) {
+  queryText = (e.target.value || "").toLowerCase().trim();
+  renderLog();
+});
+
+setInterval(poll, 700);
+poll();
+</script>
+</body>
+</html>

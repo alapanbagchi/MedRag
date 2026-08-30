@@ -41,6 +41,13 @@ EMBEDDING_DIM = 768
 SCHEMA = "medrag"
 
 
+def _to_np(v: Any) -> np.ndarray:
+    """Convert a fetched pgvector value (Vector / list / ndarray) to float32."""
+    if hasattr(v, "to_list"):
+        v = v.to_list()
+    return np.asarray(v, dtype=np.float32)
+
+
 @dataclass
 class PgConfig:
     """PostgreSQL connection configuration.
@@ -350,6 +357,10 @@ class PgVectorStore:
         if norm > 0:
             q = q / norm
 
+        # pgvector HNSW only explores ~ef_search candidates per query; the
+        # default (40) would cap results below top_k. Raise it for this scan.
+        cur.execute("SET LOCAL hnsw.ef_search = %s", (max(top_k + 64, 160),))
+
         if method == "cosine":
             # <#> returns negative inner product; negate for similarity
             cur.execute(f"""
@@ -431,6 +442,7 @@ class PgVectorStore:
         norm = np.linalg.norm(q)
         if norm > 0:
             q = q / norm
+        cur.execute("SET LOCAL hnsw.ef_search = %s", (max(top_k + 64, 160),))
 
         where: List[str] = []
         params: List[Any] = []
@@ -485,13 +497,20 @@ class PgVectorStore:
         cur.close()
         if row is None:
             return None
+        bc = row[5]
+        if isinstance(bc, (list, dict)):
+            breadcrumb = bc
+        elif bc:
+            breadcrumb = json.loads(bc)
+        else:
+            breadcrumb = []
         return {
             "id": row[0],
             "document_id": row[1],
             "chunk_type": row[2],
             "section": row[3],
             "subsection": row[4],
-            "breadcrumb": json.loads(row[5]) if row[5] else [],
+            "breadcrumb": breadcrumb,
             "parent_id": row[6],
             "document_position": row[7],
             "text": row[8],
@@ -511,13 +530,20 @@ class PgVectorStore:
         """, (chunk_ids,))
         results = {}
         for row in cur.fetchall():
+            bc = row[5]
+            if isinstance(bc, (list, dict)):
+                breadcrumb = bc
+            elif bc:
+                breadcrumb = json.loads(bc)
+            else:
+                breadcrumb = []
             results[row[0]] = {
                 "id": row[0],
                 "document_id": row[1],
                 "chunk_type": row[2],
                 "section": row[3],
                 "subsection": row[4],
-                "breadcrumb": json.loads(row[5]) if row[5] else [],
+                "breadcrumb": breadcrumb,
                 "parent_id": row[6],
                 "document_position": row[7],
                 "text": row[8],
@@ -539,7 +565,7 @@ class PgVectorStore:
         cur.close()
         if row is None:
             return None
-        return np.array(row[0], dtype=np.float32)
+        return _to_np(row[0])
 
     def get_embeddings(self, chunk_ids: List[str]) -> Dict[str, np.ndarray]:
         """Fetch embedding vectors for multiple chunks."""
@@ -555,7 +581,7 @@ class PgVectorStore:
         """, (chunk_ids,))
         results = {}
         for row in cur.fetchall():
-            results[row[0]] = np.array(row[1], dtype=np.float32)
+            results[row[0]] = _to_np(row[1])
         cur.close()
         return results
 

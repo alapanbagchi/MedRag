@@ -1,0 +1,1 @@
+"""Core abstractions shared across the pipeline."""

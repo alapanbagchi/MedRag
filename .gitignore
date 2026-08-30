@@ -32,6 +32,14 @@ pgvector_data/
 # derived local data (rebuildable, large)
 chunks/
 embeddings/
+chunks_v2/
+embeddings
+embeddings_v2
+reports/
+logs/
+units_v2/
+data/
+eval/
 
 # scratch / probes
 .pi_probe/

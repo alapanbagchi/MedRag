@@ -1,0 +1,11 @@
+==============================================================================
+MEDRAG RUN  2026-08-30 22:34:04
+QUERY: LOGFIRE PING
+==============================================================================
+
+==== LOGFIRE PING - connectivity check  (2026-08-30 22:34:04) ====
+  > sending test span/metrics to medpat project
+[agent] call ping_agent | output_type=Out | {"label": "ping_agent:ping-1"}
+[prompt] ping_agent:ping-1_user_prompt:
+    ping
+[parsed] Out: {'ping': 'pong'}
