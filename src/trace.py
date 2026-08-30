@@ -1,8 +1,10 @@
-"""Incremental streaming trace -> logs.txt.
+"""Incremental streaming trace -> logs.txt (+ Logfire when enabled).
 
 Every event (stage, agent call, prompt, raw model response, retrieval ranks,
 worker spawn) is written to the log file immediately and flushed, so logs.txt
-is always current even if the process dies.
+is always current even if the process dies. When Logfire is enabled
+(see src.logfire_obs) every event is also forwarded there as a span/log with
+run/task context attributes, so the same call sites feed both sinks.
 
 Usage:
     trace = get_trace()
@@ -45,6 +47,15 @@ class Trace:
     def active(self) -> bool:
         return self._fh is not None and not self._fh.closed
 
+    @staticmethod
+    def _logfire():
+        """The Logfire bridge when active (lazy import; never raises)."""
+        try:
+            from src import logfire_obs
+            return logfire_obs if logfire_obs.enabled() else None
+        except Exception:
+            return None
+
     def open_stream(self, path: str | Path, query: str = "") -> None:
         """Open the log file for incremental writing (append+flush)."""
         self.close_stream()
@@ -85,13 +96,23 @@ class Trace:
     # Public event methods
     # ------------------------------------------------------------------
     def stage(self, title: str) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.stage(title)
         self._write("")
         self._write(f"==== {title}  ({self._now()}) ====")
 
-    def bullet(self, msg: str) -> None:
-        self._write(f"  > {msg}")
+    def bullet(self, msg: str, agent: str = "") -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.bullet(msg, agent=agent)
+        prefix = f"{agent.upper()}: " if agent else ""
+        self._write(f"  > {prefix}{msg}")
 
     def agent(self, name: str, output_type: str = "", meta: dict | None = None) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.agent(name, output_type=output_type, meta=meta)
         parts = [f"call {name}"]
         if output_type:
             parts.append(f"output_type={output_type}")
@@ -100,17 +121,29 @@ class Trace:
         self._write(f"[agent] {' | '.join(parts)}")
 
     def prompt(self, label: str, text: Any) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.prompt(label, text)
         self._write(f"[prompt] {label}:")
         self._write(self._indent(self._truncate(text)))
 
     def response(self, label: str, text: Any) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.response(label, text)
         self._write(f"[response] {label}:")
         self._write(self._indent(self._truncate(text)))
 
     def parsed(self, type_name: str, data: Any) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.parsed(type_name, data)
         self._write(f"[parsed] {type_name}: {self._truncate(data, 4000)}")
 
     def log(self, event: str, **fields: Any) -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.log(event, **fields)
         parts = [f"[event] {event}"]
         for k, v in fields.items():
             parts.append(f"{k}={self._truncate(v, 2000)}")
@@ -125,12 +158,21 @@ class Trace:
         call shows up twice in the trace.
         """
         if result is None:
+            lf = self._logfire()
+            if lf is not None:
+                lf.tool(name, args)
             self._write(f"[tool] {name} args={json.dumps(args, default=str)}")
             return
+        lf = self._logfire()
+        if lf is not None:
+            lf.tool(name, args, result)
         self._write(f"[tool-result] {name}: {self._truncate(result, 4000)}")
 
     def retrieved(self, method: str, query: str, ranks: list, texts=None) -> None:
         """Log raw per-method rankings: [(chunk_id, score), ...]."""
+        lf = self._logfire()
+        if lf is not None:
+            lf.retrieved(method, query, ranks, texts)
         self._write(f"[retrieved] {method} | query={query[:80]!r} | n={len(ranks)}")
         texts = texts or {}
         full = _full_texts_enabled()
@@ -152,10 +194,16 @@ class Trace:
                 self._write("    -------- END TEXT --------")
 
     def wake(self, count: int, kind: str = "") -> None:
+        lf = self._logfire()
+        if lf is not None:
+            lf.log("workers_spawned", count=count, kind=kind)
         self._write(f"[workers] spawned {count} {kind} task(s)")
 
     def chunk(self, doc: Any, rank: int = 0, label: str = "retrieved") -> None:
         """Log ONE retrieved chunk with FULL untruncated text + metadata."""
+        lf = self._logfire()
+        if lf is not None:
+            lf.chunk(doc, rank=rank, label=label)
         cid = getattr(doc, "chunk_id", None) or getattr(doc, "id", "")
         doc_id = getattr(doc, "document_id", "")
         node = getattr(doc, "node_type", "") or getattr(doc, "chunk_type", "")

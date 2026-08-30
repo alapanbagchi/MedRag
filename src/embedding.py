@@ -175,6 +175,7 @@ class EmbeddingRunner:
         articles = [self.prepare_article(row) for _, row in eligible.iterrows()]
 
         all_embeddings: List[np.ndarray] = []
+        truncated_total = 0
         for start in range(0, len(articles), self.config.batch_size):
             batch = articles[start : start + self.config.batch_size]
 
@@ -185,6 +186,10 @@ class EmbeddingRunner:
                 return_tensors="pt",
                 max_length=self.config.max_length,
             )
+            # actual token lengths (attention mask sums, pre-padding):
+            # lengths == max_length were really truncated by the encoder.
+            lengths = encoded["attention_mask"].sum(dim=1)
+            truncated_total += int((lengths >= self.config.max_length).sum().item())
             encoded = {key: value.to(self.device) for key, value in encoded.items()}
 
             with torch.inference_mode():
@@ -204,7 +209,7 @@ class EmbeddingRunner:
         return pd.DataFrame({
             "chunk_id": eligible["id"].values,
             "embedding": list(vectors),
-        })
+        }), truncated_total
 
     # ==================================================================
     # Validation
@@ -256,7 +261,7 @@ class EmbeddingRunner:
                 df["retrieval_eligible"].fillna(False).astype(bool).sum()
             )
 
-            result = self.embed_dataframe(df)
+            result, truncated = self.embed_dataframe(df)
             self.validate_output(df, result)
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -273,6 +278,7 @@ class EmbeddingRunner:
                 "input_chunks": len(df),
                 "eligible_chunks": eligible_count,
                 "embedded_chunks": len(result),
+                "truncated_at_max_length": truncated,
                 "dimension": self.config.embedding_dim,
                 "elapsed_seconds": elapsed,
             }
@@ -283,6 +289,7 @@ class EmbeddingRunner:
                 "file": key,
                 "input_chunks": len(df),
                 "embedded_chunks": len(result),
+                "truncated": truncated,
                 "elapsed": elapsed,
             }
 
@@ -341,6 +348,7 @@ class EmbeddingRunner:
         failed = 0
         total_input_chunks = 0
         total_embedded_chunks = 0
+        total_truncated = 0
         failed_files: List[Dict[str, str]] = []
 
         run_start = time.perf_counter()
@@ -363,6 +371,7 @@ class EmbeddingRunner:
                     completed += 1
                     total_input_chunks += result["input_chunks"]
                     total_embedded_chunks += result["embedded_chunks"]
+                    total_truncated += result.get("truncated", 0)
                 else:
                     failed += 1
                     failed_files.append({
@@ -387,6 +396,8 @@ class EmbeddingRunner:
         print(f"Completed:         {completed:,}")
         print(f"Skipped:           {skipped:,}")
         print(f"Failed:            {failed:,}")
+        print(f"Truncated @{self.config.max_length}: {total_truncated:,} "
+              f"({'' if not total_embedded_chunks else round(100*total_truncated/max(1,total_embedded_chunks),1)}%)")
         print(f"Input chunks:      {total_input_chunks:,}")
         print(f"Embeddings:        {total_embedded_chunks:,}")
         print(f"Elapsed:           {elapsed / 60:.2f} minutes")
