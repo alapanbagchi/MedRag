@@ -196,3 +196,29 @@ class SPLADEIndex:
                 ))
             out.append(hits)
         return out
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+    from pathlib import Path
+
+    os.environ.setdefault("HF_HOME", str(Path(__file__).resolve().parent.parent.parent / ".cache" / "hf"))
+    os.environ.setdefault("TRANSFORMERS_CACHE", os.environ["HF_HOME"])
+
+    parser = argparse.ArgumentParser(description="Build SPLADE index from corpus (python -m src.retrieval.splade)")
+    parser.add_argument("--out-dir", type=Path, default=Path("index/splade"), help="output dir")
+    parser.add_argument("--max-docs", type=int, default=None, help="limit docs (for testing)")
+    parser.add_argument("--batch-size", type=int, default=4, help="encode batch size")
+    parser.add_argument("--model", default="NeuML/pubmedbert-base-splade", help="SPLADE model")
+    args = parser.parse_args()
+
+    from src.config import AppConfig
+    from src.retrieval.corpus import CorpusIndex
+
+    corpus = CorpusIndex(AppConfig().corpus_path)
+    idx = SPLADEIndex.build_from_corpus(
+        corpus, Path(args.out_dir), model_name=args.model, batch_size=args.batch_size,
+        max_docs=args.max_docs,
+    )
+    print(f"Saved SPLADE index to {args.out_dir}: {idx.n_docs} docs, vocab {idx.vocab_size}, nnz {idx.doc_matrix.nnz}")

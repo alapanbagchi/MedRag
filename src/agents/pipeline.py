@@ -100,10 +100,7 @@ class AgenticV3Pipeline:
             resolution_agent or ResolutionAgent(config=self.config))
         self.synthesizer = synthesizer or FinalSynthesizer(config=self.config)
         self.events = events
-        if self.events is None and getattr(self.config, "agentic_v3_events_file", ""):
-            from src.agents.events import EventEmitter
-            self.events = V3Events(EventEmitter(self.config.agentic_v3_events_file))
-        elif self.events is not None and not isinstance(self.events, V3Events):
+        if self.events is not None and not isinstance(self.events, V3Events):
             self.events = V3Events(self.events)
         if self.events is not None:
             self.worker.events = self.events
