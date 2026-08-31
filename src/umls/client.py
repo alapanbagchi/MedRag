@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from pydantic import BaseModel, Field
 
-from src.agents.planner import ClinicalEntity
+from src.retrieval.plans import ClinicalEntity
 
 logger = logging.getLogger("src.umls")
 

@@ -7,7 +7,7 @@ import json
 import pytest
 from pydantic import BaseModel
 
-from src.lib import decode_structured, strip_think
+from src.lib.utils import decode_structured, strip_think
 
 
 class Plan(BaseModel):

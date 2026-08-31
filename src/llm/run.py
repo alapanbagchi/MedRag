@@ -29,7 +29,7 @@ from typing import Any, Callable, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
-from src.lib import COMPACTION_NUDGE, decode_structured, strip_think
+from src.lib.utils import COMPACTION_NUDGE, decode_structured, strip_think
 from src.llm.ratelimit import estimate_tokens, get_bucket, is_rate_limit_error, run_with_retry
 
 logger = logging.getLogger("src.llm.run")
@@ -175,7 +175,7 @@ async def ask_structured(
     model requests nest inside), and records LLM latency / prompt-token /
     call-count metrics. When Logfire is disabled this is a thin passthrough.
     """
-    from src import logfire_obs as lf
+    from src.lib import logfire_obs as lf
 
     lf.ensure_configured()
     t0 = time.monotonic()
@@ -231,7 +231,7 @@ async def _ask_structured_core(
     fallback_parser: Optional[Any] = None,
 ) -> T:
     """The actual request path (rate limit, structured run, text fallback)."""
-    from src.trace import get_trace
+    from src.lib.trace import get_trace
 
     trace = get_trace()
     bucket = get_bucket()

@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from src.models import ScoredChunk
+from src.lib.models import ScoredChunk
 from src.retrieval.pgvector_store import PgConfig, PgVectorStore, EMBEDDING_DIM
 
 

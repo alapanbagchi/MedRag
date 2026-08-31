@@ -131,12 +131,12 @@ def test_v3_ui_handles_a_real_events_file(tmp_path):
 
     Simulates what the browser does: the polling JSON is produced by the
     server from the JSONL file; the HTML must be servable over HTTP."""
-    from src.agentic_v3.pipeline import AgenticV3Pipeline
+    from src.agents.pipeline import AgenticV3Pipeline
     from src.config import AppConfig
 
     # the pipeline constructs with an events file wired the same way the
     # server does (EventEmitter + AGENTIC_V3_EVENTS_FILE)
-    from src.agentic_v3.events import EventEmitter
+    from src.agents.events import EventEmitter
     path = tmp_path / "agentic_v3_events.jsonl"
     events = EventEmitter(str(path))
     pipeline = AgenticV3Pipeline(config=AppConfig(), events=events)

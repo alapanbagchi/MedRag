@@ -4,7 +4,7 @@
 # Prompts for the title and an optional year range; a BLANK year range
 # searches all years indexed by NCBI.
 download-articles:
-	.venv/bin/python scripts/download_articles.py
+	.venv/bin/python -m src.ingestion.download_articles
 
 # Convert collected JATS XML to Markdown (default data/raw -> data/md).
 # Override with INPUT=... OUTPUT=... LIMIT=... (e.g.:
@@ -13,7 +13,7 @@ INPUT ?= data/raw
 OUTPUT ?= data/md
 LIMIT ?=
 jats-to-md:
-	.venv/bin/python scripts/jats_to_md.py --input "$(INPUT)" --output "$(OUTPUT)" $(if $(LIMIT),--limit $(LIMIT))
+	.venv/bin/python -m src.processing.jats_to_md --input "$(INPUT)" --output "$(OUTPUT)" $(if $(LIMIT),--limit $(LIMIT))
 
 # Chunker v2: structure-first Markdown chunking (no LLM) -> chunks_v2 + units_v2.
 # MD_INPUT defaults to the Markdown output of jats-to-md (data/md).
@@ -21,7 +21,7 @@ MD_INPUT ?= data/md
 CHUNKS_OUT ?= chunks_v2
 UNITS_OUT ?= units_v2
 chunk-md:
-	.venv/bin/python -m src.md_chunker --input "$(MD_INPUT)" --chunks-out "$(CHUNKS_OUT)" --units-out "$(UNITS_OUT)"
+	.venv/bin/python -m src.chunking.md_chunker --input "$(MD_INPUT)" --chunks-out "$(CHUNKS_OUT)" --units-out "$(UNITS_OUT)"
 
 # ====================================================================
 # PostgreSQL + pgvector targets

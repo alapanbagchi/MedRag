@@ -22,7 +22,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from src._torch import resolve_device
+from src.lib._torch import resolve_device
 
 DEFAULT_QUERY_MODEL = "ncbi/MedCPT-Query-Encoder"
 DEFAULT_MAX_LENGTH = 64

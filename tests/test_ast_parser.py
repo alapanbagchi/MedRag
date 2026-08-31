@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.parser import PMCASTParser
+from src.processing.parser import PMCASTParser
 
 
 def make_xml(body: str, extra_front: str = "") -> str:

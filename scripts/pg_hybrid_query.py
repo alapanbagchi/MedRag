@@ -332,7 +332,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         # ---------------------------------------------------------------
         # INTENT RERANK (whole union scored once) — same as rerank_union
         # ---------------------------------------------------------------
-        from src.agents.planner import SubQuery
+        from src.retrieval.plans import SubQuery
         from src.retrieval.reranker import diversify_papers, rerank_union
         sub = SubQuery(id="H1", target=args.query, query=args.query,
                        evidence_required=[], terminology=[])

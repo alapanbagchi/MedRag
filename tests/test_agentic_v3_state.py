@@ -1,6 +1,6 @@
 """Agentic v3 - state model tests: evidence thresholds, dedup, coverage."""
 
-from src.agentic_v3.state import (
+from src.agents.state import (
     AnswersTask,
     CriticRelevance,
     CriticVerdict,

@@ -15,14 +15,11 @@ Different agents can use different providers: `build_model_for(config, role)`
 (`ORCHESTRATOR_`, `VERIFIER_`, `SYNTHESIZER_`, `PLANNER_`, … — see
 `.env.example`) with the global provider as fallback; e.g.
 `VERIFIER_PROVIDER=mistral` runs just the critic on Mistral while the rest of
-the pipeline stays on the global model (Gemma). When the verifier is Mistral,
-critic calls are additionally **batched**: every passage retrieved in a worker
-round is submitted as ONE Mistral Batch job (`/v1/batch/jobs`, Jobs API —
-`src/llm/mistral_batch.py`) instead of one LLM call per passage. Batching
-needs a Mistral plan with billing enabled (`VERIFIER_BATCH_ENABLED`, see
-`.env.example`); if the Batch API is unavailable (e.g. HTTP 402), the critic
-logs a warning and falls back to sequential verification with no loss of
-functionality.
+the pipeline stays on the global model (Gemma). Critic verifications run as **parallel single requests**: every passage
+retrieved in a worker round is judged concurrently, one LLM call per passage,
+with requests started at most one per second (1 req/s) so free-tier rate
+limits are respected - the Mistral free tier cannot submit Batch API jobs, so
+batching is not used.
 
 ```
 src/agents + src/orchestration              any /v1/chat/completions
@@ -38,8 +35,8 @@ src/agents + src/orchestration              any /v1/chat/completions
 
 Key architectural properties:
 
-- **Batched verification** – all candidate units of a round go through as few
-  LLM calls as possible (`VERIFY_BATCH_MAX_DOCS`, `VERIFY_BATCH_MAX_TOKENS`);
+- **Parallel paced verification** – every candidate unit of a round is judged
+  as its own single request, run concurrently at 1 req/s;
   duplicate units across subqueries are verified once via a memo.
 - **Failure ≠ irrelevance** – quota/timeouts/parse errors mark units `unknown`;
   they are retried on later rounds and reported in `warnings`, never silently
@@ -208,8 +205,8 @@ touch the corpus or the LLM itself. Set `AGENTIC_V2_UI_PORT` to change the port.
 
 ## Agentic V3 - evidence-vetted multi-agent retrieval
 
-A NEW flow (src/agentic_v3/), separate from src/agentic/ and src/agentic_v2/
-(both untouched). Implements the V1 spec: instead of a flat
+A NEW flow (src/agents/), separate from the retired legacy v1/v2 flows
+(src/agentic/, src/agentic_v2/ - moved to _trash/). Implements the V1 spec: instead of a flat
 Query -> Top-K -> LLM pipeline (and instead of v2's single-agent state
 machine), the system decomposes the question, dispatches INDEPENDENT Worker
 sub-orchestrators IN PARALLEL, verifies every passage with a CRITIC gate,
@@ -379,10 +376,7 @@ file per agent, so prompts can be edited without touching code:
 
 ```text
 src/prompts/
-  legacy/        evidence.txt  planner.txt  rewriter.txt  synthesizer.txt  verifier.txt   (python -m src, src/agents)
-  agentic_v1/    planner.txt  loop.txt                                                     (--agentic)
-  agentic_v2/    orchestrator.txt  verifier.txt  synthesize.txt                           (--agentic-v2)
-  agentic_v3/    master.txt  search_planner.txt  critic.txt  deep_inspector.txt
+  agents/        master.txt  search_planner.txt  critic.txt  deep_inspector.txt
                  replanner.txt  contradiction.txt  resolution.txt  synthesize.txt        (--agentic-v3)
 ```
 
@@ -396,17 +390,17 @@ using a stale prompt. Legacy pipeline reads live from these files per run.
 ## Layout
 
 ```
-src/medrag/
-  models.py          shared dataclasses (chunking + retrieval)
-  classification.py  section classification rules
-  parser.py          JATS/PMC XML -> Document AST
-  chunker.py         Document AST -> retrieval chunks
-  validators.py      AST and chunk validators
-  pipeline.py        chunking pipeline runner (multiprocessing)
-  collector.py       PMC OA article downloader (multithreaded)
-  embedding.py       MedCPT article-encoder embedding runner
-  retrieval/         dense, sparse, hybrid, query, reranker, corpus,
-                     index builder, engine, evaluation, and CLI
+src/
+  __main__.py        agentic query entry: python -m src "<question>"
+  config.py          environment configuration
+  ingestion/         collector.py  (PMC OA JATS download)
+  processing/        jats_to_md.py  parser.py  jatstomd.py  (XML -> Markdown)
+  chunking/          md_chunker.py  chunker.py  classification.py
+  lib/               utils.py  models.py  _torch.py  (shared support)
+  retrieval/         dense, sparse, splade, reranker, pgvector, planner
+  agents/            agentic_v3 multi-agent flow (master/worker/critic/...)
+  prompts/           agent system prompts (plain text, one file per agent)
+  llm/  umls/        shared providers
 ```
 
 Data and derived artifacts live outside the package in `data/`, `chunks/`,
@@ -458,8 +452,8 @@ make jats-to-md                                      # data/raw -> data/md
 make jats-to-md INPUT=data/raw/cardiology OUTPUT=data/md/cardiology
 make jats-to-md LIMIT=100                            # only the first 100 files (0 = all)
 # or directly:
-python scripts/jats_to_md.py --input data/raw/cardiology --output data/md/cardiology
-python scripts/jats_to_md.py --input data/raw/cardiology --output data/md/cardiology --limit 100
+python -m src.processing.jats_to_md --input data/raw/cardiology --output data/md/cardiology
+python -m src.processing.jats_to_md --input data/raw/cardiology --output data/md/cardiology --limit 100
 ```
 
 Reuses the structure-aware JATS parser (`src/parser.py`), so tables come out as
@@ -495,14 +489,14 @@ parallelize across files.
 ### 4. Chunker v2 — Markdown-native (optional, no LLM)
 
 The XML pipeline (`medrag-chunk`, above) is untouched. A separate **chunker
-v2** chunks the *Markdown* files instead (`src/md_chunker.py`), emitting the
+v2** chunks the *Markdown* files instead (`src/chunking/md_chunker.py`), emitting the
 same `Chunk` schema so the embedding/retrieval stages work unchanged:
 
 ```bash
 make chunk-md                                        # data/md -> chunks_v2 + units_v2
 make chunk-md MD_INPUT=data/md/cardiology CHUNKS_OUT=chunks_v2 UNITS_OUT=units_v2
 # or directly (tokens/overlap/lexicon/global-dedup/overwrite):
-python -m src.md_chunker --input data/md --chunks-out chunks_v2 --units-out units_v2 \
+python -m src.chunking.md_chunker --input data/md --chunks-out chunks_v2 --units-out units_v2 \
     --max-tokens 480 --overlap 0.12 --lexicon entities.json --global-dedup
 ```
 

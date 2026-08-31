@@ -124,7 +124,7 @@ class UnitPrefilter:
 
 def subquery_query_dummy(query: str) -> Any:
     """Minimal object exposing .query/.target/.evidence_required for intent_score."""
-    from src.agents.planner import SubQuery
+    from src.retrieval.plans import SubQuery
 
     return SubQuery(id="P", target=query, focus="evidence", query=query)
 

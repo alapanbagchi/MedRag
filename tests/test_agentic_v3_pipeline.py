@@ -10,9 +10,9 @@ import json
 
 import pytest
 
-from src.agentic_v3.master import MasterPlan
-from src.agentic_v3.pipeline import AgenticV3Pipeline
-from src.agentic_v3.state import (
+from src.agents.master import MasterPlan
+from src.agents.pipeline import AgenticV3Pipeline
+from src.agents.state import (
     Contradiction,
     ContradictionKind,
     EvidenceRequirement,
@@ -25,7 +25,7 @@ from src.agentic_v3.state import (
     VerifiedEvidence,
     WorkerReport,
 )
-from src.agentic_v3.synthesize import AnswerSection, Citation, SynthesisReport
+from src.agents.synthesize import AnswerSection, Citation, SynthesisReport
 from src.config import AppConfig
 
 
@@ -189,10 +189,10 @@ def test_pipeline_full_run():
 
 def test_pipeline_with_llm_agents_via_test_model():
     """The real agent classes parse the LLM JSON through TestModel."""
-    from src.agentic_v3.contradiction import ContradictionAgent
-    from src.agentic_v3.master import MasterOrchestratorAgent
-    from src.agentic_v3.resolution import ResolutionAgent
-    from src.agentic_v3.synthesize import FinalSynthesizer
+    from src.agents.contradiction import ContradictionAgent
+    from src.agents.master import MasterOrchestratorAgent
+    from src.agents.resolution import ResolutionAgent
+    from src.agents.synthesize import FinalSynthesizer
     from tests.conftest import native_test_model
 
     master_json = json.dumps({

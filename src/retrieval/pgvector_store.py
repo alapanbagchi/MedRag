@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from src.trace import get_trace
+from src.lib.trace import get_trace
 
 EMBEDDING_DIM = 768
 SCHEMA = "medrag"

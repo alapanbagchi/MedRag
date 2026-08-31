@@ -9,9 +9,9 @@ Covers the spec-critical behaviors:
     search excerpts did not answer the requirement.
 """
 
-from src.agentic_v3.replan import FailureAnalysis
-from src.agentic_v3.search import RequirementSearch, TaskSearchPlan
-from src.agentic_v3.state import (
+from src.agents.replan import FailureAnalysis
+from src.agents.search import RequirementSearch, TaskSearchPlan
+from src.agents.state import (
     AnswersTask,
     CriticRelevance,
     CriticVerdict,
@@ -23,7 +23,7 @@ from src.agentic_v3.state import (
     SupportDirection,
     VerifiedEvidence,
 )
-from src.agentic_v3.worker import WorkerAgent
+from src.agents.worker import WorkerAgent
 
 
 def _task(requirements=(("T1.R1", "vitamin D supplementation and blood pressure", 3),)):

@@ -10,8 +10,8 @@ import json
 
 import pytest
 
-from src.md_chunker import MDChunker, LexiconTagger
-from src.md_chunker import _parse_front_matter, _document_metadata
+from src.chunking.md_chunker import MDChunker, LexiconTagger
+from src.chunking.md_chunker import _parse_front_matter, _document_metadata
 
 
 def make_md(**overrides):
@@ -273,7 +273,7 @@ def test_reference_chunks_carry_unit_id(chunker):
 
 def test_global_dedup_deterministic_p1_wins(capfd, tmp_path):
     import pandas as pd
-    from src.md_chunker import main as md_main
+    from src.chunking.md_chunker import main as md_main
 
     md_in = tmp_path / "md"
     md_in.mkdir()
@@ -298,7 +298,7 @@ def test_global_dedup_deterministic_p1_wins(capfd, tmp_path):
 
 
 def test_cli_runner_skips_unchanged(capfd, tmp_path):
-    from src.md_chunker import main as md_main
+    from src.chunking.md_chunker import main as md_main
     md_in = tmp_path / "md"
     md_in.mkdir()
     (md_in / "PMC42.md").write_text(make_md(), encoding="utf-8")
@@ -318,7 +318,7 @@ def test_cli_runner_skips_unchanged(capfd, tmp_path):
 
 def test_runner_writes_corpus_compatible_columns(capfd, tmp_path):
     import pandas as pd
-    from src.md_chunker import main as md_main
+    from src.chunking.md_chunker import main as md_main
     md_in = tmp_path / "md"
     md_in.mkdir()
     (md_in / "PMC42.md").write_text(make_md(), encoding="utf-8")

@@ -3,20 +3,20 @@ import json
 
 import pytest
 
-from src.agentic_v3.critic import (
+from src.agents.critic import (
     CriticAgent,
     evidence_excerpt,
     is_promising_for_deep_inspection,
 )
-from src.agentic_v3.contradiction import (
+from src.agents.contradiction import (
     ContradictionAgent,
     detect_contradictions_deterministic,
 )
-from src.agentic_v3.deepinspect import (
+from src.agents.deepinspect import (
     expand_passage,
     verify_quote,
 )
-from src.agentic_v3.state import (
+from src.agents.state import (
     AnswersTask,
     ContradictionKind,
     CriticRelevance,

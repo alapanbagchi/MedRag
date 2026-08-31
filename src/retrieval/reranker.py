@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Sequence
 
-from src.agents.planner import SubQuery
+from src.retrieval.plans import SubQuery
 
 def rerank_candidates(sub: SubQuery, documents: Sequence[Any]) -> List[Any]:
     """Compat shim (legacy probe scripts): sort docs by rrf_score."""
