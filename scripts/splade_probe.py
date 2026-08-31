@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ.setdefault("HF_HOME", str(Path(__file__).resolve().parent.parent / ".cache" / "hf"))
 os.environ.setdefault("TRANSFORMERS_CACHE", os.environ["HF_HOME"])
 
-from src.agents.planner import SubQuery
+from src.retrieval.plans import SubQuery
 from src.config import AppConfig
 from src.retrieval.retriever import RetrievalService
 
@@ -43,7 +43,7 @@ async def main() -> int:
     cfg.retrieval_primary = "splade"
     cfg.max_documents = 8
 
-    from src.trace import get_trace
+    from src.lib.trace import get_trace
     trace = get_trace()
     log_path = os.environ.get("LOG_FILE", "logs.txt")
     trace.open_stream(log_path, query=query)

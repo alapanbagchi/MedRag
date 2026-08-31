@@ -8,7 +8,7 @@ touching code:
       legacy/        evidence.txt planner.txt rewriter.txt synthesizer.txt verifier.txt
       agentic_v1/    planner.txt loop.txt
       agentic_v2/    orchestrator.txt verifier.txt synthesize.txt
-      agentic_v3/    master.txt search_planner.txt critic.txt deep_inspector.txt
+      agents/    master.txt search_planner.txt critic.txt deep_inspector.txt
                      replanner.txt contradiction.txt resolution.txt synthesize.txt
 
 Env override: PROMPT_DIR=/path/to/prompts swaps the whole tree (useful for

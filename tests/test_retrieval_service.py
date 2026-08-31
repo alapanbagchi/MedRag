@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import AppConfig
-from src.agents.planner import SubQuery
+from src.retrieval.plans import SubQuery
 from src.retrieval.retriever import (
     RetrievedDocument,
     RetrievalService,

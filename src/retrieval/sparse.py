@@ -31,7 +31,7 @@ from typing import Any, Callable, Dict, Iterable, List, Sequence, Tuple
 
 import numpy as np
 
-from src.models import ScoredChunk
+from src.lib.models import ScoredChunk
 
 DEFAULT_TOKEN_PATTERN = r"[a-z0-9]+"
 

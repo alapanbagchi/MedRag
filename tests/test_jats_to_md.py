@@ -1,4 +1,4 @@
-"""Tests for scripts/jats_to_md.py — the loss-aware, structure-first
+"""Tests for src.processing.jats_to_md converter module. — the loss-aware, structure-first
 JATS -> Markdown converter.
 
 No network, no corpus required (the real-file test is guarded). Synthetic
@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.jats_to_md import (  # noqa: E402
+from src.processing.jats_to_md import (  # noqa: E402
     _build_grid,
     _collect_references,
     _extract_tex,
@@ -25,7 +25,7 @@ from scripts.jats_to_md import (  # noqa: E402
     _render_document,
     convert_one,
 )
-from src.parser import PMCASTParser  # noqa: E402
+from src.processing.parser import PMCASTParser  # noqa: E402
 
 S3 = "https://pmc-oa-opendata.s3.amazonaws.com/PMC42"
 
@@ -309,7 +309,7 @@ def test_convert_one_atomic_and_skip(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_image_hrefs_resolved_to_pmc_oa_bucket():
-    import scripts.jats_to_md as J
+    import src.processing.jats_to_md as J
     assert J._resolve_href("fig1.jpg") == \
         "https://pmc-oa-opendata.s3.amazonaws.com/PMC4329953.1/fig1.jpg" \
         if J._ARTICLE_DIR == "" else True
@@ -338,7 +338,7 @@ def test_image_hrefs_resolved_to_pmc_oa_bucket():
     reason="corpus not present",
 )
 def test_real_file_converts_and_chunks_with_tables(tmp_path):
-    from src.md_chunker import MDChunker
+    from src.chunking.md_chunker import MDChunker
 
     xml_path = Path("data/chunked/PMC10327125.4.xml")
     md_path = tmp_path / "PMC10327125.4.md"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
-from src.agents.planner import SubQuery
+from src.retrieval.plans import SubQuery
 
 
 def build_subquery_variants(sub: SubQuery, max_variants: int = 5) -> List[str]:

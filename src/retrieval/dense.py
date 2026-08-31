@@ -30,7 +30,7 @@ import numpy as np
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from src.models import ScoredChunk
+from src.lib.models import ScoredChunk
 
 EMBEDDING_DIM = 768
 INDEX_FILENAME = "dense.faiss"

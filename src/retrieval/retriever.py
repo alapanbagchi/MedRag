@@ -7,9 +7,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.config import AppConfig
-from src.agents.planner import QueryPlan, SubQuery
+from src.retrieval.plans import QueryPlan, SubQuery
 from src.retrieval.reranker import union_rerank_diversify
-from src.trace import get_trace
+from src.lib.trace import get_trace
 
 logger = logging.getLogger("src.retriever")
 
@@ -72,7 +72,7 @@ class PgFtsSparse:
         import math
         import re as _re
 
-        from src.models import ScoredChunk
+        from src.lib.models import ScoredChunk
 
         store = self._store_obj()
         conn = store.connect()

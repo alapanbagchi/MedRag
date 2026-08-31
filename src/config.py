@@ -139,7 +139,7 @@ class AppConfig:
         # Structured event stream for the agentic v2 UI (JSONL; empty = off).
         self.agentic_v2_events_file: str = _env("AGENTIC_V2_EVENTS_FILE", "").strip()
 
-        # Agentic v3 (src/agentic_v3): master -> parallel workers ->
+        # Agentic v3 (src/agents): master -> parallel workers ->
         # contradiction -> resolution -> final answer (V1 spec).
         self.agentic_v3_evidence_target: int = _int("AGENTIC_V3_EVIDENCE_TARGET", 3)
         self.agentic_v3_max_searches: int = _int("AGENTIC_V3_MAX_SEARCHES", 5)
@@ -158,15 +158,6 @@ class AppConfig:
             _env("AGENTIC_V3_SYNTHESIS_TIMEOUT", "180"))
         # Structured event stream for the agentic v3 run (JSONL; empty = off).
         self.agentic_v3_events_file: str = _env("AGENTIC_V3_EVENTS_FILE", "").strip()
-
-        # Mistral Batch API for verification (critic) calls.
-        # VERIFIER_BATCH_ENABLED: auto (on when the verifier provider is
-        # Mistral) | 1/on | 0/off. Batch requires a Mistral plan with billing
-        # enabled; on failure the critic falls back to sequential calls.
-        self.verifier_batch_enabled: str = _env("VERIFIER_BATCH_ENABLED", "auto").strip().lower()
-        self.verifier_batch_max_requests: int = _int("VERIFIER_BATCH_MAX_REQUESTS", 100)
-        self.verifier_batch_poll_seconds: float = float(_env("VERIFIER_BATCH_POLL_SECONDS", "5"))
-        self.verifier_batch_timeout_seconds: float = float(_env("VERIFIER_BATCH_TIMEOUT_SECONDS", "900"))
 
         # Logfire observability (PydanticAI GenAI tracing + app trace events).
         # LOGFIRE_ENABLED: auto (default; enabled iff credentials/token are

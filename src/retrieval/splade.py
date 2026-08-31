@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Sequence
 import numpy as np
 import scipy.sparse as sp
 
-from src.models import ScoredChunk
+from src.lib.models import ScoredChunk
 
 logger = logging.getLogger("src.splade")
 

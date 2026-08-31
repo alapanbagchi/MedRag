@@ -1,0 +1,57 @@
+[project]
+name = "medrag"
+version = "0.1.0"
+description = "Structure-aware RAG pipeline for PMC/JATS biomedical articles"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "boto3",
+  "docling",
+  "faiss-cpu",
+  "httpx",
+  "logfire",
+  "langchain-text-splitters",
+  "lxml",
+  "numpy",
+  "pandas",
+  "pgvector",
+  "psycopg2-binary",
+  "pyarrow",
+  "pydantic",
+  "pydantic-ai[logfire]",
+  "python-dotenv",
+  "scipy",
+  "torch",
+  "tqdm",
+  "transformers",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+  "core",
+  "src",
+  "src.agents",
+  "src.chunking",
+  "src.ingestion",
+  "src.lib",
+  "src.llm",
+  "src.processing",
+  "src.prompts",
+  "src.prompts.agents",
+  "src.retrieval",
+  "src.umls",
+]
+
+[tool.setuptools.package-data]
+"src.prompts" = ["*.txt"]
+"src.prompts.agents" = ["*.txt"]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+]

@@ -14,7 +14,7 @@ unchanged):
 
   v2: serves ui/agentic_v2.html, runs src.agentic_v2
       (AGENTIC_V2_EVENTS_FILE, AGENTIC_V2_UI_HOST, AGENTIC_V2_UI_PORT)
-  v3: serves ui/agentic_v3.html, runs src.agentic_v3
+  v3: serves ui/agentic_v3.html, runs src.agents
       (AGENTIC_V3_EVENTS_FILE, AGENTIC_V3_UI_HOST, AGENTIC_V3_UI_PORT)
 
 Usage:
@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT))   # make src importable from the scripts dir
 
 from src.prompts.load import load_prompt  # noqa: E402  (needs ROOT on sys.path)
 
-FLOW = os.environ.get("AGENTIC_UI_FLOW", "v2").strip().lower()
+FLOW = "v3"  # v3-only; the v2 agentic flow was removed
 
 if FLOW == "v3":
     UI_FILE = ROOT / "ui" / "agentic_v3.html"
@@ -58,14 +58,14 @@ else:  # v2 (default; existing behaviour unchanged)
 # Agent (llm-observer agent name) -> prompt file, for the UI's per-agent
 # "System prompt" box. Covers every flow; the UI shows whichever it needs.
 SYSTEM_PROMPT_AGENTS = {
-    "master_orchestrator": ("agentic_v3", "master.txt"),
-    "search_term_planner": ("agentic_v3", "search_planner.txt"),
-    "critic": ("agentic_v3", "critic.txt"),
-    "replanner": ("agentic_v3", "replanner.txt"),
-    "paper_inspector": ("agentic_v3", "deep_inspector.txt"),
-    "contradiction_agent": ("agentic_v3", "contradiction.txt"),
-    "resolution_agent": ("agentic_v3", "resolution.txt"),
-    "synthesizer_v3": ("agentic_v3", "synthesize.txt"),
+    "master_orchestrator": ("agents", "master.txt"),
+    "search_term_planner": ("agents", "search_planner.txt"),
+    "critic": ("agents", "critic.txt"),
+    "replanner": ("agents", "replanner.txt"),
+    "paper_inspector": ("agents", "deep_inspector.txt"),
+    "contradiction_agent": ("agents", "contradiction.txt"),
+    "resolution_agent": ("agents", "resolution.txt"),
+    "synthesizer_v3": ("agents", "synthesize.txt"),
     "planner": ("agentic_v1", "planner.txt"),
     "orchestrator": ("agentic_v2", "orchestrator.txt"),
     "verifier": ("agentic_v2", "verifier.txt"),
@@ -112,10 +112,10 @@ def _run_pipeline(question: str) -> None:
         # sys.modules, so a module loaded before a code change stays stale for
         # every later run. Re-import the flow package fresh on each run so the
         # UI always executes the current code on disk.
-        prefixes = ("src.llm.", "src.llm", "src.collector", "src.config",
-                    "src.trace")
+        prefixes = ("src.llm.", "src.llm", "src.ingestion.collector", "src.config",
+                    "src.lib.trace")
         if FLOW == "v3":
-            prefixes += ("src.agentic_v3.", "src.agentic_v3")
+            prefixes += ("src.agents.", "src.agents")
         else:
             prefixes += ("src.agentic_v2.", "src.agentic_v2")
         for mod_name in list(sys.modules):
@@ -125,22 +125,13 @@ def _run_pipeline(question: str) -> None:
         from src.config import AppConfig
 
         cfg = AppConfig()
-        if FLOW == "v3":
-            from src.agentic_v3.events import EventEmitter
-            from src.agentic_v3.pipeline import AgenticV3Pipeline
+        from src.agents.events import EventEmitter
+        from src.agents.pipeline import AgenticV3Pipeline
 
-            cfg.agentic_v3_events_file = EVENTS_FILE
-            emitter = EventEmitter(EVENTS_FILE)
-            emitter.truncate()  # fresh log for this run
-            pipeline = AgenticV3Pipeline(config=cfg, events=emitter)
-        else:
-            from src.agentic_v2.events import EventEmitter
-            from src.agentic_v2.pipeline import AgenticV2Pipeline
-
-            cfg.agentic_v2_events_file = EVENTS_FILE
-            emitter = EventEmitter(EVENTS_FILE)
-            emitter.truncate()  # fresh log for this run
-            pipeline = AgenticV2Pipeline(config=cfg, events=emitter)
+        cfg.agentic_v3_events_file = EVENTS_FILE
+        emitter = EventEmitter(EVENTS_FILE)
+        emitter.truncate()  # fresh log for this run
+        pipeline = AgenticV3Pipeline(config=cfg, events=emitter)
         import asyncio
         asyncio.run(pipeline.answer(question))
     except Exception as exc:  # noqa: BLE001 - surface any startup error to the log

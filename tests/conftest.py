@@ -45,6 +45,18 @@ def _clean_env(monkeypatch):
         "ENABLE_DENSE", "REWRITE_ENABLED", "ENABLE_CROSS_ENCODER",
         "TRACE_FULL_TEXTS", "LOCAL_MODE", "VECTOR_DB_URL",
         "PLANNER_USE_UMLS_TOOL",
+        # per-role model routing + mistral batch (the ambient .env may set these)
+        "MISTRAL_API_KEY", "MISTRAL_MODEL", "MISTRAL_BASE_URL",
+        "ORCHESTRATOR_PROVIDER", "ORCHESTRATOR_BASE_URL",
+        "ORCHESTRATOR_API_KEY", "ORCHESTRATOR_MODEL",
+        "PLANNER_PROVIDER", "PLANNER_BASE_URL", "PLANNER_API_KEY",
+        "PLANNER_MODEL",
+        "VERIFIER_PROVIDER", "VERIFIER_BASE_URL", "VERIFIER_API_KEY",
+        "VERIFIER_MODEL",
+        "SYNTHESIZER_PROVIDER", "SYNTHESIZER_BASE_URL",
+        "SYNTHESIZER_API_KEY", "SYNTHESIZER_MODEL",
+        "CONTRADICTION_PROVIDER", "RESOLUTION_PROVIDER",
+        "DEEP_INSPECTOR_PROVIDER",
         # Logfire must stay OFF in tests: with credentials present (the repo's
         # .logfire/) an accidental export would pollute the real project.
         "LOGFIRE_ENABLED", "LOGFIRE_TOKEN", "LOGFIRE_SERVICE_NAME",
@@ -63,16 +75,13 @@ def _reset_singletons():
     from src.retrieval.fullpaper import reset_unit_index
     from src.llm.ratelimit import reset_bucket
     from src.llm.run import reset_llm_observer
-    from src.agents.planner import reset_umls_tool_cache
 
     reset_retrieval_service()
     reset_unit_index()
     reset_bucket()
-    reset_umls_tool_cache()
     reset_llm_observer()
     yield
     reset_retrieval_service()
     reset_unit_index()
     reset_bucket()
-    reset_umls_tool_cache()
     reset_llm_observer()

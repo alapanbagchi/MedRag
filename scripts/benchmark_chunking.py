@@ -56,7 +56,7 @@ if str(ROOT) not in sys.path:
 from tqdm import tqdm  # noqa: E402
 
 from src.retrieval.sparse import BM25Index  # noqa: E402
-from src.md_chunker import MDChunker, _chunks_to_df, _global_dedup_pass  # noqa: E402
+from src.chunking.md_chunker import MDChunker, _chunks_to_df, _global_dedup_pass  # noqa: E402
 
 STOP = frozenset({
     "the", "a", "an", "of", "and", "or", "to", "in", "for", "with", "on",
@@ -89,7 +89,7 @@ def _spec(s: str) -> Dict[str, Any]:
 def _materialize(xml_dir: Path, md_dir: Path, sample: int, workers: int) -> List[Path]:
     """Convert a deterministic sample of JATS files to Markdown (if needed)."""
     sys.path.insert(0, str(ROOT))
-    from scripts.jats_to_md import convert_one
+    from src.processing.jats_to_md import convert_one
 
     # --md-dir is the PRIMARY input: use its Markdown whenever present
     # (sample==0 = ALL of it). Only fall back to converting from --xml-dir

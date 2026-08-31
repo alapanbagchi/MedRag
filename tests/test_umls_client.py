@@ -6,7 +6,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from src.agents.planner import ClinicalEntity
+from src.retrieval.plans import ClinicalEntity
 from src.umls.client import UMLSClient, serialize_umls_context
 
 

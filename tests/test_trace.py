@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.trace import Trace
+from src.lib.trace import Trace
 
 
 def test_tool_call_and_result_are_not_double_logged(tmp_path):

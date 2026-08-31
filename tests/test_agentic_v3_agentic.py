@@ -16,11 +16,11 @@ Covers, without any live LLM/corpus:
 import asyncio
 import json
 
-from src.agentic_v3.critic import CriticAgent
-from src.agentic_v3.events import V3Events
-from src.agentic_v3.replan import meaningfully_different
-from src.agentic_v3.search import RequirementSearch, TaskSearchPlan
-from src.agentic_v3.state import (
+from src.agents.critic import CriticAgent
+from src.agents.events import V3Events
+from src.agents.replan import meaningfully_different
+from src.agents.search import RequirementSearch, TaskSearchPlan
+from src.agents.state import (
     AnswersTask,
     CriticRelevance,
     CriticVerdict,
@@ -34,8 +34,8 @@ from src.agentic_v3.state import (
     SupportDirection,
     VerifiedEvidence,
 )
-from src.agentic_v3.synthesize import _synthesis_prompt
-from src.agentic_v3.worker import WorkerAgent
+from src.agents.synthesize import _synthesis_prompt
+from src.agents.worker import WorkerAgent
 from src.config import AppConfig
 
 
@@ -99,7 +99,7 @@ class FakeReplanner:
                            "prev": list(ctx.previous_queries),
                            "rounds_left": ctx.remaining_rounds,
                            "searches_left": ctx.remaining_searches})
-        from src.agentic_v3.replan import FailureAnalysis
+        from src.agents.replan import FailureAnalysis
         return FailureAnalysis(
             diagnosis="previous queries did not surface outcome passages",
             missing_evidence=f"more supporting papers for {ctx.requirement_id}",
@@ -342,7 +342,7 @@ def test_verified_evidence_excludes_rejected_and_carries_provenance():
     assert req.verified() == [ok], "REJECTED items are structurally excluded"
 
     # synthesis prompt only presents verified items
-    from src.agentic_v3.state import V3RunState, MasterPlan
+    from src.agents.state import V3RunState, MasterPlan
     state = V3RunState(run_id="r", question="q")
     state.add_task(ResearchTask(id="T1", title="t", objective="o",
                                 evidence_requirements=[req]))
@@ -386,7 +386,7 @@ def test_evidence_provenance_chain_complete():
 # ---------------------------------------------------------------------------
 
 def test_contradiction_detector_ignores_rejected():
-    from src.agentic_v3.contradiction import detect_contradictions_deterministic
+    from src.agents.contradiction import detect_contradictions_deterministic
     rejected = VerifiedEvidence(id="E1", task_id="T2", requirement_id="T2.R1",
                                 document_id="A", excerpt="support claim",
                                 support=SupportDirection.SUPPORTS,
@@ -413,9 +413,9 @@ def test_end_to_end_transition_trace():
     [MASTER] -> [WORKER:T1] [SEARCH:A1] [RETRIEVAL] [CRITIC:E..] ->
     [EVIDENCE:req -> state] -> ([REPLAN:A2] -> ...) -> [CONTRADICTION] ->
     [SYNTHESIS]. Scope ids must be self-consistent (no cross-task leakage)."""
-    from src.agentic_v3.master import MasterPlan
-    from src.agentic_v3.pipeline import AgenticV3Pipeline
-    from src.agentic_v3.synthesize import AnswerSection, Citation, SynthesisReport
+    from src.agents.master import MasterPlan
+    from src.agents.pipeline import AgenticV3Pipeline
+    from src.agents.synthesize import AnswerSection, Citation, SynthesisReport
 
 
     class FakeMaster:

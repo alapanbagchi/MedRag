@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agents.planner import SubQuery
+from src.retrieval.plans import SubQuery
 from src.config import AppConfig
 from src.retrieval.retriever import RetrievalService
 
@@ -43,7 +43,7 @@ def format_doc(doc, idx):
 async def main() -> int:
     import os
 
-    from src.trace import get_trace
+    from src.lib.trace import get_trace
 
     query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "risk factors for COPD exacerbation"
     cfg = AppConfig()

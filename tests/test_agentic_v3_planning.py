@@ -3,19 +3,19 @@ import json
 
 import pytest
 
-from src.agentic_v3.master import (
+from src.agents.master import (
     MasterOrchestratorAgent,
     PlanTask,
     build_plan,
     fallback_task,
 )
-from src.agentic_v3.search import (
+from src.agents.search import (
     SearchTermPlanner,
     TaskSearchPlan,
     _clean_query,
     fallback_queries,
 )
-from src.agentic_v3.state import EvidenceRequirement, ResearchTask, RunBudget, TermConcept
+from src.agents.state import EvidenceRequirement, ResearchTask, RunBudget, TermConcept
 from src.config import AppConfig
 from tests.conftest import native_test_model
 

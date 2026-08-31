@@ -9,8 +9,8 @@ from __future__ import annotations
 import random
 from typing import List
 
-from src.models import Block, Document, Section
-from src.chunker import ASTChunker
+from src.lib.models import Block, Document, Section
+from src.chunking.chunker import ASTChunker
 
 
 def random_section(rng: random.Random, depth: int = 0) -> Section:
