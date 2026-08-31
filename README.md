@@ -147,7 +147,7 @@ Key properties:
 Layout: `state.py` (research notebook), `orchestrator.py` (decision agent),
 `actions.py` (executors), `verify.py` (objective verifier), `synthesize.py`
 (final synthesis), `pipeline.py` (the run loop), `policy.py` (the runtime
-state machine), `events.py` (structured event stream for the UI).
+state machine), `events.py` (event log).
 
 ### Progress-guaranteed state machine
 
@@ -174,34 +174,6 @@ runtime (`policy.py`) is authoritative:
 New events: `phase_changed`, `policy_repair`, `no_progress`,
 `strategy_exhausted`, `timeout`, `progress` (existing events unchanged).
 
-### Watch it — n8n-style workflow UI
-
-A dependency-free web UI renders the run as an **n8n-style node graph**: every
-spawned agent (orchestrator / planner / UMLS / retriever / verifier /
-synthesizer) becomes a node, connected left-to-right by arrows in execution
-order. Each node shows its input, the model's **thought**, and its output (the
-retriever node lists every fetched paragraph/table/figure line-by-line);
-clicking a node opens a modal with the full **question → thought → response**
-plus the full fetched paragraphs.
-
-Thoughts are captured at the LLM choke point (`src/llm/run.py` now emits an
-optional `llm_call` observation: `{label, input, thought, output}`), bridged to
-the event stream via `src/agentic_v2/llm_observer.py`.
-
-```bash
-# start the UI (stdlib-only server), then open http://127.0.0.1:8090
-python scripts/v2_ui.py
-```
-
-Use the **Run** box in the page, or feed the same UI from the CLI:
-
-```bash
-AGENTIC_V2_EVENTS_FILE=agentic_v2_events.jsonl \
-    uv run python -m src --agentic-v2 "your question here"
-```
-
-The UI is read-only and polls `agentic_v2_events.jsonl`; it never needs to
-touch the corpus or the LLM itself. Set `AGENTIC_V2_UI_PORT` to change the port.
 
 ## Agentic V3 - evidence-vetted multi-agent retrieval
 
@@ -306,8 +278,8 @@ Upgrades over the linear flow:
   inspection budget is exhausted - no infinite loops.
 - **Observable transitions** - every state change is logged with its full
   scope: [SEARCH:T1:R1:A1], [RETRIEVAL:T1:R1:A1], [CRITIC:T1:R1:A1:E1],
-  [REPLAN:T1:R1:A2], [EVIDENCE:T1.R1 -> PARTIALLY_SUPPORTED], ... on the
-  JSONL event stream (evidence_state, requirement_state, replan events).
+  [REPLAN:T1:R1:A2], [EVIDENCE:T1.R1 -> PARTIALLY_SUPPORTED], ... in the trace log
+  (evidence_state, requirement_state, replan transitions).
 
 Layout: state.py (models + state machine), master.py, umls.py, search.py,
 retriever.py, critic.py, worker.py (adaptive loop), replan.py (failure
@@ -317,27 +289,12 @@ resolution.py, synthesize.py, pipeline.py, events.py.
 Budget knobs (env, defaults in parens): AGENTIC_V3_EVIDENCE_TARGET (3),
 AGENTIC_V3_MAX_SEARCHES (5), AGENTIC_V3_MAX_RETRIEVAL_ROUNDS (5),
 AGENTIC_V3_PAPERS_PER_SEARCH (5), AGENTIC_V3_MAX_DEEP_INSPECTIONS (3),
-AGENTIC_V3_MAX_WORKERS (4), plus per-stage timeouts (AGENTIC_V3_*_TIMEOUT)
-and the event stream (AGENTIC_V3_EVENTS_FILE, v2-compatible JSONL).
+AGENTIC_V3_MAX_WORKERS (4), plus per-stage timeouts (AGENTIC_V3_*_TIMEOUT).
 
-Watch a v3 run in the web UI (the v2 server now serves both flows):
-
-    AGENTIC_UI_FLOW=v3 python scripts/v2_ui.py    # http://127.0.0.1:8091
-
-then type the question in the page (POST /run runs the v3 pipeline and
-streams every state transition: master plan -> parallel worker lanes ->
-search/retrieval ticks -> evidence-state ticks (accepted/rejected/
-contradictory) -> replan ticks -> task requirement coverage x/N -> evidence
-items with full provenance (click an evidence chip for the critic verdict,
-query, method, rank, chunk) -> contradictions/resolutions -> final answer),
-or feed it from the CLI with AGENTIC_V3_EVENTS_FILE=...jsonl.
-The event stream / UI is opt-in; it is only active when
-`AGENTIC_V3_EVENTS_FILE` (or `AGENTIC_V2_EVENTS_FILE`) is set.
-
-### Observability: Pydantic AI → Logfire (replaces the UI)
+### Observability: Pydantic AI → Logfire
 
 By default (when Logfire credentials or a `LOGFIRE_TOKEN` are present) every
-run streams to **Logfire** instead of the web UI. Two layers, both automatic:
+every run streams to **Logfire**. Two layers, both automatic:
 
 * **LLM traces (PydanticAI GenAI instrumentation)** — `src/logfire_obs.py`
   calls `logfire.configure()` (once per process) and
@@ -366,8 +323,7 @@ present) | `1`/`on` (force on) | `0`/`off` (force off). Other knobs:
 `LOGFIRE_SERVICE_NAME` (default `medrag`), `LOGFIRE_ENVIRONMENT`,
 `LOGFIRE_CONSOLE` (`true` also prints spans to the terminal), or paste a write
 token in `LOGFIRE_TOKEN`. With no token present the app stays fully offline
-(no exporting). The JSONL event stream / web UI remain available as an opt-in
-alternative by setting the `AGENTIC_*_EVENTS_FILE` env vars.
+(no exporting).
 
 ## Prompts
 
@@ -558,7 +514,7 @@ ann-indexed retrieval:
 
 ```bash
 # 1. Start the pgvector Docker container (idempotent, never wipes data)
-make pg-up
+make pg-init
 
 # 2. Load embeddings_v2 + chunks_v2 (idempotent upsert — safe to re-run)
 make pg-load
@@ -569,11 +525,11 @@ make pg-load RESET=1
 # Other useful targets
 make pg-reset    # drop everything (chunks + embeddings + indexes)
 make pg-stats    # current counts + index state
-make pg-smoke    # retrieval smoke test
-make pg-smoke QUERY="Does high uric acid increase the risk of hypertension?"
+make pg-init --stats-only    # retrieval smoke test
+make pg-init --stats-only QUERY="Does high uric acid increase the risk of hypertension?"
 ```
 
-The loader is `scripts/pg_load_v2.py` and defaults to
+The loader is `scripts/pg_init.py` and defaults to
 `EMBEDDINGS_DIR=embeddings_v2` and `CHUNKS_DIR=chunks_v2`; point them at any
 folder (`make pg-load EMBEDDINGS_DIR=/data/embs CHUNKS_DIR=/data/chunks`).
 
@@ -618,7 +574,7 @@ checkpoint (`medrag.load_marks`) in one transaction, so:
 
 Querying: `PyVectorStore` / `PgDenseIndex` in `src/retrieval/pgvector_store.py`
 already implement search (`store.search(qvec, top_k=...)`,
-`search_filtered(qvec, document_id=...)`), and `scripts/pg_smoke.py` is a
+`search_filtered(qvec, document_id=...)`), and `scripts/pg_init.py --stats-only` is a
 ready-made retrieval check.
 
 ### 7b. Hybrid search (BM25 + pgvector)

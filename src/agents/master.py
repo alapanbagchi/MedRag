@@ -617,26 +617,18 @@ class MasterOrchestratorAgent:
         )
 
     async def _raw_run(self, prompt: str, label: str) -> str:
-        """One unconstrained text call (rate-limited + observed like the rest)."""
+        """One unconstrained text call (rate-limited)."""
         from src.llm.ratelimit import estimate_tokens, get_bucket
-        from src.llm.run import _notify_observer, _notify_observer_start
 
         bucket = get_bucket()
         await bucket.acquire(estimate_tokens(prompt))
-        _notify_observer_start(label, prompt)
-        try:
-            result = await self.agent.run(
-                prompt,
-                output_type=str,
-                model_settings={
-                    "max_tokens": min(2000,
-                                      getattr(self.config, "agent_max_tokens", 2048)),
-                    "temperature": 0.0,
-                },
-            )
-            raw = str(result.output)
-        except BaseException:
-            _notify_observer(label, prompt, "", None)
-            raise
-        _notify_observer(label, prompt, raw, None)
-        return raw
+        result = await self.agent.run(
+            prompt,
+            output_type=str,
+            model_settings={
+                "max_tokens": min(2000,
+                                  getattr(self.config, "agent_max_tokens", 2048)),
+                "temperature": 0.0,
+            },
+        )
+        return str(result.output)

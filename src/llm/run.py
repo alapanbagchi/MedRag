@@ -25,7 +25,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Optional, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -35,81 +35,6 @@ from src.llm.ratelimit import estimate_tokens, get_bucket, is_rate_limit_error, 
 logger = logging.getLogger("src.llm.run")
 
 T = TypeVar("T", bound=BaseModel)
-
-# ---------------------------------------------------------------------------
-# Optional LLM observer (used by the agentic v2 UI to capture prompt/thought/
-# response per node). Defaults to None; set via set_llm_observer.
-# ---------------------------------------------------------------------------
-
-_llm_observer: Optional[Callable[..., None]] = None
-
-_THINK_RE = re.compile(r"<think(?:ing)?>(.*?)</think(?:ing)?>", re.DOTALL | re.IGNORECASE)
-_THOUGHT_RE = re.compile(r"<thought>(.*?)</thought>", re.DOTALL | re.IGNORECASE)
-
-
-def set_llm_observer(observer: Optional[Callable[..., None]]) -> None:
-    """Install a callable invoked as ``observer(label=, input=, thought=, output=)``."""
-    global _llm_observer
-    _llm_observer = observer
-
-
-def reset_llm_observer() -> None:
-    global _llm_observer
-    _llm_observer = None
-
-
-def _extract_thought(raw: str) -> str:
-    if not raw:
-        return ""
-    chunks = _THINK_RE.findall(raw) + _THOUGHT_RE.findall(raw)
-    return "\n\n".join(t.strip() for t in chunks if t and t.strip())
-
-
-def _raw_response_text(result: Any) -> str:
-    """Best-effort raw model text from a pydantic_ai AgentRunResult."""
-    try:
-        parts = []
-        for msg in result.all_messages():
-            if type(msg).__name__ == "ModelResponse":
-                for part in getattr(msg, "parts", []):
-                    if type(part).__name__ == "TextPart":
-                        parts.append(getattr(part, "content", "") or "")
-        return "".join(parts)
-    except Exception:
-        return ""
-
-
-def _notify_observer(label: str, prompt: str, raw: str, output_obj: Any,
-                       phase: str = "end") -> None:
-    """Notify the observer that an LLM call FINISHED (phase="end")."""
-    if _llm_observer is None:
-        return
-    raw_text = raw or ""
-    thought = _extract_thought(raw_text)
-    if isinstance(output_obj, BaseModel):
-        try:
-            out: Any = output_obj.model_dump(mode="json")
-        except Exception:
-            out = str(output_obj)
-    else:
-        out = output_obj
-    try:
-        _llm_observer(label=label, input=prompt, thought=thought, output=out,
-                      phase=phase)
-    except Exception:  # observer must never break the request path
-        logger.debug("llm observer failed", exc_info=True)
-
-
-def _notify_observer_start(label: str, prompt: str) -> None:
-    """Notify the observer that an LLM call STARTED (timing + live spinner)."""
-    if _llm_observer is None:
-        return
-    try:
-        _llm_observer(label=label, input=prompt, thought=None, output=None,
-                      phase="start")
-    except Exception:
-        logger.debug("llm observer start failed", exc_info=True)
-
 
 async def _text_fallback(
     agent: Any,
@@ -126,7 +51,6 @@ async def _text_fallback(
     parse = fallback_parser or (lambda text: decode_structured(text, output_type))
     try:
         parsed = parse(raw)
-        _notify_observer(label, prompt, raw_text, parsed)
         return parsed
     except Exception as exc:
         logger.warning("[%s] structured/text parse failed (%s); nudging", label, exc)
@@ -135,7 +59,6 @@ async def _text_fallback(
         raw2 = strip_think(raw_text2)
         try:
             parsed2 = parse(raw2)
-            _notify_observer(label, prompt + COMPACTION_NUDGE, raw_text2, parsed2)
             return parsed2
         except Exception as exc2:
             raise ValueError(f"[{label}] unparseable output: {exc2}") from exc2
@@ -243,13 +166,10 @@ async def _ask_structured_core(
 
     # Fire the START observer event before the first attempt so the UI can
     # show the spinner / timing span immediately (end fires on completion).
-    _notify_observer_start(label, prompt)
-
     await bucket.acquire(estimate_tokens(prompt))
 
     async def _structured_once() -> T:
         result = await agent.run(prompt, output_type=output_type, model_settings=settings)
-        _notify_observer(label, prompt, _raw_response_text(result), result.output)
         return result.output
 
     async def _guarded_structured() -> T:
@@ -286,4 +206,4 @@ async def _ask_structured_core(
     return output
 
 
-__all__ = ["ask_structured", "set_llm_observer", "reset_llm_observer"]
+__all__ = ["ask_structured"]

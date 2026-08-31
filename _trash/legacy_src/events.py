@@ -1,12 +1,84 @@
-"""Agentic v3 - event vocabulary for pipeline instrumentation.
+"""Agentic v3 - structured event stream (observability/UI), v2-compatible JSONL.
 
-Plain in-memory emitter interface; the web UI and its JSONL event stream
-were removed. Pipelines/tests pass a capture object with an emit method.
+A small thread-safe JSONL emitter (stdlib only; the emitter was previously
+shared from src.agentic_v2.events and is inlined here so agentic v3 has no
+legacy package dependency):
+
+    AGENTIC_V3_EVENTS_FILE=agentic_v3_events.jsonl
+
+Event types (all carry a timestamp):
+  run_start          {question, budget}
+  master_plan        {tasks: [{id, title, objective, evidence_requirements}]}
+  task_start         {task_id, title}
+  task_done          {task_id, status, summary}
+  search_round       {task_id, round_no, queries: {requirement_id: [queries]}}
+  retrieved          {task_id, requirement_id, papers: [{document_id, section, score}]}
+  verdict            {task_id, requirement_id, document_id, chunk_id, relevance,
+                      answers_task, support, confidence, accepted, note}
+  evidence_added     {task_id, requirement_id, evidence_id, document_id, support, source}
+  deep_inspection    {task_id, requirement_id, document_id, status, findings, verified}
+  worker_report      {task_id, status, searches_used, deep_inspections_used, requirements}
+  contradiction      {contradiction_id, claim, kind, evidence_a, evidence_b, description}
+  resolution         {contradiction_id, status, explanation, additional_papers}
+  final_evidence     {evidence: n, gaps: [...], contradictions: n, resolved: n, unresolved: n}
+  run_end            {stop_reason, confidence, answer}
+
+For the v2 UI to render common nodes it also emits the legacy shapes
+agent_spawn / agent_output where they map 1:1.
 """
 
 from __future__ import annotations
 
+import json
+import threading
+import time
 from typing import Any, Optional
+
+
+class EventEmitter:
+    """Appends one JSON object per line to ``path`` (thread-safe)."""
+
+    def __init__(self, path: str):
+        self.path = path
+        self._lock = threading.Lock()
+
+    def emit(self, type_: str, **fields: Any) -> None:
+        record = {"ts": time.time(), "type": type_, **fields}
+        try:
+            line = json.dumps(record, default=str, ensure_ascii=False)
+        except Exception:
+            line = json.dumps({"ts": time.time(), "type": type_,
+                               "error": "unserializable"})
+        with self._lock:
+            with open(self.path, "a", encoding="utf-8") as fh:
+                fh.write(line + "\n")
+
+    def truncate(self) -> None:
+        """Start a fresh event log (the UI calls this before a new run)."""
+        with self._lock:
+            open(self.path, "w", encoding="utf-8").close()
+
+
+_SINGLETON: Optional[EventEmitter] = None
+
+
+def get_emitter(path: Optional[str] = None) -> Optional[EventEmitter]:
+    global _SINGLETON
+    if path:
+        if _SINGLETON is None or _SINGLETON.path != path:
+            _SINGLETON = EventEmitter(path)
+        return _SINGLETON
+    return _SINGLETON
+
+
+def reset_emitter() -> None:
+    global _SINGLETON
+    _SINGLETON = None
+
+
+__all__ = ["EventEmitter", "V3Events", "get_emitter", "reset_emitter"]
+
+
 class V3Events:
     """Typed convenience wrapper over the shared JSONL EventEmitter."""
 
@@ -146,5 +218,3 @@ class V3Events:
                      output: dict, status: str = "done") -> None:
         self.emit("agent_output", iteration=iteration, action=action,
                   agent=agent, output=output, status=status)
-
-__all__ = ["V3Events"]

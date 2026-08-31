@@ -136,8 +136,6 @@ class AppConfig:
         # stall the whole run; the state machine falls back / pivots instead.
         self.agentic_v2_orchestrator_timeout: float = float(_env("AGENTIC_V2_ORCHESTRATOR_TIMEOUT", "120"))
         self.agentic_v2_action_timeout: float = float(_env("AGENTIC_V2_ACTION_TIMEOUT", "180"))
-        # Structured event stream for the agentic v2 UI (JSONL; empty = off).
-        self.agentic_v2_events_file: str = _env("AGENTIC_V2_EVENTS_FILE", "").strip()
 
         # Agentic v3 (src/agents): master -> parallel workers ->
         # contradiction -> resolution -> final answer (V1 spec).
@@ -156,8 +154,6 @@ class AppConfig:
             _env("AGENTIC_V3_RESOLUTION_TIMEOUT", "180"))
         self.agentic_v3_synthesis_timeout: float = float(
             _env("AGENTIC_V3_SYNTHESIS_TIMEOUT", "180"))
-        # Structured event stream for the agentic v3 run (JSONL; empty = off).
-        self.agentic_v3_events_file: str = _env("AGENTIC_V3_EVENTS_FILE", "").strip()
 
         # Logfire observability (PydanticAI GenAI tracing + app trace events).
         # LOGFIRE_ENABLED: auto (default; enabled iff credentials/token are

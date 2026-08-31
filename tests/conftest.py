@@ -74,14 +74,11 @@ def _reset_singletons():
     from src.retrieval.retriever import reset_retrieval_service
     from src.retrieval.fullpaper import reset_unit_index
     from src.llm.ratelimit import reset_bucket
-    from src.llm.run import reset_llm_observer
 
     reset_retrieval_service()
     reset_unit_index()
     reset_bucket()
-    reset_llm_observer()
     yield
     reset_retrieval_service()
     reset_unit_index()
     reset_bucket()
-    reset_llm_observer()
