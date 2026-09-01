@@ -15,19 +15,18 @@ candidates on later search rounds without re-fetching the same chunks.
 It is a plain async callable (no LLM), so it can be used deterministically
 during the retrieval step AND (later) as an agent tool.
 """
-
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from src.retrieval.plans import SubQuery as LegacySubQuery
 from src.retrieval.plans import SubQueryPlan
+from src.tools import register
 
-logger = logging.getLogger("src.agents.search_engine")
+logger = logging.getLogger("src.tools.retrieval")
 
 
 class RetrievalResult(BaseModel):
@@ -37,13 +36,14 @@ class RetrievalResult(BaseModel):
     section: str = ""
     unit_kind: str = "paragraph"      # paragraph | table | figure
     rrf_score: float = 0.0
-    methods: List[str] = Field(default_factory=list)
+    methods: list[str] = Field(default_factory=list)
     # FULL containing structural unit (whole paragraph/table/figure), restored
     # from the chunk pointer — not a bare snippet.
     paragraph_text: str = ""
     token_count: int = 0
 
 
+@register("hybrid_retriever")
 class HybridRetrieverTool:
     """Wraps the shared RetrievalService + StructuralUnitIndex into one tool."""
 
@@ -79,10 +79,10 @@ class HybridRetrieverTool:
     async def search(
         self,
         sub: SubQueryPlan,
-        top_k: Optional[int] = None,
-        exclude_chunk_ids: Optional[List[str]] = None,
+        top_k: int | None = None,
+        exclude_chunk_ids: list[str] | None = None,
         restore_paragraphs: bool = True,
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Hybrid-retrieve + rerank for one subquery, restoring full units."""
         from src.lib.trace import get_trace
 
@@ -108,7 +108,7 @@ class HybridRetrieverTool:
         if restore_paragraphs:
             docs = await self._restore_units(service, docs, query_text)
 
-        results: List[RetrievalResult] = []
+        results: list[RetrievalResult] = []
         for i, doc in enumerate(docs, start=1):
             text = getattr(doc, "paragraph_text", None) or getattr(doc, "text", "")
             results.append(RetrievalResult(
@@ -124,12 +124,13 @@ class HybridRetrieverTool:
             ))
         return results
 
-    async def _restore_units(self, service: Any, docs: List[Any], query_text: str):
+    async def _restore_units(self, service: Any, docs: list[Any], query_text: str):
         """Attach the full containing structural unit to each retrieved doc.
 
-        Runs the (blocking) StructuralUnitIndex lookups in the executor thread
-        so we don't stall the event loop; dedupes chunks that restore to the
-        same unit (e.g. several rows of one table).
+        Blocking StructuralUnitIndex lookups run in the executor thread in
+        parallel (event loop stays free); chunks restoring to the same unit
+        (e.g. several rows of one table) are deduped, first (highest-ranked)
+        occurrence wins.
         """
         import asyncio
 
@@ -137,12 +138,10 @@ class HybridRetrieverTool:
         unit_index = self._unit_index(corpus)
         max_tokens = self.config.max_paper_tokens
 
-        out: List[Any] = []
-        seen_units: set = set()
-        for doc in docs:
+        async def restore(doc: Any) -> tuple[Any, tuple[str, str], str, str]:
             cid = getattr(doc, "chunk_id", "")
-            unit_text = ""
             kind = getattr(doc, "node_type", "") or "paragraph"
+            unit_text = ""
             try:
                 unit_text = await asyncio.to_thread(unit_index.get, cid)
             except Exception:
@@ -155,39 +154,21 @@ class HybridRetrieverTool:
             else:
                 # fall back to the retrieved chunk text itself
                 unit_text = getattr(doc, "text", "") or ""
-
-            # dedupe: multiple chunks of the same table/figure restore to the
-            # same unit text; keep the first (highest-ranked) occurrence.
-            unit_key = (kind, unit_text[:200])
-            if unit_key in seen_units:
-                continue
-            seen_units.add(unit_key)
-
             if max_tokens and len(unit_text.split()) > max_tokens:
                 words = unit_text.split()
                 unit_text = " ".join(words[:max_tokens]) + (
                     f"\n[...unit truncated to {max_tokens} tokens for context]\n"
                 )
-            setattr(doc, "paragraph_text", unit_text)
-            setattr(doc, "unit_kind", kind)
+            return doc, (kind, unit_text[:200]), kind, unit_text
+
+        out: list[Any] = []
+        seen_units: set = set()
+        for doc, key, kind, unit_text in await asyncio.gather(
+                *(restore(d) for d in docs)):
+            if key in seen_units:
+                continue
+            seen_units.add(key)
+            doc.paragraph_text = unit_text
+            doc.unit_kind = kind
             out.append(doc)
         return out
-
-
-# ---------------------------------------------------------------------------
-# Process-wide singleton (index/corpus load once); mirrors the shared service.
-# ---------------------------------------------------------------------------
-
-_TOOL_SINGLETON: Optional[HybridRetrieverTool] = None
-
-
-def get_retriever_tool(config: Any = None) -> HybridRetrieverTool:
-    global _TOOL_SINGLETON
-    if _TOOL_SINGLETON is None:
-        _TOOL_SINGLETON = HybridRetrieverTool(config)
-    return _TOOL_SINGLETON
-
-
-def reset_retriever_tool() -> None:
-    global _TOOL_SINGLETON
-    _TOOL_SINGLETON = None

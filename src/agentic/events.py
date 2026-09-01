@@ -1,4 +1,4 @@
-"""Agentic v3 - event vocabulary for pipeline instrumentation.
+"""Event vocabulary for pipeline instrumentation.
 
 Plain in-memory emitter interface; the web UI and its JSONL event stream
 were removed. Pipelines/tests pass a capture object with an emit method.
@@ -6,11 +6,13 @@ were removed. Pipelines/tests pass a capture object with an emit method.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
+
+
 class V3Events:
     """Typed convenience wrapper over the shared JSONL EventEmitter."""
 
-    def __init__(self, emitter: Optional[EventEmitter] = None):
+    def __init__(self, emitter: Any | None = None):
         self.emitter = emitter
 
     @property
@@ -73,7 +75,7 @@ class V3Events:
 
     def worker_report(self, task_id: str, status: str, searches_used: int,
                       deep_inspections_used: int, requirements: list,
-                      stop_reason: str = "", evidence: Optional[list] = None) -> None:
+                      stop_reason: str = "", evidence: list | None = None) -> None:
         self.emit("worker_report", task_id=task_id, status=status,
                   searches_used=searches_used,
                   deep_inspections_used=deep_inspections_used,

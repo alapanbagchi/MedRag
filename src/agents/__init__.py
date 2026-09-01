@@ -1,129 +1,34 @@
-"""Agentic v3 - evidence-vetted multi-agent RAG retrieval.
+"""Agentic v3 - LLM agents only.
 
-A NEW flow, kept separate from src/agentic/ (v1) and src/agentic_v2/ (the
-orchestrator research loop - both left untouched). Implements the V1 spec:
+Each module here defines one agent role (an LLM-driven actor):
 
-    QUERY
-      -> MASTER ORCHESTRATOR          (decompose + evidence requirements +
-                                       N thresholds + stop criteria)
-      -> PARALLEL WORKERS             (UMLS enrichment, search-term
-                                       selection, retrieval + context
-                                       expansion, CRITIC verification gate,
-                                       N independent papers per requirement
-                                       with dedup, deep paper inspection,
-                                       iterative retrieval until satisfied
-                                       or budget exhausted)
-      -> VERIFIED EVIDENCE
-      -> CONTRADICTION AGENT          (cross-evidence conflicts/anomalies)
-      -> RESOLUTION AGENT             (paper search tool; resolved or
-                                       explicitly unresolved)
-      -> FINAL EVIDENCE SET -> FINAL ANSWER (honest synthesis; gaps and
-                                       unresolved conflicts are reported)
+  master.py         MasterOrchestratorAgent - decompose the query into tasks
+  search.py         SearchTermPlanner       - search-term selection per round
+  replan.py         ReplannerAgent          - failure analysis + replanning
+  critic.py         CriticAgent             - the verification gate
+  deepinspect.py    DeepInspector           - deep paper inspection
+  contradiction.py  ContradictionAgent      - cross-evidence analysis
+  resolution.py     ResolutionAgent         - resolves contradictions
+  synthesize.py     FinalSynthesizer        - evidence-gated final answer
+  worker.py         WorkerAgent             - the worker sub-orchestrator
 
-Layout:
-  state.py        pipeline models + evidence-threshold/dedup logic
-  master.py       the Master Orchestrator (Stage 2)
-  umls.py         UMLS terminology enrichment (Stage 4)
-  search.py       search-term selection (Stage 5)
-  retriever.py    retriever tool + context expansion (Stages 6-7)
-  critic.py       the CRITIC verification gate (Stage 8)
-  worker.py       the Worker sub-orchestrator loop (Stages 3, 10-13, 17-18)
-  deepinspect.py  deep paper inspection (Stage 11/14)
-  contradiction.py  global contradiction agent (Stage 14)
-  resolution.py     contradiction resolution agent (Stage 15)
-  synthesize.py     final answer (Stage 24)
-  pipeline.py       AgenticV3Pipeline - full run (Stages 1-24)
-  events.py         structured event stream (v2-compatible JSONL)
+Non-agent code lives elsewhere: the run pipeline, domain state, events and
+worker pipelines in src.agentic; reusable non-LLM capabilities in src.tools.
 """
 
-from src.agents.state import (
-    AnswersTask,
-    Contradiction,
-    ContradictionKind,
-    CriticRelevance,
-    CriticVerdict,
-    EvidenceRequirement,
-    EvidenceSource,
-    EvidenceStatus,
-    FinalEvidenceSet,
-    MasterPlan,
-    RequirementReport,
-    RequirementStatus,
-    ResearchTask,
-    ResolutionOutcome,
-    ResolutionStatus,
-    RetrievedPaper,
-    RunBudget,
-    SupportDirection,
-    TaskStatus,
-    TermConcept,
-    V3RunState,
-    VerifiedEvidence,
-    WorkerReport,
-)
-from src.agents.master import MasterOrchestratorAgent, build_plan, fallback_task
-from src.agents.umls import TerminologyEnricher
-from src.agents.search import SearchTermPlanner, TaskSearchPlan
-from src.agents.retriever import PaperRetrieverTool
-from src.agents.critic import CriticAgent, is_promising_for_deep_inspection
-from src.agents.worker import WorkerAgent
-from src.agents.deepinspect import DeepInspector, verify_quote
-from src.agents.replan import (
-    FailureAnalysis,
-    ReplanContext,
-    ReplannerAgent,
-    meaningfully_different,
-)
 from src.agents.contradiction import ContradictionAgent
+from src.agents.critic import CriticAgent
+from src.agents.deepinspect import DeepInspector, verify_quote
+from src.agents.master import MasterOrchestratorAgent
+from src.agents.replan import ReplannerAgent, meaningfully_different
 from src.agents.resolution import ResolutionAgent
-from src.agents.synthesize import FinalSynthesizer, SynthesisReport
-from src.agents.pipeline import AgenticV3Pipeline
-from src.agents.events import V3Events
+from src.agents.search import SearchTermPlanner
+from src.agents.synthesize import FinalSynthesizer
+from src.agents.worker import WorkerAgent
 
 __all__ = [
-    "AnswersTask",
-    "Contradiction",
-    "ContradictionKind",
-    "CriticRelevance",
-    "CriticVerdict",
-    "EvidenceRequirement",
-    "EvidenceSource",
-    "EvidenceStatus",
-    "FailureAnalysis",
-    "FinalEvidenceSet",
-    "MasterPlan",
-    "RequirementReport",
-    "RequirementStatus",
-    "ResearchTask",
-    "ResolutionOutcome",
-    "ResolutionStatus",
-    "RetrievedPaper",
-    "RunBudget",
-    "SupportDirection",
-    "TaskStatus",
-    "TermConcept",
-    "V3RunState",
-    "VerifiedEvidence",
-    "WorkerReport",
-    "MasterOrchestratorAgent",
-    "build_plan",
-    "fallback_task",
-    "TerminologyEnricher",
-    "SearchTermPlanner",
-    "TaskSearchPlan",
-    "PaperRetrieverTool",
-    "CriticAgent",
-    "is_promising_for_deep_inspection",
-    "WorkerAgent",
-    "DeepInspector",
-    "verify_quote",
-    "ReplanContext",
-    "ReplannerAgent",
-    "meaningfully_different",
-    "ContradictionAgent",
-    "ResolutionAgent",
-    "FinalSynthesizer",
-    "SynthesisReport",
-    "AgenticV3Pipeline",
-    "V3Events",
+    "ContradictionAgent", "CriticAgent", "DeepInspector",
+    "FinalSynthesizer", "MasterOrchestratorAgent", "ReplannerAgent",
+    "ResolutionAgent", "SearchTermPlanner", "WorkerAgent",
+    "meaningfully_different", "verify_quote",
 ]

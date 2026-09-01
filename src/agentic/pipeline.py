@@ -50,14 +50,13 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-from src.lib.utils import plural
 from src.agents.contradiction import ContradictionAgent
-from src.agents.events import V3Events
+from src.agentic.events import V3Events
 from src.agents.master import MasterOrchestratorAgent
 from src.agents.resolution import ResolutionAgent
-from src.agents.state import (
+from src.agentic.state import (
     Contradiction,
     MasterPlan,
     ResearchTask,
@@ -69,8 +68,9 @@ from src.agents.state import (
 )
 from src.agents.synthesize import FinalSynthesizer
 from src.agents.worker import WorkerAgent
+from src.lib.utils import plural
 
-logger = logging.getLogger("src.agents.pipeline")
+logger = logging.getLogger("src.agentic.pipeline")
 
 
 class AgenticV3Pipeline:
@@ -123,7 +123,7 @@ class AgenticV3Pipeline:
         return float(getattr(self.config, key, default))
 
     # ------------------------------------------------------------------
-    async def answer(self, query: str) -> Dict[str, Any]:
+    async def answer(self, query: str) -> dict[str, Any]:
         """Run the full pipeline; returns a JSON-safe result dict.
 
         Wraps the run in a top-level Logfire span (``medrag.run``) so every
@@ -138,9 +138,9 @@ class AgenticV3Pipeline:
                 return await self._answer(query)
         return await self._answer(query)
 
-    async def _answer(self, query: str) -> Dict[str, Any]:
-        from src.lib.trace import get_trace
+    async def _answer(self, query: str) -> dict[str, Any]:
         from src.lib import logfire_obs as lf
+        from src.lib.trace import get_trace
 
         trace = get_trace()
         budget = self._budget()
@@ -214,16 +214,28 @@ class AgenticV3Pipeline:
                 self.master.plan(state.question, state.budget),
                 timeout=self._timeout("agentic_v3_master_timeout", 120.0),
             )
-        except asyncio.TimeoutError:
-            from src.agents.master import build_plan, fallback_task
+        except TimeoutError:
+            from src.agents.master import Decomposition
             logger.warning("master timeout; single-hop fallback")
-            plan = build_plan(state.question, [], budget=state.budget,
-                              rationale="master timeout; single-hop fallback")
+            fallback = Decomposition(
+                rationale="master timeout; single-hop fallback",
+                tasks=[{"id": "T1", "title": "Fallback",
+                         "objective": state.question[:300],
+                         "intent": "answer the question",
+                         "evidence_required": [state.question[:200] or "user question"]}],
+            )
+            plan = fallback.to_master_plan(state.question, budget=state.budget)
         except Exception as exc:
-            from src.agents.master import build_plan
+            from src.agents.master import Decomposition
             logger.warning("master failed (%s); deterministic fallback", exc)
-            plan = build_plan(state.question, [], budget=state.budget,
-                              rationale=f"master failed: {str(exc)[:120]}")
+            fallback = Decomposition(
+                rationale=f"master failed: {str(exc)[:120]}",
+                tasks=[{"id": "T1", "title": "Fallback",
+                         "objective": state.question[:300],
+                         "intent": "answer the question",
+                         "evidence_required": [state.question[:200] or "user question"]}],
+            )
+            plan = fallback.to_master_plan(state.question, budget=state.budget)
         state.plan = plan
         if self.events is not None:
             self.events.master_plan(plan.model_dump(mode="json"))
@@ -234,7 +246,7 @@ class AgenticV3Pipeline:
             agent="master")
         return plan
 
-    async def _run_workers(self, state: V3RunState, trace: Any) -> List[WorkerReport]:
+    async def _run_workers(self, state: V3RunState, trace: Any) -> list[WorkerReport]:
         tasks = state.tasks[: max(1, state.budget.max_workers)]
         timeout = self._timeout("agentic_v3_worker_timeout", 360.0)
 
@@ -246,26 +258,18 @@ class AgenticV3Pipeline:
             worker_budget = state.budget.model_copy(deep=True)
             with lf.task_context(task_id=task.id, task_title=task.title):
                 try:
-                    report = await asyncio.wait_for(
+                    return await asyncio.wait_for(
                         self.worker.run(task, worker_budget, run_id=state.run_id),
                         timeout=timeout)
-                    return report
-                except asyncio.TimeoutError:
-                    logger.warning("worker %s timed out after %ss", task.id, timeout)
-                    task.searches_used = max(task.searches_used, 1)
-                    task.status = TaskStatus.EXHAUSTED
-                    for req in task.evidence_requirements:
-                        if not req.satisfied():
-                            req.mark_exhausted("worker timed out after "
-                                               f"{timeout:.0f}s; evidence incomplete")
-                    return self.worker._build_report(task, worker_budget)
                 except Exception as exc:
-                    logger.warning("worker %s failed (%s)", task.id, exc)
-                    task.status = TaskStatus.EXHAUSTED
-                    for req in task.evidence_requirements:
-                        if not req.satisfied():
-                            req.mark_exhausted(f"worker error: {str(exc)[:160]}")
-                    return self.worker._build_report(task, worker_budget)
+                    timed_out = isinstance(exc, TimeoutError)
+                    reason = "timeout" if timed_out else "error"
+                    gap = (f"worker timed out after {timeout:.0f}s; evidence incomplete"
+                           if timed_out else f"worker error: {str(exc)[:160]}")
+                    logger.warning("worker %s %s (%s)", task.id, reason, gap)
+                    return self._worker_failure(
+                        task, worker_budget, state.run_id, reason, gap,
+                        mark_searches=timed_out)
 
         trace.bullet(
             f"Dispatching {plural(len(tasks), 'worker')} in parallel — each "
@@ -274,7 +278,26 @@ class AgenticV3Pipeline:
             agent="orchestrator")
         return await asyncio.gather(*(one(t) for t in tasks))
 
-    async def _detect_contradictions(self, state: V3RunState, trace: Any) -> List[Contradiction]:
+    @staticmethod
+    def _worker_failure(task: ResearchTask, budget: RunBudget, run_id: str,
+                        stop_reason: str, gap: str, *,
+                        mark_searches: bool = False) -> WorkerReport:
+        """Mark a failed worker (timeout/error) and return its honest report."""
+        if mark_searches:
+            task.searches_used = max(task.searches_used, 1)
+        task.status = TaskStatus.EXHAUSTED
+        for req in task.evidence_requirements:
+            if not req.satisfied():
+                req.mark_exhausted(gap)
+        return WorkerReport(
+            run_id=run_id, task_id=task.id, task_title=task.title,
+            status=task.status.value, stop_reason=stop_reason,
+            requirements=[],
+            searches_used=task.searches_used,
+            deep_inspections_used=task.deep_inspections_used,
+            budget_exhausted=budget.exhausted())
+
+    async def _detect_contradictions(self, state: V3RunState, trace: Any) -> list[Contradiction]:
         if len(state.verified_evidence()) < 2:
             return []
         try:
@@ -282,15 +305,13 @@ class AgenticV3Pipeline:
                 self.contradiction_agent.detect(state),
                 timeout=self._timeout("agentic_v3_contradiction_timeout", 120.0),
             )
-        except asyncio.TimeoutError:
-            from src.agents.contradiction import (
-                detect_contradictions_deterministic)
+        except TimeoutError:
+            from src.agents.contradiction import detect_contradictions_deterministic
             contradictions = detect_contradictions_deterministic(
                 state.verified_evidence())
         except Exception as exc:
             logger.warning("contradiction detection failed (%s)", exc)
-            from src.agents.contradiction import (
-                detect_contradictions_deterministic)
+            from src.agents.contradiction import detect_contradictions_deterministic
             contradictions = detect_contradictions_deterministic(
                 state.verified_evidence())
         state.contradictions = contradictions
@@ -309,7 +330,7 @@ class AgenticV3Pipeline:
         return contradictions
 
     async def _resolve_contradictions(self, state: V3RunState,
-                                      contradictions: List[Contradiction],
+                                      contradictions: list[Contradiction],
                                       trace: Any) -> None:
         if not contradictions:
             return
@@ -319,14 +340,14 @@ class AgenticV3Pipeline:
             try:
                 outcome = await asyncio.wait_for(
                     self.resolution_agent.resolve(c, state), timeout=timeout)
-            except asyncio.TimeoutError:
-                from src.agents.state import ResolutionOutcome
+            except TimeoutError:
+                from src.agentic.state import ResolutionOutcome
                 outcome = ResolutionOutcome(
                     status=ResolutionStatus.UNRESOLVED,
                     explanation=f"resolution timed out after {timeout:.0f}s",
                 )
             except Exception as exc:
-                from src.agents.state import ResolutionOutcome
+                from src.agentic.state import ResolutionOutcome
                 outcome = ResolutionOutcome(
                     status=ResolutionStatus.UNRESOLVED,
                     explanation=f"resolution failed: {str(exc)[:160]}",
@@ -352,7 +373,7 @@ class AgenticV3Pipeline:
                 self.synthesizer.synthesize(state),
                 timeout=self._timeout("agentic_v3_synthesis_timeout", 180.0),
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             from src.agents.synthesize import SynthesisReport
             return SynthesisReport(
                 summary="(analysis timed out; see evidence and gaps below)",
@@ -368,7 +389,7 @@ class AgenticV3Pipeline:
             )
 
     # ------------------------------------------------------------------
-    def _result_dict(self, state: V3RunState, reports: List[WorkerReport]) -> Dict[str, Any]:
+    def _result_dict(self, state: V3RunState, reports: list[WorkerReport]) -> dict[str, Any]:
         # the final evidence set is the VERIFIED set (requirement 7)
         evidence = state.verified_evidence()
         confidence = (state.final_answer or {}).get("confidence", 0.0)

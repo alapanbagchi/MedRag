@@ -16,7 +16,7 @@ from src.agents.deepinspect import (
     expand_passage,
     verify_quote,
 )
-from src.agents.state import (
+from src.agentic.state import (
     AnswersTask,
     ContradictionKind,
     CriticRelevance,

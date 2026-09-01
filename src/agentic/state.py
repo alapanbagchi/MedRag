@@ -28,10 +28,9 @@ document_ids, not accepted items.
 from __future__ import annotations
 
 import enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # Enumerations
@@ -127,8 +126,8 @@ class EvidenceRequirement(BaseModel):
     id: str = ""
     text: str = ""                    # e.g. "Association between vitamin D status and hypertension"
     target_n: int = 3                 # N independent supporting articles
-    accepted: List["VerifiedEvidence"] = Field(default_factory=list)
-    reviewed: List[Dict[str, Any]] = Field(default_factory=list)
+    accepted: list[VerifiedEvidence] = Field(default_factory=list)
+    reviewed: list[dict[str, Any]] = Field(default_factory=list)
     # scoped review log: one entry per judged candidate (accepted OR rejected)
     # carrying {evidence_id, document_id, chunk_id, attempt_id, relevance,
     # answers_task, support, confidence, note} - the CRITIC reasoning that
@@ -136,11 +135,11 @@ class EvidenceRequirement(BaseModel):
     rejected: int = 0                 # count of REJECTED passages
     status: RequirementStatus = RequirementStatus.UNSATISFIED
     gap: str = ""                     # what is still unsupported (set at exhaustion)
-    caveats: List[str] = Field(default_factory=list)
+    caveats: list[str] = Field(default_factory=list)
 
     # -- verification-before-counting ----------------------------------
 
-    def add_evidence(self, item: "VerifiedEvidence", seen: Optional[set] = None) -> bool:
+    def add_evidence(self, item: VerifiedEvidence, seen: set | None = None) -> bool:
         """Add ONE critic-accepted evidence item (deduped). Returns True if new.
 
         Dedup key = (document_id, chunk_id, excerpt head). The same paper
@@ -157,7 +156,7 @@ class EvidenceRequirement(BaseModel):
         self.status = self.derive_status()
         return True
 
-    def derive_status(self) -> "RequirementStatus":
+    def derive_status(self) -> RequirementStatus:
         """Explicit transition function used by the orchestrator.
 
         UNSATISFIED (0 supporting papers) -> PARTIALLY_SUPPORTED
@@ -170,7 +169,7 @@ class EvidenceRequirement(BaseModel):
             return RequirementStatus.PARTIALLY_SUPPORTED
         return RequirementStatus.UNSATISFIED
 
-    def record_review(self, entry: Dict[str, Any]) -> None:
+    def record_review(self, entry: dict[str, Any]) -> None:
         """Append ONE scoped critic review of a candidate (accepted or not).
 
         This is the only place review records are written - the requirement
@@ -179,19 +178,18 @@ class EvidenceRequirement(BaseModel):
         """
         self.reviewed.append(entry)
 
-    def verified(self) -> List["VerifiedEvidence"]:
+    def verified(self) -> list[VerifiedEvidence]:
         """Evidence gated by the CRITIC: ACCEPTED + CONTRADICTORY only."""
-        from src.agents.state import EvidenceStatus
         return [e for e in self.accepted
                 if e.status in (EvidenceStatus.ACCEPTED,
                                 EvidenceStatus.CONTRADICTORY)]
 
-    def supporting_papers(self) -> List[str]:
+    def supporting_papers(self) -> list[str]:
         """DISTINCT document ids with at least one SUPPORTS item (independence)."""
         return sorted({e.document_id for e in self.accepted
                        if e.document_id and e.support == SupportDirection.SUPPORTS})
 
-    def contradicting_papers(self) -> List[str]:
+    def contradicting_papers(self) -> list[str]:
         """DISTINCT document ids carrying at least one CONTRADICTS item."""
         return sorted({e.document_id for e in self.accepted
                        if e.document_id and e.support == SupportDirection.CONTRADICTS})
@@ -211,7 +209,7 @@ class EvidenceRequirement(BaseModel):
                       else RequirementStatus.UNSATISFIED)
         self.gap = gap or self.gap
 
-    def summary(self) -> Dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "text": self.text,
@@ -237,22 +235,22 @@ class ResearchTask(BaseModel):
     title: str = ""                    # short label, e.g. "Diet -> hypertension"
     objective: str = ""                # what the task must establish
     intent: str = ""                   # the analysis the evidence must support
-    evidence_requirements: List[EvidenceRequirement] = Field(default_factory=list)
-    stop_criteria: List[str] = Field(default_factory=list)
-    entities: List[str] = Field(default_factory=list)
-    terminology: List["TermConcept"] = Field(default_factory=list)  # UMLS pool
+    evidence_requirements: list[EvidenceRequirement] = Field(default_factory=list)
+    stop_criteria: list[str] = Field(default_factory=list)
+    entities: list[str] = Field(default_factory=list)
+    terminology: list[TermConcept] = Field(default_factory=list)  # UMLS pool
     status: TaskStatus = TaskStatus.PENDING
     searches_used: int = 0
     deep_inspections_used: int = 0
-    notes: List[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
 
-    def requirement(self, req_id: str) -> Optional[EvidenceRequirement]:
+    def requirement(self, req_id: str) -> EvidenceRequirement | None:
         for r in self.evidence_requirements:
             if r.id == req_id:
                 return r
         return None
 
-    def all_evidence(self) -> List["VerifiedEvidence"]:
+    def all_evidence(self) -> list[VerifiedEvidence]:
         return [e for r in self.evidence_requirements for e in r.accepted]
 
     def satisfied(self) -> bool:
@@ -263,7 +261,7 @@ class ResearchTask(BaseModel):
     def any_evidence(self) -> bool:
         return any(r.accepted for r in self.evidence_requirements)
 
-    def uncovered(self) -> List[EvidenceRequirement]:
+    def uncovered(self) -> list[EvidenceRequirement]:
         return [r for r in self.evidence_requirements if not r.satisfied()]
 
     def finalize(self) -> None:
@@ -274,7 +272,7 @@ class ResearchTask(BaseModel):
         else:
             self.status = TaskStatus.INSUFFICIENT
 
-    def summary(self) -> Dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "title": self.title,
@@ -289,8 +287,8 @@ class ResearchTask(BaseModel):
 class MasterPlan(BaseModel):
     """The structured retrieval plan produced by the Master Orchestrator."""
     question: str = ""
-    tasks: List[ResearchTask] = Field(default_factory=list)
-    global_stop_criteria: List[str] = Field(default_factory=list)
+    tasks: list[ResearchTask] = Field(default_factory=list)
+    global_stop_criteria: list[str] = Field(default_factory=list)
     rationale: str = ""
 
 
@@ -299,15 +297,15 @@ class TermConcept(BaseModel):
     surface_form: str = ""
     preferred_name: str = ""
     cui: str = ""
-    synonyms: List[str] = Field(default_factory=list)
+    synonyms: list[str] = Field(default_factory=list)
 
-    def all_terms(self) -> List[str]:
+    def all_terms(self) -> list[str]:
         out = [self.surface_form]
         if self.preferred_name:
             out.append(self.preferred_name)
         out.extend(self.synonyms)
         seen: set = set()
-        clean: List[str] = []
+        clean: list[str] = []
         for t in out:
             t = " ".join((t or "").split())
             if t and t.casefold() not in seen:
@@ -406,11 +404,11 @@ class VerifiedEvidence(BaseModel):
     status: EvidenceStatus = EvidenceStatus.ACCEPTED
     retrieval_method: str = ""        # provenance: how it was retrieved
     rank: int = 0                     # provenance: rank in the retrieval result
-    critic_verdict: Optional[Dict[str, Any]] = None   # the CRITIC snapshot
+    critic_verdict: dict[str, Any] | None = None   # the CRITIC snapshot
     note: str = ""
     search_query: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
 
 
@@ -422,7 +420,7 @@ class RequirementReport(BaseModel):
     coverage: int = 0
     status: str = "open"
     gap: str = ""
-    papers: List[Dict[str, Any]] = Field(default_factory=list)
+    papers: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class WorkerReport(BaseModel):
@@ -438,15 +436,15 @@ class WorkerReport(BaseModel):
     task_title: str = ""
     status: str = "pending"           # satisfied | partially_supported | exhausted
     stop_reason: str = ""             # satisfied | search_budget | rounds_exhausted
-    requirements: List[RequirementReport] = Field(default_factory=list)
-    evidence: List[VerifiedEvidence] = Field(default_factory=list)
+    requirements: list[RequirementReport] = Field(default_factory=list)
+    evidence: list[VerifiedEvidence] = Field(default_factory=list)
     searches_used: int = 0
     deep_inspections_used: int = 0
     budget_exhausted: bool = False
-    gaps: List[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
     summary: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.model_dump(mode="json")
 
 
@@ -460,31 +458,31 @@ class Contradiction(BaseModel):
     claim: str = ""                   # the disputed claim
     task_id: str = ""
     requirement_id: str = ""
-    evidence_a: List[str] = Field(default_factory=list)   # evidence ids, side A
-    evidence_b: List[str] = Field(default_factory=list)   # evidence ids, side B
+    evidence_a: list[str] = Field(default_factory=list)   # evidence ids, side A
+    evidence_b: list[str] = Field(default_factory=list)   # evidence ids, side B
     kind: ContradictionKind = ContradictionKind.DIRECT_CONFLICT
     description: str = ""
-    resolution: Optional["ResolutionOutcome"] = None
+    resolution: ResolutionOutcome | None = None
 
 
 class ResolutionOutcome(BaseModel):
     """Outcome of the dedicated Contradiction Resolution Agent."""
     status: ResolutionStatus = ResolutionStatus.UNRESOLVED
     explanation: str = ""             # how it was resolved (or why not)
-    additional_queries: List[str] = Field(default_factory=list)
-    additional_papers: List[str] = Field(default_factory=list)  # doc ids consulted
+    additional_queries: list[str] = Field(default_factory=list)
+    additional_papers: list[str] = Field(default_factory=list)  # doc ids consulted
     characterization: str = ""        # e.g. "context-dependent: baseline vitamin D status"
 
 
 class FinalEvidenceSet(BaseModel):
     """Stage 23: the full verified evidence package feeding the answer stage."""
     question: str = ""
-    tasks: List[Dict[str, Any]] = Field(default_factory=list)
-    evidence: List[VerifiedEvidence] = Field(default_factory=list)
-    gaps: List[str] = Field(default_factory=list)
-    contradictions: List[Contradiction] = Field(default_factory=list)
-    resolved: List[Contradiction] = Field(default_factory=list)
-    unresolved: List[Contradiction] = Field(default_factory=list)
+    tasks: list[dict[str, Any]] = Field(default_factory=list)
+    evidence: list[VerifiedEvidence] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    contradictions: list[Contradiction] = Field(default_factory=list)
+    resolved: list[Contradiction] = Field(default_factory=list)
+    unresolved: list[Contradiction] = Field(default_factory=list)
     confidence: float = 0.0
 
 
@@ -534,14 +532,14 @@ class V3RunState(BaseModel):
     """
     run_id: str = ""
     question: str = ""
-    plan: Optional[MasterPlan] = None
-    tasks: List[ResearchTask] = Field(default_factory=list)
-    contradictions: List[Contradiction] = Field(default_factory=list)
+    plan: MasterPlan | None = None
+    tasks: list[ResearchTask] = Field(default_factory=list)
+    contradictions: list[Contradiction] = Field(default_factory=list)
     budget: RunBudget = Field(default_factory=RunBudget)
-    gaps: List[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
     terminal: bool = False
     stop_reason: str = ""
-    final_answer: Optional[Dict[str, Any]] = None
+    final_answer: dict[str, Any] | None = None
     iterations: int = 0
 
     def add_task(self, task: ResearchTask) -> None:
@@ -551,22 +549,22 @@ class V3RunState(BaseModel):
                 return
         self.tasks.append(task)
 
-    def all_evidence(self) -> List[VerifiedEvidence]:
+    def all_evidence(self) -> list[VerifiedEvidence]:
         return [e for t in self.tasks for e in t.all_evidence()]
 
-    def verified_evidence(self) -> List[VerifiedEvidence]:
+    def verified_evidence(self) -> list[VerifiedEvidence]:
         """Evidence that passed the CRITIC (ACCEPTED + CONTRADICTORY).
 
         This is the ONLY input to contradiction analysis and synthesis -
         REJECTED / UNDER_REVIEW items are structurally excluded (reqs 5-7).
         """
-        out: List[VerifiedEvidence] = []
+        out: list[VerifiedEvidence] = []
         for t in self.tasks:
             for r in t.evidence_requirements:
                 out.extend(r.verified())
         return out
 
-    def evidence_by_id(self) -> Dict[str, VerifiedEvidence]:
+    def evidence_by_id(self) -> dict[str, VerifiedEvidence]:
         return {e.id: e for e in self.all_evidence()}
 
 

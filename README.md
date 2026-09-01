@@ -354,7 +354,9 @@ src/
   chunking/          md_chunker.py  chunker.py  classification.py
   lib/               utils.py  models.py  _torch.py  (shared support)
   retrieval/         dense, sparse, splade, reranker, pgvector, planner
-  agents/            agentic_v3 multi-agent flow (master/worker/critic/...)
+  agents/            agentic_v3 LLM agents (master/worker/critic/...)
+  agentic/           agentic_v3 engine (pipeline, domain state, events, worker pipelines)
+  tools/             reusable non-LLM capabilities (umls, retrieval) agents call
   prompts/           agent system prompts (plain text, one file per agent)
   llm/  umls/        shared providers
 ```

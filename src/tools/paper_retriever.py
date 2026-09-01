@@ -22,18 +22,19 @@ and adapts the worker's evidence requirement into the SubQueryPlan
 retrieval expects. Loop-avoidance: excluded already-seen chunk ids are passed
 in so later rounds return FRESH candidates.
 """
-
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
+from src.agentic.state import EvidenceRequirement, ResearchTask, RetrievedPaper
 from src.retrieval.plans import SubQueryPlan
-from src.agents.state import EvidenceRequirement, ResearchTask, RetrievedPaper
+from src.tools import register
 
-logger = logging.getLogger("src.agents.retriever")
+logger = logging.getLogger("src.tools.paper_retriever")
 
 
+@register("paper_retriever")
 class PaperRetrieverTool:
     """Searches the corpus for one evidence requirement and restores context."""
 
@@ -45,7 +46,7 @@ class PaperRetrieverTool:
 
     def _tool_obj(self) -> Any:
         if self._tool is None:
-            from src.agents.search_engine import HybridRetrieverTool
+            from src.tools.retrieval import HybridRetrieverTool
 
             self._tool = HybridRetrieverTool(config=self.config)
         return self._tool
@@ -56,10 +57,10 @@ class PaperRetrieverTool:
         requirement: EvidenceRequirement,
         query: str,
         *,
-        exclude_chunk_ids: Optional[List[str]] = None,
-        top_k: Optional[int] = None,
+        exclude_chunk_ids: list[str] | None = None,
+        top_k: int | None = None,
         round_no: int = 0,
-    ) -> List[RetrievedPaper]:
+    ) -> list[RetrievedPaper]:
         """Run ONE query for ONE requirement; returns expanded-context papers.
 
         Each hit's FULL containing structural unit is restored (context
@@ -75,10 +76,10 @@ class PaperRetrieverTool:
             query=query,
             focus="evidence",
             evidence_required=[requirement.text],
-            terminology=[c.all_terms()[0] if c.all_terms() else "" 
+            terminology=[c.all_terms()[0] if c.all_terms() else ""
                          for c in getattr(task, "terminology", [])],
         )
-        k = top_k or getattr(self.config, "agentic_v3_papers_per_search", None)             or self.config.max_documents
+        k = top_k or getattr(self.config, "agentic_v3_papers_per_search", None) or self.config.max_documents
         trace.tool("v3_retrieve", {"query": query, "requirement": requirement.id,
                                    "top_k": k, "exclude": len(exclude_chunk_ids or [])})
         try:
@@ -89,7 +90,7 @@ class PaperRetrieverTool:
             logger.warning("retrieval failed for %s/%s (%s)", task.id,
                            requirement.id, exc)
             return []
-        papers: List[RetrievedPaper] = []
+        papers: list[RetrievedPaper] = []
         seen: set = set()
         for r in results:
             key = (r.document_id or "", r.chunk_id or "", r.paragraph_text[:80])

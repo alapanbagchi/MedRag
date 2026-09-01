@@ -35,6 +35,8 @@ packages = [
   "core",
   "src",
   "src.agents",
+  "src.agentic",
+  "src.tools",
   "src.chunking",
   "src.ingestion",
   "src.lib",

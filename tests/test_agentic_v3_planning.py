@@ -5,9 +5,8 @@ import pytest
 
 from src.agents.master import (
     MasterOrchestratorAgent,
-    PlanTask,
-    build_plan,
-    fallback_task,
+    Decomposition,
+    PlannedTask,
 )
 from src.agents.search import (
     SearchTermPlanner,
@@ -15,7 +14,7 @@ from src.agents.search import (
     _clean_query,
     fallback_queries,
 )
-from src.agents.state import EvidenceRequirement, ResearchTask, RunBudget, TermConcept
+from src.agentic.state import EvidenceRequirement, ResearchTask, RunBudget, TermConcept
 from src.config import AppConfig
 from tests.conftest import native_test_model
 
@@ -35,16 +34,18 @@ def _task_with_terms(terms=("vitamin D", "hypertension", "blood pressure")):
     return task
 
 
-def test_build_plan_applies_thresholds_and_stop_criteria():
-    blueprints = [PlanTask(
-        id="T1",
-        title="Dietary management of hypertension",
-        objective="determine diet-blood pressure strategies",
-        evidence_required=["Foods that affect blood pressure",
-                           "Potassium intake and blood pressure"],
-        entities=["sodium", "potassium"],
-    )]
-    plan = build_plan("diet question", blueprints, budget=RunBudget(evidence_target=3))
+def test_plan_applies_budget_and_stop_criteria():
+    raw = json.dumps({
+        "rationale": "diet plan",
+        "tasks": [{"id": "T1", "title": "Dietary management",
+                    "objective": "determine diet strategies",
+                    "intent": "dietary strategies",
+                    "evidence_required": ["Foods that affect BP", "Potassium and BP"],
+                    "entities": ["sodium"]}],
+    })
+    master = MasterOrchestratorAgent(model=native_test_model(raw), config=AppConfig())
+    import asyncio
+    plan = asyncio.run(master.plan("diet question", budget=RunBudget(evidence_target=3)))
     assert len(plan.tasks) == 1
     t = plan.tasks[0]
     assert len(t.evidence_requirements) == 2
@@ -53,21 +54,20 @@ def test_build_plan_applies_thresholds_and_stop_criteria():
     assert plan.question == "diet question"
 
 
-def test_build_plan_dedupes_by_objective():
-    blueprints = [
-        PlanTask(id="T1", title="one", objective="eggs and cardiovascular disease",
-                 evidence_requirements=["a"], entities=["egg"]),
-        PlanTask(id="T2", title="two", objective="eggs and cardiovascular disease risk",
-                 evidence_requirements=["b"], entities=["egg"]),
-    ]
-    plan = build_plan("eggs question", blueprints)
-    assert len(plan.tasks) == 1
-
-
-def test_build_plan_falls_back_to_single_task():
-    plan = build_plan("some question", [], budget=RunBudget(evidence_target=2))
-    assert len(plan.tasks) == 1
-    assert plan.tasks[0].evidence_requirements[0].target_n == 2
+def test_plan_passes_all_tasks():
+    raw = json.dumps({
+        "rationale": "two tasks",
+        "tasks": [
+            {"id": "T1", "title": "one", "objective": "eggs and cardiovascular disease",
+             "intent": "find evidence", "evidence_required": ["a"], "entities": ["egg"]},
+            {"id": "T2", "title": "two", "objective": "eggs and cardiovascular disease risk",
+             "intent": "find evidence", "evidence_required": ["b"], "entities": ["egg"]},
+        ],
+    })
+    master = MasterOrchestratorAgent(model=native_test_model(raw), config=AppConfig())
+    import asyncio
+    plan = asyncio.run(master.plan("eggs question"))
+    assert len(plan.tasks) == 2
 
 
 def test_master_agent_parses_decomposition():
@@ -99,7 +99,8 @@ def test_master_agent_parses_decomposition():
     assert plan.tasks[0].entities == ["sodium", "DASH"]
 
 
-def test_master_agent_falls_back_on_garbage():
+def test_master_agent_raises_on_garbage():
+    """Unparseable LLM output -> agent raises (no fallback)."""
     master = MasterOrchestratorAgent(
         model=native_test_model("not json at all"), config=AppConfig())
 
@@ -107,8 +108,8 @@ def test_master_agent_falls_back_on_garbage():
         return await master.plan("q", budget=RunBudget(evidence_target=1))
 
     import asyncio
-    plan = asyncio.run(_run())
-    assert len(plan.tasks) == 1  # deterministic fallback never returns zero tasks
+    with pytest.raises(Exception):
+        asyncio.run(_run())
 
 
 def test_fallback_queries_rotate_and_never_repeat():
@@ -149,9 +150,9 @@ def test_search_planner_uses_llm_queries():
     assert len(queries) == 2
     assert "vitamin D supplementation" in queries[0]
 
-def test_master_parses_thought_plus_json():
-    """The strict prompt makes the model think in prose THEN emit the JSON -
-    the plan must come out fully populated (raw-text JSON salvage)."""
+
+def test_master_parses_json():
+    """Clean JSON output is validated natively by pydantic-ai."""
     raw = json.dumps({
         "rationale": "two obligations",
         "tasks": [
@@ -172,8 +173,7 @@ def test_master_parses_thought_plus_json():
              "entities": ["vitamin D", "hypertension", "blood pressure"]},
         ],
     })
-    composite = "<thought>Here is my outline T1..., T2...</thought>" + raw
-    master = MasterOrchestratorAgent(model=native_test_model(composite),
+    master = MasterOrchestratorAgent(model=native_test_model(raw),
                                      config=AppConfig())
 
     async def _run():
@@ -189,37 +189,24 @@ def test_master_parses_thought_plus_json():
                                       "hypertension", "blood pressure"]
 
 
-def test_master_salvages_prose_outline_with_task_fields():
-    """When the model emits ONLY a bullet outline (Task:/Intent:/Evidence:/
-    Entities:), the plan is salvaged from the outline - never empty."""
+def test_master_rejects_non_json():
+    """Non-JSON output -> agent raises (no prose salvage)."""
     outline = ("<thought>\n* T1: Dietary management\n"
-               "    * Task: Identify dietary modifications supported for hypertension.\n"
-               "    * Intent: Identify and assess dietary strategies.\n"
-               "    * Evidence: Dietary restrictions for blood pressure control.\n"
-               "    * Entities: Hypertension, diet, blood pressure.\n"
-               "* T2: Vitamin D and hypertension\n"
-               "    * Task: Determine if increased vitamin D intake is effective.\n"
-               "    * Intent: Assess the benefit of vitamin D.\n"
-               "    * Evidence: Effect of vitamin D supplementation on blood pressure.\n"
-               "    * Entities: Vitamin D, hypertension, blood pressure.\n"
+               "    * Task: Identify dietary modifications.\n"
                "</thought>")
     master = MasterOrchestratorAgent(model=native_test_model(outline),
                                      config=AppConfig())
 
     async def _run():
-        return await master.plan("diet for hypertension and vitamin D?")
+        return await master.plan("diet for hypertension?")
 
     import asyncio
-    plan = asyncio.run(_run())
-    assert len(plan.tasks) == 2
-    assert plan.tasks[0].objective.startswith("Identify dietary modifications")
-    assert plan.tasks[1].evidence_requirements[0].text.startswith(
-        "Effect of vitamin D")
+    with pytest.raises(Exception):
+        asyncio.run(_run())
 
 
 def test_master_rejects_title_only_output():
-    """A label-only response (no objectives/evidence anywhere) must not be
-    accepted as a plan - it falls back to the honest single task."""
+    """Label-only response -> agent raises (not valid JSON)."""
     labels = "<thought>* T1: Dietary stuff\n* T2: Vitamin D stuff</thought>"
     master = MasterOrchestratorAgent(model=native_test_model(labels),
                                      config=AppConfig())
@@ -228,6 +215,5 @@ def test_master_rejects_title_only_output():
         return await master.plan("some question")
 
     import asyncio
-    plan = asyncio.run(_run())
-    assert len(plan.tasks) == 1
-    assert plan.tasks[0].objective
+    with pytest.raises(Exception):
+        asyncio.run(_run())

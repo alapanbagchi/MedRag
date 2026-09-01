@@ -69,7 +69,7 @@ async def _agentic_v3_main(argv: list[str]) -> None:
 
     from src.config import AppConfig
     from src.lib.trace import get_trace
-    from src.agents.pipeline import AgenticV3Pipeline
+    from src.agentic.pipeline import AgenticV3Pipeline
 
     query = " ".join(a for a in argv if not a.startswith("-"))
     cfg = AppConfig()

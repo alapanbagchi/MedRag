@@ -33,23 +33,22 @@ counts as evidence until the CRITIC accepts it.
 """
 
 from __future__ import annotations
-from src.prompts.load import load_prompt
 
 import logging
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from src.lib.utils import plural
 from src.agents.critic import CriticAgent, evidence_excerpt
-from src.agents.state import (
+from src.agentic.state import (
     EvidenceRequirement,
     EvidenceSource,
     ResearchTask,
     SupportDirection,
     VerifiedEvidence,
 )
+from src.lib.utils import normalize_for_match, plural, quote_grounded
+from src.prompts.load import load_prompt
 
 logger = logging.getLogger("src.agents.deepinspect")
 
@@ -69,7 +68,7 @@ INSPECTOR_SYSTEM_PROMPT = load_prompt('agents', 'deep_inspector.txt')
 
 
 class InspectorOutput(BaseModel):
-    findings: List[Finding] = Field(default_factory=list)
+    findings: list[Finding] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -93,14 +92,13 @@ class _FullTextProvider:
             from src.retrieval.retriever import get_retrieval_service
             service = get_retrieval_service(self.config)
             self._corpus = service._components()["corpus"]
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.warning("corpus unavailable for deep inspection: %s", exc)
             self._corpus = None
         return self._corpus
 
-    def split_sections_rows(self, document_id: str) -> List[Tuple[str, str]]:
+    def split_sections_rows(self, document_id: str) -> list[tuple[str, str]]:
         """[(section, section_text)] ordered by document position, deduped."""
-        import asyncio
 
         corpus = self._corpus_obj()
         if corpus is None:
@@ -114,7 +112,7 @@ class _FullTextProvider:
         order_col = "document_position" if "document_position" in sub.columns else None
         if order_col is not None:
             sub = sub.sort_values(order_col)
-        sections: Dict[str, List[str]] = {}
+        sections: dict[str, list[str]] = {}
         for _, row in sub.iterrows():
             sec = str(row.get("section") or "(untitled)")
             text = str(row.get("text") or "").strip()
@@ -130,7 +128,7 @@ class _FullTextProvider:
         """
         try:
             rows = self.split_sections_rows(document_id)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.warning("cannot read document %s: %s", document_id, exc)
             return ""
         parts = []
@@ -153,40 +151,28 @@ class _FullTextProvider:
 # Deterministic text verification ("GREP proves the claimed text exists")
 # ---------------------------------------------------------------------------
 
-def _norm_sep(s: str) -> str:
-    """Normalize but keep word separators (used for locating indexes)."""
-    s = (s or "").lower()
-    s = re.sub(r"[\s\n\t]+", " ", s)
-    return s
+def verify_quote(document_text: str, quote: str) -> tuple[int, int] | None:
+    """Return (start, end) in the normalized document text, or None.
 
-
-def verify_quote(document_text: str, quote: str) -> Optional[Tuple[int, int]]:
-    """Return (start, end) in the normalised document text, or None.
-
-    True means the claimed text ACTUALLY EXISTS in the source - the finder's
-    claim has passed GREP verification and may proceed to the CRITIC.
+    Grounds the claim via src.lib.utils.quote_grounded (normalized ->
+    squashed -> fuzzy ladder); the returned span lives in the same
+    normalize_for_match form expand_passage consumes.
     """
     if not document_text or not quote:
         return None
-    doc = _norm_sep(document_text)
-    q = _norm_sep(quote).strip()
-    if not q:
+    grounded, _ = quote_grounded(quote, document_text)
+    if not grounded:
         return None
+    doc = normalize_for_match(document_text)
+    q = normalize_for_match(quote)
     start = doc.find(q)
-    if start >= 0:
-        return (start, start + len(q))
-    # fuzzy fallback: allow modest whitespace differences only (never content)
-    q_compact = " ".join(q.split())
-    start = doc.find(q_compact)
-    if start >= 0:
-        return (start, start + len(q_compact))
-    return None
+    return (start, start + len(q)) if start >= 0 else None
 
 
 def expand_passage(document_text: str, start: int, end: int,
                    lead: int = 400, tail: int = 700) -> str:
     """Expand the verified span to its surrounding paragraph context."""
-    doc = _norm_sep(document_text)
+    doc = normalize_for_match(document_text)
     lo = max(0, start - lead)
     hi = min(len(doc), end + tail)
     # snap to sentence boundaries
@@ -206,17 +192,16 @@ class DeepInspector:
 
     def __init__(self, config: Any = None, model: Any = None,
                  critic: Any = None, provider: Any = None):
+        from pydantic_ai import Agent
+
         from src.config import AppConfig
         from src.llm import build_model_for
-        from pydantic_ai import Agent
 
         self.config = config or AppConfig()
         self.model = model or build_model_for(self.config, role="deep_inspector")
-        self.agent = Agent(
-            self.model,
-            system_prompt=INSPECTOR_SYSTEM_PROMPT,
-            name="paper_inspector",
-        )
+        self.agent = Agent(self.model, system_prompt=INSPECTOR_SYSTEM_PROMPT,
+                           output_type=InspectorOutput, retries=2,
+                           name="paper_inspector")
         self.critic = critic or CriticAgent(config=self.config)
         self.provider = provider or _FullTextProvider(self.config)
 
@@ -229,7 +214,7 @@ class DeepInspector:
         context_hint: str = "",
         run_id: str = "",
         attempt_id: str = "",
-    ) -> List[VerifiedEvidence]:
+    ) -> list[VerifiedEvidence]:
         """Deep-inspect ONE paper; returns critic-ACCEPTED evidence (may be []).
 
         Steps (spec section 14):
@@ -239,32 +224,22 @@ class DeepInspector:
         Every finding is stamped with the caller's scope (run/task/
         requirement/attempt) so it stays isolated like any other evidence.
         """
-        from src.llm.run import ask_structured
         from src.lib.trace import get_trace
 
         trace = get_trace()
         doc_text = self._full_text(document_id)
         if not doc_text:
             return []
-        trace.agent("paper_inspector", output_type="InspectorOutput",
-                    meta={"document": document_id, "requirement": requirement.id,
-                          "chars": len(doc_text)})
 
-        findings: List[Finding] = []
+        findings: list[Finding] = []
         try:
-            out = await ask_structured(
-                self.agent,
-                self._prompt(task, requirement, doc_text, context_hint),
-                InspectorOutput,
-                label=f"paper_inspector:{document_id}",
-                max_tokens=min(1500, getattr(self.config, "agent_max_tokens", 2048)),
-            )
-            findings = [f for f in out.findings if (f.quote or "").strip()][:_MAX_FINDINGS]
-        except Exception as exc:
+            out = await self.agent.run(self._prompt(task, requirement, doc_text, context_hint))
+            findings = [f for f in out.output.findings if (f.quote or "").strip()][:_MAX_FINDINGS]
+        except Exception as exc:  # noqa: BLE001
             logger.warning("deep inspection find failed for %s (%s)", document_id, exc)
             return []
 
-        accepted: List[VerifiedEvidence] = []
+        accepted: list[VerifiedEvidence] = []
         for f in findings:
             match = verify_quote(doc_text, f.quote)
             if match is None:
@@ -279,7 +254,7 @@ class DeepInspector:
                 continue
             # The CRITIC is the final authority even here; the candidate
             # carries the full scope so the verdict is scoped like any other.
-            from src.agents.state import EvidenceStatus, RetrievedPaper
+            from src.agentic.state import EvidenceStatus, RetrievedPaper
             paper = RetrievedPaper(
                 evidence_id=f"{task.id}.{requirement.id}.{attempt_id or '?'}."
                            f"DI{len(accepted) + 1}",
@@ -300,7 +275,7 @@ class DeepInspector:
             try:
                 verdict = await self.critic.judge(
                     task, requirement, paper, run_id=run_id, attempt_id=attempt_id)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 logger.warning("critic failed during deep inspection %s: %s",
                                document_id, exc)
                 continue
@@ -308,7 +283,7 @@ class DeepInspector:
                 continue
             try:
                 support = SupportDirection(verdict.support.value)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 support = SupportDirection.SUPPORTS
             item = VerifiedEvidence(
                 id=paper.evidence_id,
@@ -345,7 +320,7 @@ class DeepInspector:
     def _full_text(self, document_id: str) -> str:
         try:
             return self.provider.document_text(document_id, max_tokens=_MAX_DOC_TOKENS)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.warning("full-text load failed for %s: %s", document_id, exc)
             return ""
 

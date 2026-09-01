@@ -16,17 +16,17 @@ Design notes:
     forms (those containing ',') and over-long terms (> 40 chars) that would
     poison BM25.
 """
-
 from __future__ import annotations
 
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.retrieval.plans import SubQueryPlan
+from src.tools import register
 
-logger = logging.getLogger("src.agents.umls_enricher")
+logger = logging.getLogger("src.tools.umls")
 
 # generic/common words and single-letter noise that must never be folded into a
 # retrieval query (they would poison BM25 with off-domain dictionary matches).
@@ -77,21 +77,21 @@ def _usable_term(name: str, surface_form: str = "") -> bool:
 @dataclass
 class EnrichedTerm:
     surface_form: str
-    preferred_name: Optional[str] = None
+    preferred_name: str | None = None
     cui: str = ""
-    synonyms: List[str] = field(default_factory=list)
+    synonyms: list[str] = field(default_factory=list)
 
 
 @dataclass
 class EnrichmentResult:
     subquery_id: str
-    terms: List[EnrichedTerm] = field(default_factory=list)
+    terms: list[EnrichedTerm] = field(default_factory=list)
 
     @property
-    def flat_terms(self) -> List[str]:
+    def flat_terms(self) -> list[str]:
         """All candidate terms (preferred + synonyms), deduped and cleaned."""
         seen: set = set()
-        out: List[str] = []
+        out: list[str] = []
         for t in self.terms:
             for name in ([t.preferred_name] if t.preferred_name else []) + t.synonyms:
                 if not _usable_term(name, t.surface_form):
@@ -107,6 +107,7 @@ class EnrichmentResult:
         return out
 
 
+@register("umls_enricher")
 class UMLSEnricher:
     """Resolves task entities against UMLS and folds terms into the pool."""
 
@@ -130,14 +131,14 @@ class UMLSEnricher:
     def enabled(self) -> bool:
         return bool(getattr(self.umls, "enabled", False))
 
-    async def enrich_subquery(self, sub: SubQueryPlan) -> List[EnrichedTerm]:
+    async def enrich_subquery(self, sub: SubQueryPlan) -> list[EnrichedTerm]:
         """Resolve a subquery's entities; returns enriched terms (empty on failure)."""
         if not self.enabled:
             return []
         entities = [e for e in sub.entities if e.text]
         if not entities:
             return []
-        terms: List[EnrichedTerm] = []
+        terms: list[EnrichedTerm] = []
         for e in entities:
             try:
                 concept = await self.umls.search_concept(e.text)
@@ -154,14 +155,14 @@ class UMLSEnricher:
             ))
         return terms
 
-    async def enrich(self, subs: List[SubQueryPlan]) -> Dict[str, List[EnrichedTerm]]:
+    async def enrich(self, subs: list[SubQueryPlan]) -> dict[str, list[EnrichedTerm]]:
         """Enrich every subquery (concurrently); keyed by subquery id."""
         results = await asyncio_gather_results(
             [(sub.id, self.enrich_subquery(sub)) for sub in subs]
         )
         return dict(results)
 
-    def apply_to_query(self, sub: SubQueryPlan, terms: List[EnrichedTerm]) -> str:
+    def apply_to_query(self, sub: SubQueryPlan, terms: list[EnrichedTerm]) -> str:
         """Fold enriched terms into the subquery's retrieval query.
 
         Returns the expanded query and (side-effect) stores the additions back
@@ -169,7 +170,7 @@ class UMLSEnricher:
         meaningful.
         """
         base = (sub.query or sub.target or "").strip()
-        additions: List[str] = []
+        additions: list[str] = []
         base_cf = f" {base.casefold()} "
         seen: set = set()
         for t in terms:
@@ -194,9 +195,8 @@ class UMLSEnricher:
         return base
 
 
-async def asyncio_gather_results(pairs: List[tuple]):
+async def asyncio_gather_results(pairs: list[tuple]):
     """Gather (key, awaitable) pairs, swallowing per-item exceptions."""
-    import asyncio
 
     results = []
     for key, coro in pairs:

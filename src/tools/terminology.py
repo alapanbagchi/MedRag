@@ -26,17 +26,18 @@ src.agentic.umls_tool.UMLSEnricher (no modifications to agentic v1/v2).
 Degrades gracefully: no API key / network failure leaves the task's own
 entities as the pool.
 """
-
 from __future__ import annotations
 
 import logging
-from typing import Any, List
+from typing import Any
 
-from src.agents.state import ResearchTask, TermConcept
+from src.agentic.state import ResearchTask, TermConcept
+from src.tools import register
 
-logger = logging.getLogger("src.agents.umls")
+logger = logging.getLogger("src.tools.terminology")
 
 
+@register("terminology_enricher")
 class TerminologyEnricher:
     """Builds a UMLS terminology pool for one research task."""
 
@@ -47,9 +48,9 @@ class TerminologyEnricher:
         self._enricher = enricher
 
     def _umls_enricher(self) -> Any:
-        """Lazily build the shared UMLSEnricher (src.agentic.umls_tool)."""
+        """Lazily build the shared UMLSEnricher (src.tools.umls)."""
         if self._enricher is None:
-            from src.agents.umls_enricher import UMLSEnricher
+            from src.tools.umls import UMLSEnricher
 
             self._enricher = UMLSEnricher(config=self.config)
         return self._enricher
@@ -61,7 +62,7 @@ class TerminologyEnricher:
         except Exception:
             return False
 
-    async def enrich(self, task: ResearchTask) -> List[TermConcept]:
+    async def enrich(self, task: ResearchTask) -> list[TermConcept]:
         """Resolve the task's entities against UMLS/MeSH.
 
         Returns the terminology pool (empty list on any failure - entities
@@ -90,7 +91,7 @@ class TerminologyEnricher:
             evidence_required=[r.text for r in task.evidence_requirements],
             entities=[PlannedEntity(text=e) for e in entities],
         )
-        pool: List[TermConcept] = []
+        pool: list[TermConcept] = []
         try:
             terms = await enricher.enrich_subquery(sub)
         except Exception as exc:
@@ -110,10 +111,10 @@ class TerminologyEnricher:
         return task.terminology
 
     @staticmethod
-    def pool_terms(task: ResearchTask) -> List[str]:
+    def pool_terms(task: ResearchTask) -> list[str]:
         """Flatten the terminology pool into deduped search vocabulary."""
         seen: set = set()
-        out: List[str] = []
+        out: list[str] = []
         for concept in task.terminology:
             for t in concept.all_terms():
                 t = " ".join((t or "").split())
@@ -123,7 +124,7 @@ class TerminologyEnricher:
         return out
 
     @staticmethod
-    def pool_summary(task: ResearchTask) -> List[dict]:
+    def pool_summary(task: ResearchTask) -> list[dict]:
         """A small JSON-safe view of the pool (for events / UI)."""
         return [
             {"surface_form": c.surface_form, "preferred_name": c.preferred_name,

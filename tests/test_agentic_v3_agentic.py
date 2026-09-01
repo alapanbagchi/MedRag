@@ -17,10 +17,10 @@ import asyncio
 import json
 
 from src.agents.critic import CriticAgent
-from src.agents.events import V3Events
+from src.agentic.events import V3Events
 from src.agents.replan import meaningfully_different
 from src.agents.search import RequirementSearch, TaskSearchPlan
-from src.agents.state import (
+from src.agentic.state import (
     AnswersTask,
     CriticRelevance,
     CriticVerdict,
@@ -174,7 +174,7 @@ def _worker(retriever, critic, replanner=None, deep=None, events=None):
         events = V3Events(events)
     return WorkerAgent(
         enricher=FakeEnricher(),
-        search_planner=FakeSearchPlanner(),
+        planner=FakeSearchPlanner(),
         replanner=replanner or FakeReplanner(),
         retriever=retriever,
         critic=critic,
@@ -342,7 +342,7 @@ def test_verified_evidence_excludes_rejected_and_carries_provenance():
     assert req.verified() == [ok], "REJECTED items are structurally excluded"
 
     # synthesis prompt only presents verified items
-    from src.agents.state import V3RunState, MasterPlan
+    from src.agentic.state import V3RunState, MasterPlan
     state = V3RunState(run_id="r", question="q")
     state.add_task(ResearchTask(id="T1", title="t", objective="o",
                                 evidence_requirements=[req]))
@@ -413,8 +413,8 @@ def test_end_to_end_transition_trace():
     [MASTER] -> [WORKER:T1] [SEARCH:A1] [RETRIEVAL] [CRITIC:E..] ->
     [EVIDENCE:req -> state] -> ([REPLAN:A2] -> ...) -> [CONTRADICTION] ->
     [SYNTHESIS]. Scope ids must be self-consistent (no cross-task leakage)."""
-    from src.agents.master import MasterPlan
-    from src.agents.pipeline import AgenticV3Pipeline
+    from src.agentic.state import MasterPlan
+    from src.agentic.pipeline import AgenticV3Pipeline
     from src.agents.synthesize import AnswerSection, Citation, SynthesisReport
 
 

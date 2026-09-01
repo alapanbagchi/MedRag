@@ -18,14 +18,14 @@ authority).
 """
 
 from __future__ import annotations
-from src.prompts.load import load_prompt
 
 import logging
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from src.agents.state import ResolutionStatus, V3RunState
+from src.agentic.state import ResolutionStatus, V3RunState
+from src.prompts.load import load_prompt
 
 logger = logging.getLogger("src.agents.synthesize")
 
@@ -39,18 +39,18 @@ class Citation(BaseModel):
 class AnswerSection(BaseModel):
     heading: str = ""
     body: str = ""
-    citations: List[Citation] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
 
 
 class SynthesisReport(BaseModel):
     summary: str = ""
-    sections: List[AnswerSection] = Field(default_factory=list)
-    limitations: List[str] = Field(default_factory=list)
-    unresolved_gaps: List[str] = Field(default_factory=list)
-    unresolved_contradictions: List[str] = Field(default_factory=list)
-    resolved_contradictions: List[str] = Field(default_factory=list)
+    sections: list[AnswerSection] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    unresolved_gaps: list[str] = Field(default_factory=list)
+    unresolved_contradictions: list[str] = Field(default_factory=list)
+    resolved_contradictions: list[str] = Field(default_factory=list)
     confidence: float = 0.0
-    citations: List[Citation] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
 
 
 SYNTHESIS_SYSTEM_PROMPT = load_prompt('agents', 'synthesize.txt')
@@ -83,7 +83,7 @@ def _synthesis_prompt(state: V3RunState) -> str:
     # + CONTRADICTORY) is ever presented to the synthesizer - arbitrary
     # retrieval results and REJECTED items are structurally excluded.
     evidence = state.verified_evidence()
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append(f"USER QUESTION: {state.question}")
     lines.append("\nTASKS:")
     lines.append(_task_block(state))
@@ -122,7 +122,7 @@ def _synthesis_prompt(state: V3RunState) -> str:
 def _repair_citations(report: SynthesisReport, evidence_ids: set) -> SynthesisReport:
     """Deterministic citation repair: drop any id that is not in the verified
     evidence (the LLM is never the citation authority)."""
-    def clean(cits: List[Citation]) -> List[Citation]:
+    def clean(cits: list[Citation]) -> list[Citation]:
         return [c for c in cits if c.requirement_id in evidence_ids or c.document_id in evidence_ids]
     sections = [s.model_copy(update={"citations": clean(s.citations)})
                 for s in report.sections]
@@ -134,34 +134,17 @@ class FinalSynthesizer:
     """Writes the final answer from the final verified evidence set."""
 
     def __init__(self, config: Any = None, model: Any = None):
+        from pydantic_ai import Agent
+
         from src.config import AppConfig
         from src.llm import build_model_for
-        from pydantic_ai import Agent
 
         self.config = config or AppConfig()
         self.model = model or build_model_for(self.config, role="synthesizer")
-        self.agent = Agent(
-            self.model,
-            system_prompt=SYNTHESIS_SYSTEM_PROMPT,
-            name="synthesizer_v3",
-        )
+        self.agent = Agent(self.model, system_prompt=SYNTHESIS_SYSTEM_PROMPT,
+                           output_type=SynthesisReport, retries=2, name="synthesizer_v3")
 
     async def synthesize(self, state: V3RunState) -> SynthesisReport:
-        from src.llm.run import ask_structured
-        from src.lib.trace import get_trace
-
-        trace = get_trace()
-        prompt = _synthesis_prompt(state)
-        trace.agent("synthesizer_v3", output_type="SynthesisReport",
-                    meta={"evidence": len(state.verified_evidence()),
-                          "contradictions": len(state.contradictions),
-                          "tasks": len(state.tasks)})
-        report = await ask_structured(
-            self.agent,
-            prompt,
-            SynthesisReport,
-            label="synthesizer_v3",
-            max_tokens=min(2500, getattr(self.config, "agent_max_tokens", 2048)),
-        )
-        # citation repair binds every answer citation to a REAL verified id
+        """Write the final answer, then bind every citation to a real verified id."""
+        report = (await self.agent.run(_synthesis_prompt(state))).output
         return _repair_citations(report, {e.id for e in state.verified_evidence()})
