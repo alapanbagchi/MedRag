@@ -1,0 +1,5 @@
+# Root-level tooling state (backend carries its own .gitignore)
+.npm-cache/
+.venv
+.bench_tmp/
+.impeccable/

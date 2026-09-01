@@ -16,7 +16,7 @@ import { CapsLabel, Dropdown, Led } from "@/components/ui/primitives";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { MessageList } from "@/components/chat/MessageList";
 import { SourcePanel } from "@/components/sources/SourcePanel";
-import { STAGE_LABEL } from "@/components/chat/ThinkingStatus";
+import { STAGE_LABEL } from "@/components/chat/ThinkingLayer";
 
 export function ChatView({
   conversationId,
@@ -112,7 +112,7 @@ export function ChatView({
     const userMsg: Message = { id: uid("m"), role: "user", content: question, status: "complete", createdAt: t0 };
     const asst: Message = {
       id: asstId, role: "assistant", content: "", status: "queued",
-      sources: [], stages: [], createdAt: t0, startedAt: t0,
+      sources: [], stages: [], trace: [], createdAt: t0, startedAt: t0,
     };
     mutate([...msgRef.current, userMsg, asst]);
     setBusyId(asstId);
@@ -139,6 +139,21 @@ export function ChatView({
           patch(asstId, (m) => ({ ...m, sources: e.sources }));
         } else if (e.type === "token") {
           patch(asstId, (m) => ({ ...m, content: m.content + e.content }));
+        } else if (e.type === "pipeline") {
+          // verbatim backend trace -> thinking log (cap the log length).
+          // Drop the bulky report/answer payloads: the answer text already
+          // streams as tokens, so the trace stays lean for localStorage.
+          let fields = e.fields;
+          if (e.event === "answer" || e.event === "run_end") {
+            const lean = { ...e.fields };
+            delete lean.report;
+            delete lean.answer;
+            fields = lean;
+          }
+          patch(asstId, (m) => ({
+            ...m,
+            trace: [...(m.trace ?? []), { at: Date.now(), event: e.event, fields }].slice(-1500),
+          }));
         } else if (e.type === "error") {
           engineError = e.message;
         }
@@ -398,6 +413,7 @@ export function ChatView({
         activeCitation={activeCitation}
         isDesktop={isDesktop}
         contextualLabel={activeAssistant?.startedAt ? `response · ${formatClock(activeAssistant.startedAt)}` : undefined}
+        onSelectCitation={cite}
       />
     </div>
   );

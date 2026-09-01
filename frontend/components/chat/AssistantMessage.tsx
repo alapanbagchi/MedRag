@@ -7,7 +7,7 @@ import type { Message } from "@/lib/types";
 import { copyText, fmtNum, formatDuration, formatClock } from "@/lib/utils";
 import { CapsLabel, Led } from "@/components/ui/primitives";
 import { Markdown } from "@/components/chat/Markdown";
-import { ThinkingStatus } from "@/components/chat/ThinkingStatus";
+import { ThinkingLayer } from "@/components/chat/ThinkingLayer";
 
 export function AssistantMessage({
   message,
@@ -40,21 +40,25 @@ export function AssistantMessage({
 
   if (message.status === "error") {
     return (
-      <section aria-label="Research error" className="panel border-err/60">
-        <div className="flex items-center justify-between border-b border-line px-4 py-2">
-          <CapsLabel>Research interrupted</CapsLabel>
-          <Led state="err" pulse />
-        </div>
-        <div className="px-4 py-4">
-          <p className="text-[14px] font-semibold">The evidence service didn&apos;t respond.</p>
-          <p className="mono mt-2 text-[11px] leading-relaxed text-ink3">{message.error ?? "Unknown error"}</p>
-          <div className="mt-4 flex items-center gap-2">
-            <button type="button" onClick={onRetry} className="btn btn--accent">
-              <RotateCcw size={13} /> Retry
-            </button>
-            <button type="button" onClick={doCopy} disabled={!hasContent} className="btn">
-              Copy partial
-            </button>
+      <section aria-label="Research error" className="mb-10">
+        {/* keep the thinking log visible so the failure is traceable */}
+        <ThinkingLayer message={message} />
+        <div className="panel border-err/60">
+          <div className="flex items-center justify-between border-b border-line px-4 py-2">
+            <CapsLabel>Research interrupted</CapsLabel>
+            <Led state="err" pulse />
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-[14px] font-semibold">The evidence service didn&apos;t respond.</p>
+            <p className="mono mt-2 text-[11px] leading-relaxed text-ink3">{message.error ?? "Unknown error"}</p>
+            <div className="mt-4 flex items-center gap-2">
+              <button type="button" onClick={onRetry} className="btn btn--accent">
+                <RotateCcw size={13} /> Retry
+              </button>
+              <button type="button" onClick={doCopy} disabled={!hasContent} className="btn">
+                Copy partial
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -71,7 +75,10 @@ export function AssistantMessage({
         {duration && <span className="mono ml-auto text-[10px] text-ink3 tnum">{duration}</span>}
       </div>
 
-      {working && <ThinkingStatus message={message} />}
+      {/* thinking layer: collapsible live log of the whole research run */}
+      {(working || hasContent || (message.trace && message.trace.length > 0)) && (
+        <ThinkingLayer message={message} />
+      )}
 
       {(hasContent || !working) && (
         <div className="panel corner-ticks px-4 py-3 sm:px-5 sm:py-4">

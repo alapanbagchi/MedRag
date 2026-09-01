@@ -20,10 +20,12 @@ dependencies = [
   "pydantic",
   "pydantic-ai[logfire]",
   "python-dotenv",
+  "requests",
   "scipy",
   "torch",
   "tqdm",
   "transformers",
+  "fastapi>=0.141.1",
 ]
 
 [build-system]
