@@ -58,6 +58,7 @@ from src.agents.master import MasterOrchestratorAgent
 from src.agents.resolution import ResolutionAgent
 from src.agentic.state import (
     Contradiction,
+    EvidenceRequirement,
     MasterPlan,
     ResearchTask,
     ResolutionStatus,
@@ -92,18 +93,19 @@ class AgenticV3Pipeline:
 
         self.config = config or AppConfig()
         self.run_id = run_id
+        self.events = events
+        if self.events is not None and not isinstance(self.events, V3Events):
+            self.events = V3Events(self.events)
         self.master = master or MasterOrchestratorAgent(config=self.config)
-        self.worker = worker or WorkerAgent(config=self.config)
+        # events must reach the worker BEFORE it builds its search/deep
+        # pipelines — otherwise the pipes capture NullEvents and the
+        # retrieved/verdict/evidence_added/deep_inspection events vanish.
+        self.worker = worker or WorkerAgent(config=self.config, events=self.events)
         self.contradiction_agent = (
             contradiction_agent or ContradictionAgent(config=self.config))
         self.resolution_agent = (
             resolution_agent or ResolutionAgent(config=self.config))
         self.synthesizer = synthesizer or FinalSynthesizer(config=self.config)
-        self.events = events
-        if self.events is not None and not isinstance(self.events, V3Events):
-            self.events = V3Events(self.events)
-        if self.events is not None:
-            self.worker.events = self.events
 
     # ------------------------------------------------------------------
     def _budget(self) -> RunBudget:
@@ -215,27 +217,11 @@ class AgenticV3Pipeline:
                 timeout=self._timeout("agentic_v3_master_timeout", 120.0),
             )
         except TimeoutError:
-            from src.agents.master import Decomposition
             logger.warning("master timeout; single-hop fallback")
-            fallback = Decomposition(
-                rationale="master timeout; single-hop fallback",
-                tasks=[{"id": "T1", "title": "Fallback",
-                         "objective": state.question[:300],
-                         "intent": "answer the question",
-                         "evidence_required": [state.question[:200] or "user question"]}],
-            )
-            plan = fallback.to_master_plan(state.question, budget=state.budget)
+            plan = self._single_hop_plan(state, "master timeout; single-hop fallback")
         except Exception as exc:
-            from src.agents.master import Decomposition
             logger.warning("master failed (%s); deterministic fallback", exc)
-            fallback = Decomposition(
-                rationale=f"master failed: {str(exc)[:120]}",
-                tasks=[{"id": "T1", "title": "Fallback",
-                         "objective": state.question[:300],
-                         "intent": "answer the question",
-                         "evidence_required": [state.question[:200] or "user question"]}],
-            )
-            plan = fallback.to_master_plan(state.question, budget=state.budget)
+            plan = self._single_hop_plan(state, f"master failed: {str(exc)[:120]}")
         state.plan = plan
         if self.events is not None:
             self.events.master_plan(plan.model_dump(mode="json"))
@@ -245,6 +231,36 @@ class AgenticV3Pipeline:
             f"to satisfy.",
             agent="master")
         return plan
+
+    def _single_hop_plan(self, state: V3RunState, rationale: str) -> MasterPlan:
+        """Deterministic fallback when the master LLM is unavailable (timeout,
+        auth/rate-limit error ...): one task that asks the whole question, so
+        the worker + critic pipeline still runs instead of the run dying.
+        Mirrors MasterOrchestratorAgent.plan's task construction."""
+        if self.events is not None:
+            self.events.emit("fallback_plan", reason=rationale)
+        target = state.budget.evidence_target or 3
+        question = (state.question or "").strip()
+        task = ResearchTask(
+            id="T1",
+            title="Fallback",
+            objective=question[:300],
+            intent="answer the question",
+            evidence_requirements=[
+                EvidenceRequirement(
+                    id="T1.R1",
+                    text=question[:200] or "user question",
+                    target_n=target,
+                )
+            ],
+            stop_criteria=["required evidence satisfied", "retrieval budget exhausted"],
+        )
+        return MasterPlan(
+            question=state.question,
+            global_stop_criteria=["all tasks satisfied", "budget exhausted", "insufficient evidence"],
+            rationale=rationale,
+            tasks=[task],
+        )
 
     async def _run_workers(self, state: V3RunState, trace: Any) -> list[WorkerReport]:
         tasks = state.tasks[: max(1, state.budget.max_workers)]

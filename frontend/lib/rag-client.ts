@@ -7,12 +7,19 @@
 // Wire contract (newline-delimited JSON, POST to {base}/v1/chat/stream):
 //   {"type":"status","stage":"retrieving","message":"...","count":42}
 //   {"type":"sources","sources":[{id,pmcid,pmid,title,authors,journal,year,score,snippet,url}]}
+//   {"type":"pipeline","event":"task_start","task_id":"T1",...}   <- verbose trace
+//   {"type":"pipeline","event":"llm_call","role":"critic","status":"failed","status_code":429,...}
 //   {"type":"token","content":"The"}
 //   {"type":"done","timingMs":3127}
+// Every line that is not one of status|sources|token|done|error is preserved
+// verbatim as a "pipeline" event so the thinking layer shows EVERYTHING the
+// backend does (mirroring its Logfire trace).
 import type { RAGClient, ResearchStatus, Source, StreamEvent } from "@/lib/types";
 import { mockRagEvents } from "@/lib/mock-rag";
 
 const API_URL = process.env.NEXT_PUBLIC_RAG_API_URL?.replace(/\/$/, "") ?? "";
+/** The backend base URL ("" in mock mode) — shared with the source panel. */
+export const RAG_API_URL = API_URL;
 const USE_MOCK = API_URL === "" || process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 const KNOWN_STAGES: ResearchStatus[] = [
@@ -40,8 +47,21 @@ function normalizeEvent(raw: unknown): StreamEvent | null {
       return { type: "done", timingMs: typeof e.timingMs === "number" ? e.timingMs : undefined };
     case "error":
       return { type: "error", message: String(e.message ?? "Unknown engine error") };
-    default:
-      return null;
+    case "pipeline": {
+      // verbose trace line from the backend (thinking log)
+      const fields = e.fields && typeof e.fields === "object"
+        ? (e.fields as Record<string, unknown>)
+        : { ...e, event: undefined, type: undefined };
+      return { type: "pipeline", event: String(e.event ?? "unknown"), fields };
+    }
+    default: {
+      // ANY other event type the backend emits is preserved for the trace —
+      // nothing is silently dropped.
+      const name = typeof e.type === "string" ? e.type : "";
+      if (!name) return null;
+      const { type: _t, ...fields } = e;
+      return { type: "pipeline", event: name, fields };
+    }
   }
 }
 

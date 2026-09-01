@@ -192,6 +192,14 @@ class SearchPipeline:
             "accepted": verdict.accepted,
         }
         req.record_review(entry)
+        if self.events is not None:
+            # stream the critic verdict with its reasoning so the UI shows
+            # exactly what was verified and WHY (accept or reject)
+            self.events.verdict(
+                task.id, req.id, paper.document_id, paper.chunk_id,
+                verdict.relevance.value, verdict.answers_task.value,
+                verdict.support.value, verdict.confidence, verdict.accepted,
+                note=verdict.note or "")
         from src.lib import logfire_obs as lf
         lf.record_metric("evidence_accepted" if verdict.accepted
                          else "evidence_rejected", 1,

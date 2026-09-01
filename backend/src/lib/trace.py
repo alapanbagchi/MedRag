@@ -56,12 +56,15 @@ class Trace:
         except Exception:
             return None
 
-    def open_stream(self, path: str | Path, query: str = "") -> None:
-        """Open the log file for incremental writing (append+flush)."""
+    def open_stream(self, path: str | Path, query: str = "", append: bool = False) -> None:
+        """Open the log file for incremental writing (append+flush).
+
+        ``append=True`` keeps prior runs (the API server reuses one long-lived
+        log; the CLI truncates per run)."""
         self.close_stream()
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._fh = open(self._path, "w", encoding="utf-8")
+        self._fh = open(self._path, "a" if append else "w", encoding="utf-8")
         self._write("=" * 78)
         self._write(f"MEDRAG RUN  {self._now()}")
         if query:

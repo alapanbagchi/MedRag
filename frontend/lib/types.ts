@@ -37,6 +37,15 @@ export interface StageEvent {
   at: number;         // epoch ms
 }
 
+/** One raw event from the backend's verbose trace (the thinking log).
+ *  Mirrors the pipeline's own event vocabulary (task_start, retrieved,
+ *  verdict, llm_call, contradiction, ...) verbatim. */
+export interface TraceEntry {
+  at: number;                       // epoch ms
+  event: string;                    // backend event type
+  fields: Record<string, unknown>;
+}
+
 export type MessageStatus = "queued" | "streaming" | "complete" | "stopped" | "error";
 
 export interface Message {
@@ -46,6 +55,8 @@ export interface Message {
   status: MessageStatus;
   sources?: Source[];
   stages?: StageEvent[];
+  /** Chronological pipeline / LLM trace for the thinking layer. */
+  trace?: TraceEntry[];
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
@@ -69,7 +80,9 @@ export type StreamEvent =
   | { type: "sources"; sources: Source[] }
   | { type: "token"; content: string }
   | { type: "done"; timingMs?: number }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  // verbose backend trace line (thinking log) — any event type verbatim
+  | { type: "pipeline"; event: string; fields: Record<string, unknown> };
 
 export interface RAGStreamResult {
   aborted: boolean;

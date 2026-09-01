@@ -2,10 +2,70 @@
 
 from __future__ import annotations
 
+import contextvars
 import os
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
+
+from pydantic_ai.models.openai import OpenAIChatModel
 
 from src.config import AppConfig
+
+# Optional per-request event sink (callable emit(type_, **fields)) bound via
+# set_llm_event_sink. Contextvars scope it to ONE request's task tree, so
+# concurrent streams never cross-talk. With no sink bound, models behave
+# exactly as before (zero overhead).
+_LLM_SINK: contextvars.ContextVar = contextvars.ContextVar("llm_event_sink", default=None)
+
+
+def set_llm_event_sink(sink: Any) -> None:
+    """Bind an event sink for LLM-call observations in the CURRENT context."""
+    _LLM_SINK.set(sink)
+
+
+class _ObservedOpenAI(OpenAIChatModel):
+    """OpenAIChatModel subclass that emits ``llm_call`` events (start ->
+    ok | failed) around each request when an event sink is bound
+    (set_llm_event_sink). Being a real pydantic_ai Model instance it passes
+    infer_model() untouched. Agent-level retries surface naturally as
+    failed -> start -> ok sequences in the UI log, so rate-limit retries are
+    visible like Logfire shows them. With no sink bound it behaves exactly
+    like its parent (zero overhead).
+    (ponytail: request_stream is not wrapped - nothing here streams model
+    output; add it when an agent uses run(stream=True).)"""
+
+    def __init__(self, *args: Any, role: str = "default", **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        object.__setattr__(self, "_role", (role or "default").strip() or "default")
+        object.__setattr__(self, "_attempt", 0)
+
+    def _emit(self, status: str, exc: Optional[BaseException] = None) -> None:
+        sink = _LLM_SINK.get()
+        if sink is None:
+            return
+        fields: dict[str, Any] = {
+            "role": object.__getattribute__(self, "_role"),
+            "model": self.model_name,
+            "attempt": object.__getattribute__(self, "_attempt"),
+            "status": status,
+        }
+        if exc is not None:
+            fields["error"] = str(exc)[:300]
+            code = getattr(exc, "status_code", None)
+            if code is None and getattr(exc, "response", None) is not None:
+                code = getattr(exc.response, "status_code", None)
+            fields["status_code"] = code
+        sink("llm_call", **fields)
+
+    async def request(self, *args: Any, **kwargs: Any):
+        object.__setattr__(self, "_attempt", object.__getattribute__(self, "_attempt") + 1)
+        self._emit("start")
+        try:
+            resp = await super().request(*args, **kwargs)
+            self._emit("ok")
+            return resp
+        except Exception as exc:
+            self._emit("failed", exc)
+            raise
 
 
 def _resolve(provider: str, base_url: str, api_key: str, model: str
@@ -102,9 +162,16 @@ def resolve_role_provider(cfg: AppConfig, role: str
     raise ValueError(f"unknown provider: {provider!r}")
 
 
+def _observe(model_name: str, provider: Any, profile: Optional[Any],
+             role: str = "default") -> Any:
+    """Use the LLM-call observer when a sink is bound, else the plain model."""
+    if _LLM_SINK.get() is None:
+        return OpenAIChatModel(model_name, provider=provider, profile=profile)
+    return _ObservedOpenAI(model_name, provider=provider, profile=profile, role=role)
+
+
 def build_model_for(config: Optional[AppConfig] = None, role: str = "default"):
     """Build a PydanticAI model for one agent role ("default" = global)."""
-    from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
 
     cfg = config or AppConfig()
@@ -113,26 +180,19 @@ def build_model_for(config: Optional[AppConfig] = None, role: str = "default"):
     base_url, api_key, model, profile = resolve_role_provider(cfg, role)
     provider = os.environ.get(f"{role.upper()}_PROVIDER", "").strip().lower() or cfg.provider
     _require_api_key(provider, api_key, base_url, role=role)
-    return OpenAIChatModel(
-        model,
-        provider=OpenAIProvider(base_url=base_url, api_key=api_key),
-        profile=profile,
-    )
+    return _observe(model, OpenAIProvider(base_url=base_url, api_key=api_key),
+                    profile, role)
 
 
 def build_model(config: Optional[AppConfig] = None):
     """Build a PydanticAI model for the configured provider."""
-    from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
 
     cfg = config or AppConfig()
     base_url, api_key, model, profile = resolve_provider(cfg)
     _require_api_key(cfg.provider, api_key, base_url)
-    return OpenAIChatModel(
-        model,
-        provider=OpenAIProvider(base_url=base_url, api_key=api_key),
-        profile=profile,
-    )
+    return _observe(model, OpenAIProvider(base_url=base_url, api_key=api_key),
+                    profile, "default")
 
 
 # env var(s) that carry the key for providers that need one
