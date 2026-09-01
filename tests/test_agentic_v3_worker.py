@@ -11,7 +11,7 @@ Covers the spec-critical behaviors:
 
 from src.agents.replan import FailureAnalysis
 from src.agents.search import RequirementSearch, TaskSearchPlan
-from src.agents.state import (
+from src.agentic.state import (
     AnswersTask,
     CriticRelevance,
     CriticVerdict,
@@ -157,7 +157,7 @@ def _worker(retriever, critic, deep=None, enricher=None, planner=None,
              replanner=None, events=None):
     return WorkerAgent(
         enricher=enricher or FakeEnricher(),
-        search_planner=planner or FakeSearchPlanner(),
+        planner=planner or FakeSearchPlanner(),
         replanner=replanner or FakeReplanner(),
         retriever=retriever,
         critic=critic,

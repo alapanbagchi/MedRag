@@ -10,9 +10,9 @@ import json
 
 import pytest
 
-from src.agents.master import MasterPlan
-from src.agents.pipeline import AgenticV3Pipeline
-from src.agents.state import (
+from src.agentic.state import MasterPlan
+from src.agentic.pipeline import AgenticV3Pipeline
+from src.agentic.state import (
     Contradiction,
     ContradictionKind,
     EvidenceRequirement,

@@ -6,7 +6,7 @@ import asyncio
 import time
 
 from src.agents.critic import CriticAgent, _PACE_SECONDS
-from src.agents.state import (
+from src.agentic.state import (
     EvidenceRequirement,
     EvidenceStatus,
     ResearchTask,
