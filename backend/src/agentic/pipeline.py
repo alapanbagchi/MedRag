@@ -88,6 +88,7 @@ class AgenticV3Pipeline:
         synthesizer: Any = None,
         events: Any = None,
         run_id: str = "",
+        memory: Any = None,
     ):
         from src.config import AppConfig
 
@@ -106,6 +107,14 @@ class AgenticV3Pipeline:
         self.resolution_agent = (
             resolution_agent or ResolutionAgent(config=self.config))
         self.synthesizer = synthesizer or FinalSynthesizer(config=self.config)
+        # OPTIONAL memory + context layer (src.memory). When attached, the
+        # run resumes a research session, receives bounded memory context in
+        # the planner stage (advisory only — never evidence), and commits the
+        # verified evidence / claims / contradictions / gaps / conclusion
+        # afterwards. When None, behavior is byte-identical to before.
+        self.memory = memory
+        self._memory_prep = None
+        self._memory_stats = None
 
     # ------------------------------------------------------------------
     def _budget(self) -> RunBudget:
@@ -125,8 +134,11 @@ class AgenticV3Pipeline:
         return float(getattr(self.config, key, default))
 
     # ------------------------------------------------------------------
-    async def answer(self, query: str) -> dict[str, Any]:
+    async def answer(self, query: str, conversation_id: str = "") -> dict[str, Any]:
         """Run the full pipeline; returns a JSON-safe result dict.
+
+        ``conversation_id`` is optional and is only consumed by the memory
+        layer, which records the conversation turn under that id.
 
         Wraps the run in a top-level Logfire span (``medrag.run``) so every
         stage, retrieval and LLM GenAI span from the whole run nests inside
@@ -137,10 +149,10 @@ class AgenticV3Pipeline:
         lf.ensure_configured(self.config)
         if lf.enabled():
             async with lf.run_span(query=query):
-                return await self._answer(query)
-        return await self._answer(query)
+                return await self._answer(query, conversation_id)
+        return await self._answer(query, conversation_id)
 
-    async def _answer(self, query: str) -> dict[str, Any]:
+    async def _answer(self, query: str, conversation_id: str = "") -> dict[str, Any]:
         from src.lib import logfire_obs as lf
         from src.lib.trace import get_trace
 
@@ -148,6 +160,33 @@ class AgenticV3Pipeline:
         budget = self._budget()
         run_id = self.run_id or f"run-{os.getpid()}-{int(time.time() * 1000)}"
         state = V3RunState(run_id=run_id, question=query, budget=budget)
+
+        # Optional memory + context layer: resume the research session and
+        # assemble the bounded memory context region BEFORE planning.
+        self._memory_prep = None
+        self._memory_stats = None
+        if self.memory is not None:
+            try:
+                self._memory_prep = self.memory.prepare_run(
+                    query, conversation_id=conversation_id or None)
+                trace.bullet(
+                    f"Memory layer: resumed research session "
+                    f"{self._memory_prep.session_id or '(new)'} and assembled "
+                    f"bounded memory context for the planner.",
+                    agent="memory")
+                if self.events is not None:
+                    mem = self._memory_prep.context.memory
+                    self.events.memory_prepare(
+                        session_id=self._memory_prep.session_id or "",
+                        session_title=(self._memory_prep.session.title
+                                       if self._memory_prep.session else "") or "",
+                        prior_claims=len(mem.claims),
+                        prior_contradictions=len(mem.contradictions),
+                        prior_gaps=len(mem.gaps))
+            except Exception as exc:
+                logger.warning("memory prepare_run failed (%s); run continues without it", exc)
+                self._memory_prep = None
+
         trace.stage("ORCHESTRATOR STARTED")
         trace.bullet(
             f"New research run {run_id} for the question: “{query}”. "
@@ -188,6 +227,31 @@ class AgenticV3Pipeline:
         finally:
             lf.clear_run_context()
 
+        # Optional memory layer: persist verified evidence, claims,
+        # contradictions, gaps and the labeled conclusion.
+        if self.memory is not None and self._memory_prep is not None:
+            try:
+                result = self._result_dict(state, reports) \
+                    if (state.final_answer is not None) else None
+                if result is not None:
+                    self._memory_stats = self.memory.record_run(
+                        result,
+                        session_id=self._memory_prep.session_id,
+                        conversation_id=conversation_id or None)
+                    trace.bullet(
+                        f"Memory layer: run committed — "
+                        f"{self._memory_stats.claims_committed} claim(s) added, "
+                        f"{self._memory_stats.claims_deduped} deduped, "
+                        f"{self._memory_stats.contradictions} contradiction(s), "
+                        f"{self._memory_stats.gaps} gap(s) recorded.",
+                        agent="memory")
+                    if self.events is not None:
+                        self.events.memory_commit(
+                            session_id=self._memory_prep.session_id or "",
+                            stats=self._memory_stats.as_dict())
+            except Exception as exc:
+                logger.warning("memory record_run failed (%s)", exc)
+
         if self.events is not None:
             self.events.final_evidence(
                 len(state.verified_evidence()),
@@ -211,9 +275,17 @@ class AgenticV3Pipeline:
 
     # ------------------------------------------------------------------
     async def _master_plan(self, state: V3RunState, trace: Any) -> MasterPlan:
+        # memory context is advisory for the planner (never evidence)
+        memory_context = ""
+        if self._memory_prep is not None:
+            try:
+                memory_context = self._memory_prep.context_text()
+            except Exception:
+                memory_context = ""
         try:
             plan = await asyncio.wait_for(
-                self.master.plan(state.question, state.budget),
+                self._call_master(self.master, state.question, state.budget,
+                                  memory_context),
                 timeout=self._timeout("agentic_v3_master_timeout", 120.0),
             )
         except TimeoutError:
@@ -231,6 +303,25 @@ class AgenticV3Pipeline:
             f"to satisfy.",
             agent="master")
         return plan
+
+    @staticmethod
+    def _call_master(master: Any, question: str, budget: Any,
+                     memory_context: str):
+        """Call ``master.plan`` with memory context ONLY when the master
+        accepts it (real MasterOrchestratorAgent does; test fakes may not).
+        Backward compatible: with no memory or a fake master, the call is
+        exactly the historical one."""
+        import inspect
+        try:
+            sig = inspect.signature(master.plan)
+            has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD
+                             for p in sig.parameters.values())
+            accepts_ctx = "memory_context" in sig.parameters or has_var_kw
+        except (TypeError, ValueError):
+            accepts_ctx = False
+        if accepts_ctx and memory_context:
+            return master.plan(question, budget, memory_context=memory_context)
+        return master.plan(question, budget)
 
     def _single_hop_plan(self, state: V3RunState, rationale: str) -> MasterPlan:
         """Deterministic fallback when the master LLM is unavailable (timeout,
@@ -458,4 +549,20 @@ class AgenticV3Pipeline:
             ],
             "confidence": confidence,
             "answer": state.final_answer,
+            "memory": self._memory_result_dict(),
+        }
+
+    def _memory_result_dict(self) -> dict[str, Any]:
+        """Expose the memory-layer wiring in the result dict (advisory only —
+        the evidence/answer fields above are unchanged)."""
+        if self.memory is None:
+            return {"enabled": False}
+        prep = self._memory_prep
+        stats = self._memory_stats
+        return {
+            "enabled": True,
+            "session_id": prep.session_id if prep else "",
+            "session_title": (prep.session.title if prep and prep.session else "") or "",
+            "context": prep.context_text() if prep else "",
+            "committed": stats.as_dict() if stats is not None else None,
         }

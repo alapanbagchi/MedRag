@@ -121,6 +121,47 @@ export function AssistantMessage({
         </div>
       )}
 
+      {/* research-memory strip — session resume + what was persisted.
+          Advisory context only, never evidence; labeled as such. */}
+      {message.memory &&
+        (message.memory.sessionId || message.memory.committed) && (
+          <div
+            className="mt-3 flex flex-wrap items-center gap-1.5"
+            title={`Persistent research memory — advisory context only, never evidence. Session: ${message.memory.sessionTitle || message.memory.sessionId || "—"}`}
+          >
+            <span className="mono mr-0.5 inline-flex items-center gap-1.5 border border-line-strong px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink2">
+              <Led
+                state={message.memory.committed ? "ok" : "accent"}
+                pulse={!message.memory.committed}
+                className="!h-1.5 !w-1.5"
+              />
+              Memory
+            </span>
+            {message.memory.sessionId && (
+              <span className="mono border border-line px-1.5 py-1 text-[10px] text-ink3 tnum">
+                {message.memory.sessionId.slice(0, 12)}
+                {message.memory.sessionId.length > 12 ? "…" : ""}
+              </span>
+            )}
+            {(message.memory.priorClaims > 0 ||
+              message.memory.priorContradictions > 0 ||
+              message.memory.priorGaps > 0) && (
+              <span className="mono border border-line px-1.5 py-1 text-[10px] text-ink3 tnum">
+                {message.memory.priorClaims} prior claim{message.memory.priorClaims === 1 ? "" : "s"} ·{" "}
+                {message.memory.priorContradictions} contrad. · {message.memory.priorGaps} gap
+                {message.memory.priorGaps === 1 ? "" : "s"}
+              </span>
+            )}
+            {message.memory.committed && (
+              <span className="mono border border-line px-1.5 py-1 text-[10px] text-ink3 tnum">
+                recorded {message.memory.committed.claimsCommitted} claim{message.memory.committed.claimsCommitted === 1 ? "" : "s"} ·{" "}
+                {message.memory.committed.contradictions} contrad. ·{" "}
+                {message.memory.committed.gaps} gap{message.memory.committed.gaps === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+        )}
+
       {/* footer actions */}
       {(message.status === "complete" || message.status === "stopped") && hasContent && (
         <div className="mt-3 flex items-center gap-1 border-t border-line pt-2.5">

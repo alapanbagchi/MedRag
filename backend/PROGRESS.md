@@ -789,3 +789,154 @@ chunks with the current config, prints every chunk with tables row-by-row
 Verified on PMC11727332.1 + PMC10327125.4: empty-label rows 0, "Column i"
 rows 0, numbers spaced, group_path now carries Sex/Median/panel context.
 Full suite 267 passing.
+
+MEMORY + CONTEXT LAYER (src/memory) — persistent, temporal, provenance-aware research state
+-------------------------------------------------------------------------------------------
+New package src/memory/ implements the MedPat Memory + Context layer design
+(L0 conversation / L1 working research state / L2 persistent research memory /
+L3 evidence corpus referenced, never copied). Governing invariant enforced
+mechanically: MEMORY IS NOT MEDICAL EVIDENCE.
+
+  src/memory/enums.py         provenance classes, claim/relation/contradiction
+                              statuses, memory event vocabulary
+  src/memory/models.py        typed records (claim, evidence-ref, session,
+                              contradiction, gap, preference, audit events, ...)
+                              with valid_from/valid_to (bi-temporal, append-only)
+  src/memory/embed.py         HashEmbedder (offline deterministic) + optional
+                              MedCPTEmbedder (768d) + NullEmbedder
+  src/memory/validation.py    provenance gate (EVIDENCE_DERIVED_CLAIM requires
+                              >=1 verified evidence ref else DEGRADED to
+                              MODEL_INFERENCE), classifier, injection guard,
+                              dedup + near-duplicate detection
+  src/memory/store.py         MemoryStore contract + InMemory + Postgres
+                              (schema medrag_memory, CREATE TABLE idempotently,
+                              pgvector optional, FKs + CHECK constraints on
+                              provenance/roles, memory_events audit table)
+  src/memory/retrieval.py     hybrid recall: lexical + entity + semantic +
+                              session + graph proximity, provenance-aware
+                              penalties, per-session diversity, staleness
+  src/memory/context.py       typed context blocks, token budgets, boundary
+                              markers (VERIFIED EVIDENCE vs PERSISTENT RESEARCH
+                              MEMORY), contradictions always rendered both
+                              sides, hard whole-block shedding on overflow
+  src/memory/pipeline.py      candidate -> classify -> validate -> dedup ->
+                              commit (atomic, audited); run-result extraction
+                              (only CRITIC-verified evidence -> claims)
+  src/memory/consolidate.py   background: derive statuses from links, merge
+                              near-dups (SUPERSEDED kept), detect
+                              contradictions, temporal refresh, staleness
+  src/memory/api.py           MemoryAPI facade (prepare_run/record_run,
+                              compose_context, session lifecycle, lineage,
+                              preference/user-text handling, consolidate)
+  src/memory/hooks.py         AgenticV3Pipeline integration adapter
+  scripts/memory_init.py      create the medrag_memory schema in PostgreSQL
+
+Integration (opt-in, evidence boundary intact): AgenticV3Pipeline accepts
+memory=MemoryAPI(...). Before the run the planner receives a BOUNDED memory
+context region labeled ADVISORY ONLY (never citable); after the run the
+verified evidence, claims, contradictions, gaps and the labeled conclusion
+are persisted. Run with:  python -m src --memory "<query>"  (or MEMORY_ENABLED=1).
+MasterOrchestratorAgent.plan gained an optional memory_context kwarg (default
+'' — behavior unchanged when absent). result["memory"] reports the wiring.
+
+Key behaviors verified by tests:
+  * gate: unsupported statements can never become evidence-backed claims --
+    EVIDENCE_DERIVED without verified refs is DEGRADED, user assertions never
+    upgraded, prompt-injection text refused for persistence;
+  * provenance: every evidence-derived claim renders with its lineage
+    claim -> links -> evidence -> PMCID; dedup UNIONs evidence links, never
+    discards them;
+  * temporal: supersession closes valid_to, history kept (as_of), claims never
+    overwritten;
+  * contradictions: preserved with BOTH sides + dimension scaffolding;
+  * context: typed blocks, budget enforced (whole blocks shed, never silent
+    mid-item cut), memory never injected into the evidence channel;
+  * cross-session continuity: a follow-up question resumes the same research
+    session and the planner receives prior research state.
+
+Tests: tests/test_memory_{validation,store,retrieval,context,pipeline,
+integration}.py (52 tests). Full suite: 216 passing, 2 pre-existing failures
+(test_md_chunker embedding prefix + test_retrieval_service missing-index,
+both fail identically on the pristine tree), 1 skipped.
+PostgreSQL smoke-validated live against the dev database (schema created,
+record_run -> retrieval -> lineage -> resume -> consolidate, rows cleaned up).
+
+MEMORY + CONTEXT LAYER — FRONTEND LINKAGE (MedPat web ↔ backend/api.py)
+-----------------------------------------------------------------------
+The memory layer is now linked end-to-end with the frontend:
+
+Backend (backend/api.py):
+  * one per-process MemoryAPI singleton (get_memory_api(), lazy, auto
+    backend: Postgres medrag_memory when reachable, in-memory fallback;
+    MEMORY_ENABLED=0/off disables);
+  * /v1/chat/stream attaches memory to the pipeline and forwards the
+    frontend's conversation_id (AgenticV3Pipeline.answer gained an optional
+    conversation_id kwarg, threaded into prepare_run/record_run);
+  * streams FIRST-CLASS memory events (not wrapped as pipeline trace):
+      {"type":"memory","kind":"prepare","session_id","session_title",
+       "prior_claims","prior_contradictions","prior_gaps"}
+      {"type":"memory","kind":"commit","session_id","stats":{...}}
+    emitted by the pipeline via new V3Events.memory_prepare/memory_commit;
+  * store.ensure_conversation() (in-memory + Postgres) so frontend
+    conversation ids are preserved when turns are recorded.
+
+Frontend (frontend/):
+  * lib/types.ts: MemoryInfo (sessionId/title, prior counts, committed
+    stats) on Message + the memory StreamEvent;
+  * lib/rag-client.ts: normalizeEvent handles the backend's snake_case
+    memory frame -> camelCase event;
+  * lib/mock-rag.ts: mock engine emits realistic memory prepare/commit
+    events so the UI shows the strip in mock mode too;
+  * components/chat/ChatView.tsx: onEvent stores memory prepare/commit
+    into the assistant message;
+  * components/chat/AssistantMessage.tsx: compact RESEARCH-MEMORY strip
+    under each response (MEM led · sess id · prior claims/contradictions/
+    gaps · recorded stats), tooltip-labeled "advisory context only, never
+    evidence".
+
+Verified: tests/test_api_memory.py (4 tests, TestClient stream asserts the
+memory prepare/commit contract + no trace duplication + conversation_id
+threading + MEMORY_ENABLED gating); frontend tsc --noEmit clean; live boot
+of api:app streamed {"type":"memory","kind":"prepare",...} against the
+dev Postgres before any LLM work (residue cleaned afterwards).
+Full backend suite: 220 passing (same 2 pre-existing failures), 1 skipped.
+
+MEMORY UTILIZATION BY THE AGENTS — FOLLOW-UP CONTINUITY FIX
+-----------------------------------------------------------
+Reported: asking "how does hypertension affect life expectancy" then
+"how does hypertension lead to diseases" re-processed the FIRST query —
+memory was persisted but not utilized by the planner. Root causes (seen in
+prepare_run output for the follow-up):
+  1) record_run never marked questions answered -> prior questions stayed
+     "[open]" and the planner saw them as outstanding obligations to redo;
+  2) the master prompt only said "shape which questions to investigate"
+     while showing only the prior open questions -> small models mirrored
+     Q1's tasks;
+  3) the run's CONCLUSION claim (what was established) was never retrieved
+     into context, so there was no "build on this" anchor.
+
+Fixes:
+  * api.record_run: on a terminal answer, mark every session question
+    answered (store.mark_question_answered) and store the answer summary as
+    the session's rolling summary (new store.update_session_summary in both
+    backends) — used by session identification + context rendering;
+  * context (PersistentMemoryContext.render): "ALREADY INVESTIGATED — do NOT
+    re-derive:" header; prior conclusions rendered separately and
+    prominently ("prior conclusions (labeled inference, not evidence)");
+    ResearchContext.render shows "[answered]" vs "[open]" per question plus
+    "last conclusion: ...";
+  * agents/master._plan_prompt: mandatory PLANNING RULES — plan ONLY for the
+    NEW question; do NOT recreate [answered]/ALREADY-INVESTIGATED tasks; use
+    prior findings as background only; follow-ups build ON prior findings;
+  * memory retrieval: lower min_score floor (0.12 -> 0.08) and semantic
+    floor (0.30 -> 0.15), full session-continuity baseline within the
+    resumed session, conclusion-claim boost, and session-question vocabulary
+    expansion for short follow-up queries (len(tokens) < 4).
+
+Tests: tests/test_memory_continuity.py (6 tests) — prior questions answered
+in follow-up context, conclusion surfaced, short-followup recall via session
+questions, run2 answers recorded, end-to-end planner receives the answered
+framing, planning rules present only when memory attached. PostgreSQL
+smoke-validated (4 questions all answered, summary set, follow-up resumes
+same session, [answered] framing in context; rows cleaned).
+Full backend suite: 226 passing (same 2 pre-existing failures), 1 skipped.

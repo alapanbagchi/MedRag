@@ -89,8 +89,8 @@ function SourceCard({
             {source.journal} · {source.year} · {source.pmcid ?? source.id}
           </span>
           <span className="mono mt-1.5 block text-[9px] uppercase tracking-[0.14em] text-accent/80">
-            Open article →
-          </span>
+          {source.isWeb ? "Open website →" : "Open article →"}
+        </span>
         </span>
       </button>
 
@@ -131,10 +131,17 @@ function SourceCard({
               href={source.url}
               target="_blank"
               rel="noreferrer"
+              title={source.isWeb ? `Open the website with the cited passage highlighted` : undefined}
               className="mono mt-3 inline-flex items-center gap-1.5 border border-line-strong px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink2 hover:border-accent hover:text-accent"
             >
-              Open in PMC <ExternalLink size={11} />
+              {source.isWeb ? "Open website — highlight passage" : "Open in PMC"} <ExternalLink size={11} />
             </a>
+          )}
+          {source.isWeb && source.highlight && (
+            <p className="mt-2 border-t border-line/60 pt-2 text-[11px] leading-relaxed text-ink2">
+              <span className="mono text-[9px] uppercase tracking-[0.14em] text-accent">Highlighted passage </span>
+              “{source.highlight}”
+            </p>
           )}
         </div>
       )}
@@ -374,7 +381,34 @@ export function SourcePanel({
       </ul>
     );
   } else if (!active || !pmcid) {
-    body = (
+    body = active && active.isWeb ? (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+        <p className="mono text-[10.5px] uppercase tracking-[0.14em] text-ink3">
+          Web source · {active.journal}
+        </p>
+        {active.snippet && (
+          <p className="mono max-w-md text-[11px] leading-relaxed text-ink2">
+            “{active.snippet}”
+          </p>
+        )}
+        {active.highlight && (
+          <p className="mono max-w-md border border-accent/40 bg-accent/[0.05] px-2 py-1.5 text-[10.5px] leading-relaxed text-ink">
+            Highlight: {active.highlight}
+          </p>
+        )}
+        {active.url && (
+          <a
+            href={active.url}
+            target="_blank"
+            rel="noreferrer"
+            title="Open the website with the cited passage highlighted"
+            className="btn btn--accent inline-flex items-center gap-1.5"
+          >
+            Open website — highlight passage <ExternalLink size={13} />
+          </a>
+        )}
+      </div>
+    ) : (
       <div className="flex flex-1 items-center justify-center p-6 text-center">
         <p className="mono text-[11px] uppercase tracking-[0.14em] text-ink3">
           {active ? "No PMCID for this source" : "Select a source"}
@@ -403,7 +437,7 @@ export function SourcePanel({
             rel="noreferrer"
             className="mono inline-flex items-center gap-1.5 border border-line-strong px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink2 hover:border-accent hover:text-accent"
           >
-            Open in PMC <ExternalLink size={11} />
+            {active.isWeb ? "Open website — highlight passage" : "Open in PMC"} <ExternalLink size={11} />
           </a>
         )}
       </div>
@@ -435,7 +469,7 @@ export function SourcePanel({
                 rel="noreferrer"
                 className="mono inline-flex items-center gap-1.5 border border-line-strong px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink2 hover:border-accent hover:text-accent"
               >
-                Open in PMC <ExternalLink size={11} />
+                {active.isWeb ? "Open website — highlight passage" : "Open in PMC"} <ExternalLink size={11} />
               </a>
             )}
           </div>

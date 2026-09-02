@@ -8,7 +8,7 @@
 // hidden. No fabricated progress: the log is whatever the stream emitted.
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { Message, ResearchStatus, TraceEntry } from "@/lib/types";
 import { cn, formatDuration } from "@/lib/utils";
@@ -64,11 +64,11 @@ function queryCount(q: unknown): number {
 
 // -- event -> log row -------------------------------------------------
 
-function describeTrace(entry: TraceEntry): LogRow {
-  const { event, fields, at } = entry;
+function describeTrace(entry: TraceEntry, key: string): LogRow {
+  const { event, fields } = entry;
   const f = (k: string) => fields[k];
   let row: LogRow = {
-    key: `${event}-${at}-${Math.random().toString(36).slice(2, 6)}`,
+    key,
     kind: "info", glyph: "•", title: event,
   };
   switch (event) {
@@ -191,6 +191,112 @@ function describeTrace(entry: TraceEntry): LogRow {
       }
       break;
     }
+    case "decompose_done": {
+      const reqs = arr(f("requirements"));
+      row = {
+        ...row, glyph: "▸",
+        title: `Decomposed into ${reqs.length} research task${reqs.length === 1 ? "" : "s"}`,
+        detail: trunc(reqs.map((r) => str((r as Record<string, unknown>).text)).filter(Boolean).join(" · "), 110),
+      };
+      break;
+    }
+    case "search_round":
+      row = {
+        ...row, glyph: "∿",
+        title: `${str(f("source")) === "web" ? "Web" : "Corpus"} search round ${str(f("round_no"))}`,
+        detail: `${queryCount(f("queries"))} quer${queryCount(f("queries")) === 1 ? "y" : "ies"}`,
+      };
+      break;
+    case "query_start":
+      row = { ...row, glyph: "∿", title: `Search: ${trunc(str(f("query")), 90)}`, detail: str(f("source")) };
+      break;
+    case "web_search_started":
+      row = {
+        ...row, glyph: "≋",
+        title: `Broad web search — ${trunc(str(f("query")), 90)}`,
+        detail: [f("purpose") ? trunc(str(f("purpose")), 80) : "", f("base") ? str(f("base")) : ""].filter(Boolean).join(" · "),
+      };
+      break;
+    case "web_search_done": {
+      const urls = arr(f("urls"));
+      row = {
+        ...row, glyph: "≋",
+        title: `Web search returned ${str(f("count")) || urls.length} result${(num(f("count")) ?? urls.length) === 1 ? "" : "s"}`,
+        detail: trunc(urls.join(" · "), 100),
+      };
+      break;
+    }
+    case "web_fetch":
+      row = {
+        ...row, kind: f("ok") ? "info" : "warn",
+        glyph: f("ok") ? "↧" : "↧",
+        title: `Opened site: ${trunc(str(f("url")), 70)}`,
+        detail: f("ok")
+          ? `fetched ${str(f("chars"))} chars${f("purpose") ? " · " + trunc(str(f("purpose")), 60) : ""}`
+          : `fetch failed → snippet only${f("purpose") ? " · " + trunc(str(f("purpose")), 60) : ""}`,
+      };
+      break;
+    case "reliability_verdict": {
+      const rel = str(f("reliability"));
+      row = {
+        ...row,
+        kind: rel === "high" ? "ok" : rel === "medium" ? "info" : "warn",
+        glyph: "★",
+        title: `Reliability: ${rel}${rel ? "" : ""} — ${trunc(str(f("url")), 60)}`,
+        detail: trunc(str(f("note")), 120),
+      };
+      break;
+    }
+    case "gap_probe":
+      row = {
+        ...row, glyph: "◌",
+        title: `Gap probe: ${trunc(str(f("question")), 80)}`,
+        detail: `${queryCount(f("queries"))} targeted quer${queryCount(f("queries")) === 1 ? "y" : "ies"}`,
+        chip: "GAP",
+      };
+      break;
+    case "gap_resolution":
+      row = {
+        ...row,
+        kind: f("status") === "unresolved" ? "warn" : "ok",
+        glyph: "▣",
+        title: `Gap ${str(f("status"))}: ${trunc(str(f("gap")), 80)}`,
+        detail: [
+          num(arr(f("evidence_ids")).length) != null ? `${arr(f("evidence_ids")).length} verified` : "",
+          trunc(str(f("note")), 90),
+        ].filter(Boolean).join(" · "),
+      };
+      break;
+    case "gap_completeness":
+      row = {
+        ...row,
+        kind: arr(f("remaining")).length ? "warn" : "ok",
+        glyph: "◌",
+        title: `Gap completeness: ${str(f("status"))}`,
+        detail: trunc((arr(f("remaining")) as string[]).join("; "), 130),
+      };
+      break;
+    case "gaps_reconciled":
+      row = {
+        ...row, glyph: "⚠",
+        title: `Synthesis reconciliation: ${str(f("synthesizer_listed"))} gap(s) listed by the answer`,
+        detail: `${str(f("added_to_state"))} added to state · total ${str(f("total_gaps"))}`,
+      };
+      break;
+    case "synthesis_start":
+      row = { ...row, glyph: "≈", title: `Synthesizing from ${str(f("verified"))} verified item${f("verified") === 1 ? "" : "s"}` };
+      break;
+    case "synthesis_fallback":
+      row = {
+        ...row, kind: "warn", glyph: "⚑",
+        title: "Synthesis fallback — LLM unavailable",
+        detail: trunc(str(f("note")), 120),
+        chip: "FALLBACK",
+      };
+      break;
+    case "synthesis_done":
+      row = { ...row, kind: "ok", glyph: "≈", title: `Answer drafted — ${str(f("answer_len"))} chars`, detail: `${str(f("verified"))} verified${num(f("gaps")) ? " · " + str(f("gaps")) + " gaps" : ""}` };
+      break;
     default:
       // every event type is visible, even ones the formatter does not know
       row = { ...row, title: cap(event), detail: trunc(JSON.stringify(fields), 160) };
@@ -214,6 +320,10 @@ const FIELD_ORDER = [
   "summary", "stop_reason", "searches_used", "deep_inspections_used",
   "findings", "verified", "title", "rationale", "tasks", "stop_criteria",
   "entities", "agent", "action", "iteration", "input", "output",
+  "query", "url", "chars", "ok", "snippet_used", "purpose", "source",
+  "reliability", "answers_task", "relevance", "accepted",
+  "problem", "fix", "evidence_ids", "count", "dropped_blocked",
+  "dropped_unverified", "requirement_id", "question", "queries",
 ];
 
 const FIELD_LABEL: Record<string, string> = {
@@ -224,6 +334,15 @@ const FIELD_LABEL: Record<string, string> = {
   support: "Support", confidence: "Confidence", accepted: "Accepted",
   note: "Critic reason", reason: "Reason", diagnosis: "Diagnosis",
   missing_evidence: "Missing evidence", evidence_id: "Evidence",
+  purpose: "Purpose", chars: "Chars fetched", ok: "Fetched ok",
+  snippet_used: "Snippet fallback", reliability: "Reliability tier",
+  url: "URL", source: "Source", count: "Count",
+  dropped_blocked: "Blocked dropped", dropped_unverified: "Unverified dropped",
+  evidence_ids: "Evidence IDs",
+  synthesizer_listed: "Answer-listed gaps",
+  added_to_state: "Added to state",
+  total_gaps: "Total gaps",
+  remaining: "Remaining facets",
   old_state: "From state", new_state: "To state", claim: "Claim",
   kind: "Kind", explanation: "Explanation", evidence_a: "Evidence A",
   evidence_b: "Evidence B", additional_papers: "Additional papers",
@@ -374,6 +493,21 @@ export function ThinkingLayer({ message }: { message: Message }) {
     if (working && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [rowCount, working]);
 
+  // Stable per-row identities: (event, at) plus an occurrence counter for
+  // same-millisecond collisions. Re-renders (the 250ms elapsed ticker, every
+  // newly streamed event) must NOT remount a row — a remount would reset the
+  // row's open/closed state and make accordions snap shut while the query is
+  // still processing.
+  const rowKeys = useMemo(() => {
+    const counts = new Map<string, number>();
+    return (message.trace ?? []).map((e) => {
+      const base = `${e.event}-${e.at}`;
+      const c = counts.get(base) ?? 0;
+      counts.set(base, c + 1);
+      return `${base}-${c}`;
+    });
+  }, [message.trace]);
+
   const toggle = () => {
     toggledRef.current = true;
     setOpen((v) => !v);
@@ -389,7 +523,8 @@ export function ThinkingLayer({ message }: { message: Message }) {
   const durationMs = message.finishedAt && message.startedAt ? message.finishedAt - message.startedAt : elapsed;
   const rows: LogRow[] =
     rowCount > 0
-      ? trace.map(describeTrace)
+      ? trace.map((entry, i) =>
+          describeTrace(entry, rowKeys[i] ?? `${entry.event}-${entry.at}-${i}`))
       : stages.map((s, i) => ({
           key: `stage-${i}`,
           kind: "info" as Kind,

@@ -138,6 +138,25 @@ class V3Events:
         """The full final answer report (summary + sections + citations)."""
         self.emit("answer", report=report, summary=report.get("summary", ""))
 
+    # -- memory + context layer (src/memory) --------------------------
+
+    def memory_prepare(self, session_id: str = "", session_title: str = "",
+                       prior_claims: int = 0, prior_contradictions: int = 0,
+                       prior_gaps: int = 0) -> None:
+        """Before the run: the research session was resumed and bounded prior
+        research memory is being carried into the planner (advisory only)."""
+        self.emit("memory_prepare", session_id=session_id,
+                  session_title=session_title, prior_claims=prior_claims,
+                  prior_contradictions=prior_contradictions,
+                  prior_gaps=prior_gaps)
+
+    def memory_commit(self, session_id: str = "",
+                      stats: dict | None = None) -> None:
+        """After the run: the verified evidence, claims, contradictions,
+        gaps and the labeled conclusion were persisted to memory."""
+        self.emit("memory_commit", session_id=session_id,
+                  stats=stats or {})
+
     # -- legacy shapes (so the v2 UI can render agent nodes) ------------
 
     def agent_spawn(self, iteration: int, action: str, agent: str, input_data: dict) -> None:

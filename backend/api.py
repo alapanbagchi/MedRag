@@ -54,13 +54,46 @@ STAGE = {
 # streamed under their own top-level type; everything else is mirrored
 # verbatim as {"type":"pipeline","event":<name>, ...fields} so the UI's
 # thinking log shows EVERY pipeline / LLM event (like Logfire does).
-_RESERVED = {"status", "sources", "token", "done", "error"}
+_RESERVED = {"status", "sources", "token", "done", "error",
+             "memory_prepare", "memory_commit"}
+
+# ---------------------------------------------------------------------------
+# Memory + Context layer (src/memory): one MemoryAPI per server process.
+# auto backend = Postgres (medrag_memory schema) when reachable, in-memory
+# otherwise. MEMORY_ENABLED=0/off disables it entirely.
+# ---------------------------------------------------------------------------
+
+_memory_api = None
+
+
+def get_memory_api():
+    """Lazy per-process MemoryAPI singleton (safe to call from any request)."""
+    global _memory_api
+    if _memory_api is not None:
+        return _memory_api
+    switch = os.environ.get("MEMORY_ENABLED", "").strip().lower()
+    if switch in ("0", "false", "off", "no", "disabled"):
+        return None
+    try:
+        from src.config import AppConfig
+        from src.memory.api import MemoryAPI
+        from src.memory.config import MemoryConfig
+        _memory_api = MemoryAPI.build(MemoryConfig.from_appconfig(AppConfig()))
+        print(f"[memory] API attached: backend={_memory_api.config.backend} "
+              f"embedder={_memory_api.config.embedder}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[memory] attach failed ({exc}); API runs without it")
+        _memory_api = None
+    return _memory_api
 
 
 class ChatBody(BaseModel):
     question: str
     conversation_id: str = ""
     history: list = []
+    # engine: "" (default) | "v3" | "xdeep" - select the research pipeline.
+    # XDEEP_ENGINE=1 env also forces xdeep when the body does not ask.
+    engine: str = ""
 
 
 class _Emitter:
@@ -405,8 +438,29 @@ def _chunks(text: str, size: int = 28):
         yield buf
 
 
+def _engine_selected(body: ChatBody) -> str:
+    """Which pipeline to run: body.engine, else XDEEP_ENGINE env."""
+    if (body.engine or "").strip().lower() in ("xdeep", "v3"):
+        return (body.engine or "").strip().lower()
+    switch = os.environ.get("XDEEP_ENGINE", "").strip().lower()
+    if switch in ("1", "true", "yes", "on", "xdeep"):
+        return "xdeep"
+    return "v3"
+
+
 @app.post("/v1/chat/stream")
 async def chat_stream(body: ChatBody, request: Request):
+    if _engine_selected(body) == "xdeep":
+        # x_deepagents research graph streamed under the same UI contract
+        from src.x_deepagents.bridge import stream_xdeep
+
+        trace = get_trace()
+        trace.stage(f"API REQUEST (HTTP POST /v1/chat/stream, engine=xdeep) "
+                    f"conv={body.conversation_id or '-'}")
+        trace.bullet(f"question: {body.question[:300]}")
+        return StreamingResponse(
+            stream_xdeep(body.question), media_type="application/x-ndjson")
+
     from src.config import AppConfig
     from src.agentic.pipeline import AgenticV3Pipeline
     from src.llm.client import set_llm_event_sink
@@ -423,8 +477,11 @@ async def chat_stream(body: ChatBody, request: Request):
         trace.stage(f"API REQUEST (HTTP POST /v1/chat/stream) conv={body.conversation_id or '-'}")
         trace.bullet(f"question: {body.question[:300]}")
 
+        memory_api = get_memory_api()
         task = asyncio.create_task(
-            AgenticV3Pipeline(config=AppConfig(), events=emitter).answer(body.question)
+            AgenticV3Pipeline(config=AppConfig(), events=emitter,
+                              memory=memory_api).answer(
+                body.question, conversation_id=body.conversation_id)
         )
         result: dict | None = None
         while True:
@@ -440,6 +497,21 @@ async def chat_stream(body: ChatBody, request: Request):
             if t == "retrieved" and f.get("papers"):
                 papers = [_src(p) for p in f["papers"][:10]]
                 yield _line({"type": "sources", "sources": papers})
+            if t == "memory_prepare":
+                yield _line({
+                    "type": "memory", "kind": "prepare",
+                    "session_id": f.get("session_id", ""),
+                    "session_title": f.get("session_title", ""),
+                    "prior_claims": f.get("prior_claims", 0),
+                    "prior_contradictions": f.get("prior_contradictions", 0),
+                    "prior_gaps": f.get("prior_gaps", 0),
+                })
+            elif t == "memory_commit":
+                yield _line({
+                    "type": "memory", "kind": "commit",
+                    "session_id": f.get("session_id", ""),
+                    "stats": f.get("stats", {}),
+                })
             if t not in _RESERVED:
                 # verbose mirror of EVERY pipeline / LLM event
                 yield _line({"type": "pipeline", "event": t, "fields": f})

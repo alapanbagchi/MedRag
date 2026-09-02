@@ -1,0 +1,26 @@
+# README: copy this OVER backend/searxng/settings.yml (currently owned by the
+# docker container user). Fixes the 403 "format=json disabled" web-search bug.
+#
+#   sudo chown -R $(id -u):$(id -g) searxng          # take ownership once
+#   cp searxng-settings-fixed.yml searxng/settings.yml
+#   docker compose -f searxng.docker-compose.yml up -d --force-recreate
+#
+# Read the documentation before extending the defaults:
+# https://docs.searxng.org/admin/settings/
+
+use_default_settings: true
+
+server:
+  secret_key: "9v7Pzsk7ydaLgNl1WrExb6mmphtkd"
+  image_proxy: true
+  # JSON API: must be explicitly whitelisted, otherwise format=json returns
+  # 403 Forbidden even though the instance is healthy. The xdeep web-gap-fill
+  # tool calls this endpoint.
+  # Disable the bot limiter for localhost so scripted RAG queries are not
+  # rate-limited out of the JSON API.
+  limiter: false
+
+search:
+  formats:
+    [html, csv, json, rss]
+  safe_search: 1

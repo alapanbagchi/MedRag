@@ -139,6 +139,32 @@ export function ChatView({
           patch(asstId, (m) => ({ ...m, sources: e.sources }));
         } else if (e.type === "token") {
           patch(asstId, (m) => ({ ...m, content: m.content + e.content }));
+        } else if (e.type === "memory") {
+          // research-memory linkage: session resume (prepare) then persistence
+          // stats (commit). Advisory context only — the strip labels it so.
+          patch(asstId, (m) => {
+            const cur = m.memory ?? { sessionId: "", sessionTitle: "", priorClaims: 0, priorContradictions: 0, priorGaps: 0 };
+            const next: typeof cur = {
+              ...cur,
+              sessionId: e.sessionId ?? cur.sessionId,
+              sessionTitle: e.sessionTitle ?? cur.sessionTitle,
+            };
+            if (e.kind === "prepare") {
+              next.priorClaims = e.priorClaims ?? cur.priorClaims;
+              next.priorContradictions = e.priorContradictions ?? cur.priorContradictions;
+              next.priorGaps = e.priorGaps ?? cur.priorGaps;
+            }
+            if (e.kind === "commit" && e.stats) {
+              next.committed = {
+                claimsCommitted: Number(e.stats.claims_committed ?? 0),
+                claimsDeduped: Number(e.stats.claims_deduped ?? 0),
+                contradictions: Number(e.stats.contradictions ?? 0),
+                gaps: Number(e.stats.gaps ?? 0),
+                questions: Number(e.stats.questions ?? 0),
+              };
+            }
+            return { ...m, memory: next };
+          });
         } else if (e.type === "pipeline") {
           // verbatim backend trace -> thinking log (cap the log length).
           // Drop the bulky report/answer payloads: the answer text already
