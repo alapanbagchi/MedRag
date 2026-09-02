@@ -47,6 +47,21 @@ function normalizeEvent(raw: unknown): StreamEvent | null {
       return { type: "done", timingMs: typeof e.timingMs === "number" ? e.timingMs : undefined };
     case "error":
       return { type: "error", message: String(e.message ?? "Unknown engine error") };
+    case "memory": {
+      // research-memory linkage: session resume (prepare) + persistence stats
+      // (commit). Backend sends snake_case; the UI speaks camelCase.
+      const kind = e.kind === "commit" ? "commit" : "prepare";
+      return {
+        type: "memory",
+        kind,
+        sessionId: typeof e.session_id === "string" ? e.session_id : undefined,
+        sessionTitle: typeof e.session_title === "string" ? e.session_title : undefined,
+        priorClaims: typeof e.prior_claims === "number" ? e.prior_claims : 0,
+        priorContradictions: typeof e.prior_contradictions === "number" ? e.prior_contradictions : 0,
+        priorGaps: typeof e.prior_gaps === "number" ? e.prior_gaps : 0,
+        stats: e.stats && typeof e.stats === "object" ? (e.stats as Record<string, unknown>) : undefined,
+      };
+    }
     case "pipeline": {
       // verbose trace line from the backend (thinking log)
       const fields = e.fields && typeof e.fields === "object"
@@ -69,6 +84,8 @@ async function streamFromBackend(input: {
   question: string;
   conversationId: string;
   signal?: AbortSignal;
+  /** Backend research engine: "" (server default/v3) | "xdeep" */
+  engine?: "xdeep" | "v3";
   onEvent: (e: StreamEvent) => void;
 }): Promise<{ aborted: boolean; error?: string; timingMs?: number }> {
   const started = Date.now();
@@ -77,7 +94,11 @@ async function streamFromBackend(input: {
     res = await fetch(`${API_URL}/v1/chat/stream`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ question: input.question, conversation_id: input.conversationId }),
+      body: JSON.stringify({
+        question: input.question,
+        conversation_id: input.conversationId,
+        engine: input.engine ?? "",
+      }),
       signal: input.signal,
     });
   } catch (err) {

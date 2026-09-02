@@ -378,7 +378,9 @@ ONLY use a provided resolution when one exists in the evidence.
 
 ## RESOLVED CONTRADICTION
 
-If the evidence explicitly provides a resolution, explain the distinction.
+If the evidence explicitly provides a resolution, explain the distinction
+INLINE, inside the body of the SECTION where the claim is discussed - not as
+a separate list.
 
 Example:
 
@@ -386,9 +388,11 @@ Study A reports benefit in participants with low baseline vitamin D.
 
 Study B reports no benefit in participants with adequate baseline vitamin D.
 
-Resolution:
+Write, inside the relevant section body:
 
-"The differing findings were associated with baseline vitamin D status: benefit was reported among participants with low baseline status, whereas no benefit was reported among participants with adequate baseline status."
+"The differing findings were associated with baseline vitamin D status:
+benefit was reported among participants with low baseline status, whereas no
+benefit was reported among participants with adequate baseline status."
 
 Do NOT say:
 
@@ -396,11 +400,9 @@ Do NOT say:
 
 Do NOT arbitrarily choose one study.
 
-Instead, explain the evidence-supported distinction.
-
-Add the contradiction to:
-
-"resolved_contradictions"
+Do NOT create a separate "resolved contradictions" list: the resolution must
+live in the paragraph itself, with the citations that support each side
+attached to the sentences that mention them.
 
 ---
 

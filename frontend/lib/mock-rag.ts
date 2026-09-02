@@ -61,6 +61,19 @@ export async function* mockRagEvents(
   yield trace("llm_call", { role: "master", model, attempt: 1, status: "ok" });
   if (!(await waitOrAbort(rand(450, 750), signal))) return;
 
+  // research-memory linkage (mirrors the real backend's memory_prepare event):
+  // the run resumes the "hypertension diet" session and carries prior claims.
+  yield {
+    type: "memory",
+    kind: "prepare",
+    sessionId: "rs_mock0001",
+    sessionTitle: "Dietary management of hypertension",
+    priorClaims: 3,
+    priorContradictions: 1,
+    priorGaps: 1,
+  };
+  yield trace("memory_prepare", { session_id: "rs_mock0001", prior_claims: 3, prior_contradictions: 1, prior_gaps: 1 });
+
   yield trace("master_plan", {
     tasks: [
       { id: "T1", title: "Dietary pattern → BP", objective: "quantity DASH vs control BP effect" },
@@ -119,5 +132,8 @@ export async function* mockRagEvents(
   }
 
   yield trace("run_end", { stop_reason: "synthesized", confidence: 0.91, answer: body });
+  // persistence stats (mirrors the real backend's memory_commit event)
+  yield { type: "memory", kind: "commit", sessionId: "rs_mock0001", stats: { claims_committed: 4, claims_deduped: 2, contradictions: 1, gaps: 1, questions: 2 } };
+  yield trace("memory_commit", { session_id: "rs_mock0001", stats: { claims_committed: 4, claims_deduped: 2, contradictions: 1, gaps: 1 } });
   yield { type: "done", timingMs: Date.now() - started };
 }

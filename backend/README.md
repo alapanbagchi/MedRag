@@ -325,6 +325,95 @@ present) | `1`/`on` (force on) | `0`/`off` (force off). Other knobs:
 token in `LOGFIRE_TOKEN`. With no token present the app stays fully offline
 (no exporting).
 
+## Memory + Context layer (`src/memory`)
+
+Persistent, temporal, provenance-aware research state + context construction.
+The governing invariant: **memory is not medical evidence** — the PMC corpus
+and the verified-evidence pipeline are the only authority for medical fact;
+memory provides continuity, prior research state and personalization, and it
+can never silently become a source of unsupported medical truth.
+
+Layers (never blurred): L0 conversation (conversations/messages/summaries),
+L1 working research state (active session questions/gaps), L2 persistent
+research memory (sessions, claims, contradictions, gaps, preferences), L3 the
+evidence corpus — L3 is referenced from memory **only** through
+`EvidenceReferenceRecord` (PMCID/PMID/DOI + chunk + verification status,
+never a copy of evidence).
+
+Run with memory attached:
+
+    uv run python -m src --memory "Does vitamin D lower blood pressure?"
+    # or: MEMORY_ENABLED=1 uv run python -m src "..."
+
+What happens:
+
+* **Before the run** — `prepare_run` resumes/identifies the research session
+  and assembles a **bounded, budgeted memory context region** composed from
+  typed blocks (conversation / working research state / persistent memory /
+  user preferences) with explicit `VERIFIED EVIDENCE` vs `PERSISTENT RESEARCH
+  MEMORY` boundary markers. The planner receives it as *advisory context only*
+  — it can shape decomposition but is never citable as a source.
+* **After the run** — `record_run` persists the research questions, the
+  verified evidence references, **evidence-derived claims** (each with a full
+  lineage claim → links → evidence → PMCID), the contradictions (both sides,
+  dimension-attributed, never collapsed), the gaps and a labeled
+  `MODEL_INFERENCE` conclusion. Re-running related questions resumes the same
+  session and near-duplicate claims are deduplicated (evidence links unioned,
+  never discarded).
+* **Write pipeline** — candidate → classification → schema validation →
+  **provenance gate** (an `EVIDENCE_DERIVED_CLAIM` requires ≥1 verified
+  evidence reference; otherwise it is degraded to a labeled
+  `MODEL_INFERENCE`, never silently upgraded) → dedup → relation/temporal
+  update → commit (append-only, every write audited in `memory_events`).
+* **Background consolidation** — `consolidate()` derives claim statuses from
+  evidence links, merges near-duplicate claims (older ones `SUPERSEDED`, kept
+  for history), detects contradictions from opposing polarity, and flags
+  staleness (`MEMORY_STALENESS_DAYS`, 0 = disabled — staleness then only from
+  explicit `mark_stale` and contradicting-evidence triggers).
+* **Follow-up continuity** — a completed run marks its session's questions
+  `answered` and stores the run's conclusion as the session's rolling
+  summary. On the next related question the planner therefore receives prior
+  questions as `ALREADY INVESTIGATED — do NOT re-derive`, the established
+  conclusion surfaced up front, and mandatory PLANNING RULES ("plan ONLY for
+  the NEW question; follow-ups build ON prior findings, they are not the prior
+  question re-run"). Short follow-ups ("what about older adults?") also get
+  session-question vocabulary expansion + a continuity baseline so prior
+  findings are actually recalled (see `tests/test_memory_continuity.py`).
+
+Storage: one PostgreSQL schema `medrag_memory` (same instance as the corpus;
+`scripts/memory_init.py` creates it idempotently, pgvector optional for the
+embedding columns). `MEMORY_BACKEND=memory` runs fully in-memory (tests/local).
+
+Configuration (see `src/memory/config.py`):
+
+| Env var | Default | Meaning |
+| --- | --- | --- |
+| `MEMORY_BACKEND` | `auto` | `auto` (Postgres, fallback memory) · `postgres` · `memory` |
+| `MEMORY_EMBEDDER` | `hash` | `hash` (offline deterministic) · `medcpt` (768-dim, needs weights) |
+| `MEMORY_EMBED_DIM` | `256` | embedding width (must match schema at init) |
+| `MEMORY_CONTEXT_TOKENS` | `1800` | total budget of the memory/context region |
+| `MEMORY_CLAIM_MIN_SIM` | `0.86` | near-duplicate threshold for dedup/merge |
+| `MEMORY_RETRIEVE_MIN_SIM` | `0.30` | semantic floor of vector recall |
+| `MEMORY_STALENESS_DAYS` | `0` | revalidation horizon (0 = disabled) |
+
+Tests: `tests/test_memory_*.py` (52 tests) cover the provenance gate
+(contamination can never become evidence), store lifecycle + temporal
+supersession, hybrid retrieval precision, context budgets/boundaries, the
+run-record path and cross-session continuity through the real pipeline.
+
+Frontend linkage (`backend/api.py` + MedPat web): the API keeps one
+`MemoryAPI` per process (`auto` backend) and attaches it to every
+`/v1/chat/stream` run; `tests/test_api_memory.py` pins the wire contract.
+The stream emits first-class `memory` events — `{"type":"memory",
+"kind":"prepare", ...}` (research session resumed + prior claims surfaced
+into the planner, advisory only) before the run and `{"type":"memory",
+"kind":"commit", "stats": {...}}` (what was persisted) afterwards. The
+frontend (`lib/rag-client.ts`, `lib/types.ts`, `ChatView`, `AssistantMessage`)
+normalizes those events and renders a compact **research-memory strip** under
+each response (`MEM · sess … · N prior claims · … recorded N claims`),
+explicitly labeled as advisory context — never evidence. `MEMORY_ENABLED=0`
+disables the layer on the API side.
+
 ## Prompts
 
 Every agent system prompt is a plain-text file under `src/prompts/`, one

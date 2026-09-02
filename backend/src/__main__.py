@@ -62,6 +62,17 @@ def _print_agentic_v3_result(result: dict) -> None:
             print("\nLimitations:")
             for lim in result["answer"]["limitations"]:
                 print("  -", lim[:200])
+    mem = result.get("memory") or {}
+    if mem.get("enabled"):
+        stats = mem.get("committed") or {}
+        print("\n--- MEMORY ---")
+        print(f"session={mem.get('session_id')} title={mem.get('session_title') or '(new)'!r}")
+        if stats:
+            print(f"committed: {stats.get('claims_committed', 0)} claims, "
+                  f"{stats.get('evidence_refs', 0)} evidence refs, "
+                  f"{stats.get('contradictions', 0)} contradictions, "
+                  f"{stats.get('gaps', 0)} gaps, "
+                  f"{stats.get('questions', 0)} questions")
 
 
 async def _agentic_v3_main(argv: list[str]) -> None:
@@ -71,6 +82,8 @@ async def _agentic_v3_main(argv: list[str]) -> None:
     from src.lib.trace import get_trace
     from src.agentic.pipeline import AgenticV3Pipeline
 
+    enable_memory = any(a == "--memory" for a in argv) or \
+        os.environ.get("MEMORY_ENABLED", "").strip().lower() in ("1", "true", "yes", "on")
     query = " ".join(a for a in argv if not a.startswith("-"))
     cfg = AppConfig()
 
@@ -78,7 +91,15 @@ async def _agentic_v3_main(argv: list[str]) -> None:
     trace = get_trace()
     trace.open_stream(log_path, query=query or "(none)")
 
-    pipeline = AgenticV3Pipeline(config=cfg)
+    memory = None
+    if enable_memory:
+        from src.memory import MemoryAPI
+        from src.memory.config import MemoryConfig
+        memory = MemoryAPI.build(MemoryConfig.from_appconfig(cfg))
+        print(f"[memory] enabled | backend={memory.config.backend} "
+              f"embedder={memory.config.embedder}")
+
+    pipeline = AgenticV3Pipeline(config=cfg, memory=memory)
     print(f"[mode] agentic-v3 | local_mode={cfg.local_mode} | dense={cfg.enable_dense} | model={_model_label(cfg)}")
     print(f"       logging to {log_path} incrementally | evidence_target={cfg.agentic_v3_evidence_target}")
     try:

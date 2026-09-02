@@ -27,6 +27,12 @@ export interface Source {
   score?: number;
   snippet?: string;
   url?: string;
+  /** Web source: true when this came from a website (not PMC); its url then
+   *  carries a #:~:text= fragment that scrolls to + highlights the cited
+   *  passage on the actual site. */
+  isWeb?: boolean;
+  /** The quoted passage that the Text-Fragment URL highlights (web sources). */
+  highlight?: string;
 }
 
 export interface StageEvent {
@@ -48,6 +54,25 @@ export interface TraceEntry {
 
 export type MessageStatus = "queued" | "streaming" | "complete" | "stopped" | "error";
 
+/** Persistent research memory attached to one assistant response.
+ *  Advisory context only — never evidence (the strip is labeled as such). */
+export interface MemoryInfo {
+  sessionId: string;
+  sessionTitle: string;
+  /** Prior research surfaced into the planner for this run (L2 memory). */
+  priorClaims: number;
+  priorContradictions: number;
+  priorGaps: number;
+  /** What this run persisted back into memory (0 before the commit event). */
+  committed?: {
+    claimsCommitted: number;
+    claimsDeduped: number;
+    contradictions: number;
+    gaps: number;
+    questions: number;
+  };
+}
+
 export interface Message {
   id: string;
   role: Role;
@@ -57,6 +82,8 @@ export interface Message {
   stages?: StageEvent[];
   /** Chronological pipeline / LLM trace for the thinking layer. */
   trace?: TraceEntry[];
+  /** Research-memory linkage for this response (when the memory layer is on). */
+  memory?: MemoryInfo;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
@@ -81,6 +108,18 @@ export type StreamEvent =
   | { type: "token"; content: string }
   | { type: "done"; timingMs?: number }
   | { type: "error"; message: string }
+  // research-memory linkage: emitted before (prepare) and after (commit) the run
+  | {
+      type: "memory";
+      kind: "prepare" | "commit";
+      sessionId?: string;
+      sessionTitle?: string;
+      priorClaims?: number;
+      priorContradictions?: number;
+      priorGaps?: number;
+      /** commit-only: what the run persisted (snake_case from the backend). */
+      stats?: Record<string, unknown>;
+    }
   // verbose backend trace line (thinking log) — any event type verbatim
   | { type: "pipeline"; event: string; fields: Record<string, unknown> };
 

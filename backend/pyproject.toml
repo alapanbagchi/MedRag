@@ -10,7 +10,10 @@ dependencies = [
   "faiss-cpu",
   "httpx",
   "logfire",
+  "deepagents>=0.7.12",
+  "langchain-openai",
   "langchain-text-splitters",
+  "langgraph>=1.2.11",
   "lxml",
   "numpy",
   "pandas",
@@ -43,11 +46,15 @@ packages = [
   "src.ingestion",
   "src.lib",
   "src.llm",
+  "src.memory",
   "src.processing",
   "src.prompts",
   "src.prompts.agents",
   "src.retrieval",
   "src.umls",
+  "src.x_deepagents",
+  "src.x_deepagents.agents",
+  "src.x_deepagents.tools",
 ]
 
 [tool.setuptools.package-data]

@@ -230,6 +230,16 @@
     border-color: var(--accent);
     filter: brightness(1.1);
   }
+  /* Disabled accent: drop the fill deliberately instead of a 40% opacity wash
+     over orange - reads as "type to enable", not a broken button. */
+  .btn--accent[disabled] {
+    background: transparent;
+    border-color: var(--line-strong);
+    color: var(--ink-3);
+    opacity: 1;
+    filter: none;
+    cursor: default;
+  }
   .btn--square {
     padding: 0.5rem;
   }
