@@ -1,6 +1,6 @@
 """Memory layer — the run record path (record_run) + background consolidation.
 
-record_run is the bridge from an AgenticV3 result dict into persistent
+record_run is the bridge from a pipeline result dict into persistent
 research memory; consolidation is the offline dedup/merge/contradiction/
 temporal pass. Both are exercised with the in-memory backend.
 """

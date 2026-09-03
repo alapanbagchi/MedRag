@@ -15,7 +15,6 @@ evidence link.
 Public surface:
     MemoryAPI        — the facade the rest of MedPat uses
     MemoryConfig     — tunables (backend, embedder, budgets, thresholds)
-    MemoryRunHooks   — AgenticV3Pipeline integration adapter
     MemoryStore      — store contract (InMemory / Postgres backends)
 """
 
@@ -23,7 +22,6 @@ from __future__ import annotations
 
 from src.memory.api import MemoryAPI, RunPrep, RunRecordStats
 from src.memory.config import MemoryConfig
-from src.memory.hooks import MemoryRunHooks
 from src.memory.store import (
     InMemoryMemoryStore,
     MemoryStore,
@@ -35,7 +33,6 @@ __all__ = [
     "InMemoryMemoryStore",
     "MemoryAPI",
     "MemoryConfig",
-    "MemoryRunHooks",
     "MemoryStore",
     "PostgresMemoryStore",
     "RunPrep",

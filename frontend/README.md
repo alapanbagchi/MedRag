@@ -1,73 +1,62 @@
-# MedPat — frontend
+# MedRAG frontend (assistant-ui · Gemini-style)
 
-The MedPat research interface: a Next.js (App Router) + TypeScript + Tailwind CSS v4 UI for a medical RAG research assistant. Brutalist × clinical × instrument-console design system (nixie laboratory counter grammar), dark-first with light mode.
+Chat frontend for the MedRAG/MedPat backend, built entirely from
+[assistant-ui](https://www.assistant-ui.com) components
+(`@assistant-ui/react` primitives + tool UIs) with a minimal Gemini-inspired
+theme. Talks to the **xdeep** research pipeline over the NDJSON stream API.
 
-## Run
+## Stack
+
+- Vite + React 19 + TypeScript + Tailwind CSS v4
+- `@assistant-ui/react` — `ExternalStoreRuntime` (zustand store owns threads +
+  messages, localStorage persistence), `Thread` / `Composer` / `Message`
+  primitives, `ThreadList` sidebar, `GroupedParts` thinking panel
+- `@assistant-ui/react-markdown` — streamed markdown answers with `[n]`
+  citation chips
+- Custom tool UIs (`defineToolkit` + `AuiConfig`) for every research step:
+  searching, web search, fetches, verdicts, reliability, contradictions, gaps
+
+## Running
 
 ```bash
-cd frontend
-npm install
-npm run dev        # http://localhost:3000
+# 1. backend (from repo root / backend/)
+cd backend && .venv/bin/python -m uvicorn api:app --host 127.0.0.1 --port 8000
+
+# 2. frontend
+cd frontend && npm install && npm run dev        # http://localhost:5174
 ```
 
-Other scripts: `npm run build`, `npm run start`, `npm run typecheck`.
+`BACKEND_URL` env overrides the proxied API target (default
+`http://127.0.0.1:8000`); `/v1` is proxied in `vite.config.ts`.
 
-## Layout
+## What the UI shows
 
-```
-frontend/
-├── app/                 # pages & root layout
-│   ├── page.tsx         # home / landing
-│   └── chat/[id]/page.tsx
-├── components/
-│   ├── layout/          # Sidebar, AppShell
-│   ├── home/            # HomeView (hero + search + telemetry)
-│   ├── chat/            # ChatView, MessageList, AssistantMessage, ThinkingStatus, Markdown, ChatInput
-│   ├── sources/         # SourcePanel (drawer / bottom sheet)
-│   └── ui/              # primitives (Dropdown, Kbd, Led, …)
-└── lib/
-    ├── types.ts         # Conversation/Message/Source/StreamEvent
-    ├── rag-client.ts    # ← the only file that talks to a backend
-    ├── mock-rag.ts      # simulated engine (default)
-    ├── mock-data.ts     # seed conversations + corpus telemetry
-    └── store.tsx        # app state (localStorage-backed)
-```
+- **Sidebar** — thread list (new/switch/archive/delete via
+  `ThreadListPrimitive`), auto-titled conversations, xdeep badge, theme toggle.
+- **Thinking panel** — auto-opens while a run is in flight: animated dots, live
+  stage ("Searching the literature", "Verifying evidence", …), elapsed seconds,
+  and grouped **tool cards** per step kind (icon + label + count + per-row
+  spinner/check). Collapses to "View thoughts · N" when done.
+- **Research plan** — the decomposed task list (`decompose_done`), standalone
+  above the answer.
+- **Sources** — verified evidence grid, numbered to match `[n]` citation chips
+  in the answer; web sources carry a globe badge and snippet.
+- **Streaming markdown** — answers render incrementally with GFM tables,
+  citations, action bar (copy / regenerate), and a stop button while running.
 
-## Connecting your real RAG backend
+## Scripts
 
-All backend I/O is isolated behind `lib/rag-client.ts`. It consumes a
-**newline-delimited JSON stream** from:
+- `npm run dev` / `npm run build` (typecheck + vite build) / `npm run preview`
+- `scripts/test-ui.mjs` — headless Chromium (puppeteer-core) smoke test:
+  empty state → send question → live panel → completion → sidebar
+- `scripts/test-complete.mjs` — long-wait E2E completion check
+- screenshots land in `.ui-shots/`
 
-```text
-POST  {NEXT_PUBLIC_RAG_API_URL}/v1/chat/stream
-```
+## API contract (from `backend/api.py`)
 
-```json
-{"type":"status","stage":"retrieving","message":"Searching PMC…","count":42}
-{"type":"sources","sources":[{"id":"PMC123456","pmcid":"PMC123456","pmid":"12345678","title":"…","authors":["…"],"journal":"…","year":2024,"score":0.94,"snippet":"…","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC123456/"}]}
-{"type":"token","content":"The"}
-{"type":"done","timingMs":3127}
-```
-
-Wire it up:
-
-1. Create `frontend/.env.local`:
-   ```
-   NEXT_PUBLIC_RAG_API_URL=http://localhost:8000
-   NEXT_PUBLIC_USE_MOCK=false
-   ```
-2. The UI now streams from the real endpoint. Status stages the engine can
-   emit: `understanding` `decomposing` `retrieving` `reranking` `verifying` `synthesizing`.
-   Unknown stages are tolerated.
-
-While `NEXT_PUBLIC_USE_MOCK` is `true` (default) or no URL is set, the app runs
-fully on the simulated engine — nothing else in the UI changes.
-
-## Shortcuts
-
-- `⌘/Ctrl + K` — focus the search / question input
-- `⌘/Ctrl + N` — new research conversation
-- `Esc` — close menus and drawers
-
-Data (conversations, pins, theme) persists in localStorage under `medpat:*`;
-swap `lib/store.tsx` for an API when you have one.
+`POST /v1/chat/stream` `{question, conversation_id, engine:"xdeep"}` →
+newline-delimited JSON events: `status` (stage), `pipeline`
+(`progress`/`decompose_done`/`query_start`/`retrieved`/`web_search_*`/
+`web_fetch`/`verdict`/`reliability_verdict`/`synthesis_*`/…),
+`sources`, `token`, `done`, `error`. See `src/lib/xdeep.ts` + `src/lib/run.ts`
+for the event→step mapping.

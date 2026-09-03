@@ -1,14 +1,13 @@
 """Prompt tree tests.
 
 Every agent system prompt lives as a plain-text file under src/prompts/
-(one file per agent), and every prompt constant loads from those files - so
-editing a .txt file changes behavior without code changes.
+(one file per agent), loaded at call time via src.prompts.load.load_prompt -
+so editing a .txt file changes behavior without code changes.
 
 Also verifies the PROMPT_DIR env override (custom prompt tree) and the
 loud file-not-found error.
 """
 
-import importlib
 from pathlib import Path
 
 import pytest
@@ -17,16 +16,19 @@ from src.prompts.load import load_prompt, reset_cache, root_dir
 
 ROOT = Path(__file__).resolve().parent.parent / "src" / "prompts"
 
-# (constant-holding module, constant name, relative prompt file)
-CONSTANTS = [
-    ("src.agents.master", "MASTER_SYSTEM_PROMPT", "agents/master.txt"),
-    ("src.agents.search", "SEARCH_PLANNER_SYSTEM_PROMPT", "agents/search_planner.txt"),
-    ("src.agents.critic", "CRITIC_SYSTEM_PROMPT", "agents/critic.txt"),
-    ("src.agents.deepinspect", "INSPECTOR_SYSTEM_PROMPT", "agents/deep_inspector.txt"),
-    ("src.agents.replan", "REPLANNER_SYSTEM_PROMPT", "agents/replanner.txt"),
-    ("src.agents.contradiction", "CONTRADICTION_SYSTEM_PROMPT", "agents/contradiction.txt"),
-    ("src.agents.resolution", "RESOLUTION_SYSTEM_PROMPT", "agents/resolution.txt"),
-    ("src.agents.synthesize", "SYNTHESIS_SYSTEM_PROMPT", "agents/synthesize.txt"),
+# every prompt file the singular agents flow loads (stages/gap_fill agents)
+PROMPTS = [
+    "agents/master.txt",
+    "agents/search_planner.txt",
+    "agents/replanner.txt",
+    "agents/critic.txt",
+    "agents/deep_inspector.txt",
+    "agents/contradiction.txt",
+    "agents/resolution.txt",
+    "agents/synthesize.txt",
+    "agents/reliability.txt",
+    "agents/gap_probe.txt",
+    "agents/gap_complete.txt",
 ]
 
 # legacy pipeline prompts are read as files too (no module constant)
@@ -34,18 +36,16 @@ LEGACY_FILES: list = []
 
 
 def test_all_prompt_files_exist_and_are_nonempty():
-    for rel in LEGACY_FILES + [c[2] for c in CONSTANTS]:
+    for rel in LEGACY_FILES + PROMPTS:
         path = ROOT / rel
         assert path.is_file(), f"missing prompt file: {path}"
         assert path.read_text(encoding="utf-8").strip(), f"empty prompt: {path}"
 
 
 def test_prompt_constants_load_from_files():
-    for mod, const, rel in CONSTANTS:
-        module = importlib.import_module(mod)
-        loaded = load_prompt(rel.split("/")[0], rel.split("/")[1])
-        assert getattr(module, const) == loaded, f"{mod}.{const} != {rel}"
-        assert getattr(module, const).strip(), f"{mod}.{const} empty"
+    for rel in PROMPTS:
+        sub, name = rel.split("/")
+        assert load_prompt(sub, name).strip(), f"empty prompt: {rel}"
 
 
 def test_legacy_prompt_files_load():

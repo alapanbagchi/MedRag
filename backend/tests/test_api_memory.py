@@ -1,70 +1,77 @@
-"""Memory + Context layer — API wiring tests (backend/api.py).
+"""Memory + Context layer — API wiring tests (backend/api.py, singular flow).
 
 Verifies the frontend contract: the chat stream emits first-class
 ``memory`` events (prepare before the run, commit after), the events are not
-duplicated into the thinking-log trace, and the pipeline receives the
+duplicated into the thinking-log trace, and the research flow receives the
 frontend's conversation_id for memory persistence. No LLM / no live DB:
-the pipeline class and the memory singleton are faked/stubbed.
+run_research and the memory singleton are faked/stubbed.
 """
 
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
-import pytest
 from fastapi.testclient import TestClient
 
 import api as api_module
-from src.memory.api import MemoryAPI
-from src.memory.config import MemoryConfig
+import src.agents.bridge as bridge_module
 from src.memory.store import InMemoryMemoryStore
 
 
-class FakePipeline:
-    """Stands in for AgenticV3Pipeline: emits memory prepare/commit events
-    through the same V3Events emitter and returns a canned result."""
+class FakeMemory:
+    """Stands in for MemoryAPI with canned prepare/commit behavior."""
 
-    def __init__(self, config=None, events=None, memory=None):
-        from src.agentic.events import V3Events
-        self.events = V3Events(events) if events is not None else None
-        self.memory = memory
-        self.answer_calls: list[tuple[str, str]] = []
+    def __init__(self):
+        self.prepare_calls: list[tuple] = []
+        self.record_calls: list[tuple] = []
 
-    async def answer(self, query: str, conversation_id: str = ""):
-        self.answer_calls.append((query, conversation_id))
-        if self.events is not None:
-            if self.memory is not None:  # pipeline-level memory events
-                self.events.memory_prepare(
-                    session_id="rs_api", session_title="hypertension",
-                    prior_claims=2, prior_contradictions=1, prior_gaps=1)
-                self.events.memory_commit(
-                    session_id="rs_api",
-                    stats={"claims_committed": 2, "claims_deduped": 0,
-                           "contradictions": 1, "gaps": 1, "questions": 1})
-        return {"answer": {"summary": "ok"}}
+    def prepare_run(self, query: str, conversation_id=None):
+        self.prepare_calls.append((query, conversation_id))
+        mem = SimpleNamespace(claims=[1, 2], contradictions=[1], gaps=[1])
+        return SimpleNamespace(
+            session_id="rs_api",
+            session=SimpleNamespace(title="hypertension"),
+            context=SimpleNamespace(memory=mem),
+            context_text=lambda: "CTX")
+
+    def record_run(self, result, session_id="", conversation_id=None,
+                   record_conclusion=True):
+        self.record_calls.append((result, session_id, conversation_id))
+        return SimpleNamespace(
+            session_id=session_id or "rs_api",
+            as_dict=lambda: {"claims_committed": 2, "claims_deduped": 0,
+                             "contradictions": 1, "gaps": 1, "questions": 1})
 
 
-@pytest.fixture(autouse=True)
-def _stub_pipeline_and_memory(monkeypatch):
-    """Point chat_stream's pipeline at the fake and give it a real in-memory
-    MemoryAPI, so the full memory event path is exercised."""
-    from src.agentic import pipeline as pipeline_module
+class EmptyRun:
+    run_id = "run1"
+    question = "q"
+    answer = ""
+    gaps: list = []
+    contradictions: list = []
+    gap_resolutions: list = []
+    requirements: list = []
 
-    class _Fake:
-        instance = None
+    def verified_items(self):
+        return []
 
-        def __init__(self, *a, **k):
-            self._inst = FakePipeline(*a, **k)
-            _Fake.instance = self._inst
+    def all_items(self):
+        return []
 
-        async def answer(self, *a, **k):
-            return await self._inst.answer(*a, **k)
 
-    monkeypatch.setattr(pipeline_module, "AgenticV3Pipeline", _Fake)
-    monkeypatch.setattr(api_module, "_memory_api", MemoryAPI(
-        store=InMemoryMemoryStore(), config=MemoryConfig(backend="memory")))
-    yield
-    api_module._memory_api = None
+def _stub_flow(monkeypatch):
+    """Fake run_research (captures its inputs) + fake memory singleton."""
+    calls: list[tuple] = []
+    mem = FakeMemory()
+
+    async def fake_run_research(question, memory_context=""):
+        calls.append((question, memory_context))
+        return EmptyRun()
+
+    monkeypatch.setattr(bridge_module, "run_research", fake_run_research)
+    monkeypatch.setattr(bridge_module, "_get_memory_api", lambda: mem)
+    return calls, mem
 
 
 def _stream_lines(client: TestClient, body: dict) -> list[dict]:
@@ -78,7 +85,8 @@ def _stream_lines(client: TestClient, body: dict) -> list[dict]:
     return lines
 
 
-def test_chat_stream_emits_memory_prepare_and_commit():
+def test_chat_stream_emits_memory_prepare_and_commit(monkeypatch):
+    _stub_flow(monkeypatch)
     client = TestClient(api_module.app)
     lines = _stream_lines(
         client, {"question": "does vitamin D lower blood pressure?",
@@ -103,27 +111,34 @@ def test_chat_stream_emits_memory_prepare_and_commit():
     pipeline_events = [l.get("event") for l in lines if l.get("type") == "pipeline"]
     assert "memory_prepare" not in pipeline_events
     assert "memory_commit" not in pipeline_events
-    assert {"done", "token", "pipeline"} & {l["type"] for l in lines}
+    assert "done" in {l["type"] for l in lines}
 
 
-def test_pipeline_receives_conversation_id():
+def test_research_flow_receives_conversation_id(monkeypatch):
+    calls, mem = _stub_flow(monkeypatch)
     client = TestClient(api_module.app)
     _stream_lines(client, {"question": "q", "conversation_id": "conv_fe_456"})
-    from src.agentic import pipeline as pipeline_module
-    inst = pipeline_module.AgenticV3Pipeline.instance
-    assert ("q", "conv_fe_456") in inst.answer_calls
+    assert calls == [("q", "CTX")]
+    assert mem.prepare_calls == [("q", "conv_fe_456")]
+    assert mem.record_calls
+    assert mem.record_calls[0][1] == "rs_api"
+    assert mem.record_calls[0][2] == "conv_fe_456"
 
 
 def test_memory_api_disabled_by_env(monkeypatch):
-    api_module._memory_api = None           # clear the singleton first
+    bridge_module._memory_api = None
+    bridge_module._memory_failed = False
     monkeypatch.setenv("MEMORY_ENABLED", "0")
-    assert api_module.get_memory_api() is None
+    assert bridge_module._get_memory_api() is None
+    bridge_module._memory_failed = False
 
 
 def test_memory_api_builds_in_memory_backend(monkeypatch):
-    api_module._memory_api = None           # clear the singleton first
+    bridge_module._memory_api = None
+    bridge_module._memory_failed = False
     monkeypatch.setenv("MEMORY_BACKEND", "memory")
-    api = api_module.get_memory_api()
+    api = bridge_module._get_memory_api()
     assert api is not None
     assert isinstance(api.store, InMemoryMemoryStore)
-    api_module._memory_api = None
+    bridge_module._memory_api = None
+    bridge_module._memory_failed = False

@@ -1,3 +1,10 @@
-from src.llm.client import build_model, build_model_for, resolve_role_provider
+"""Shared LLM adapter: the OpenCode (Muse Spark) LangChain chat model.
 
-__all__ = ["build_model", "build_model_for", "resolve_role_provider"]
+The singular agents flow builds all its models through src/agents/config.py;
+this package holds the one non-standard adapter (OpenCode speaks the
+Responses API, not Chat Completions).
+"""
+
+from src.llm.opencode_client import OpenCodeChatModel, build_opencode_model
+
+__all__ = ["OpenCodeChatModel", "build_opencode_model"]
