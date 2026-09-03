@@ -40,7 +40,8 @@ packages = [
   "core",
   "src",
   "src.agents",
-  "src.agentic",
+  "src.agents.agents",
+  "src.agents.tools",
   "src.tools",
   "src.chunking",
   "src.ingestion",
@@ -52,9 +53,6 @@ packages = [
   "src.prompts.agents",
   "src.retrieval",
   "src.umls",
-  "src.x_deepagents",
-  "src.x_deepagents.agents",
-  "src.x_deepagents.tools",
 ]
 
 [tool.setuptools.package-data]

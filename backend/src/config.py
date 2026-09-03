@@ -59,6 +59,12 @@ class AppConfig:
         ).strip().rstrip("/")
         self.gemini_api_key: str = _env("GENERAL_LLM_API_KEY", _env("GEMINI_API_KEY", "")).strip()
         self.gemini_model: str = _env("GENERAL_LLM_MODEL", _env("GEMINI_MODEL", "gemini-2.0-flash"))
+        # OpenCode (Muse Spark) — OpenAI-compatible endpoint
+        self.opencode_base_url: str = _env(
+            "OPENCODE_BASE_URL", _env("GENERAL_LLM_BASE_URL", "")
+        ).strip().rstrip("/")
+        self.opencode_api_key: str = _env("OPENCODE_API_KEY", _env("GENERAL_LLM_API_KEY", "")).strip()
+        self.opencode_model: str = _env("OPENCODE_MODEL", _env("GENERAL_LLM_MODEL", "muse-spark-1.3-contributor-free"))
         self.mistral_base_url: str = _env(
             "MISTRAL_BASE_URL", "https://api.mistral.ai/v1"
         ).strip().rstrip("/")
@@ -86,74 +92,19 @@ class AppConfig:
         self.dense_depth: int = _int("DENSE_DEPTH", 100)
         self.rrf_k: float = float(_env("RRF_K", "60"))
 
-        # Budget
-        default_tokens = 2048 if self.provider in ("gemini", "mistral") else 512
-        self.agent_max_tokens: int = _int("AGENT_MAX_TOKENS", default_tokens)
-        self.verifier_max_groups: int = _int("VERIFIER_MAX_GROUPS", 5)
-        self.synthesizer_max_evidence: int = _int("SYNTHESIZER_MAX_EVIDENCE", 6)
         self.max_documents: int = _int("MAX_DOCUMENTS", 8)
         self.max_paper_tokens: int = _int("MAX_PAPER_TOKENS", 12000)  # 0 = unlimited full paper
-        self.max_workers: int = _int("MAX_WORKERS", 8)
-        self.max_retries: int = _int("MAX_RETRIES", 3)
-        self.request_timeout: float = float(_env("REQUEST_TIMEOUT", "180"))
-        self.temperature: float = float(_env("TEMPERATURE", "0.0"))
-        self.max_plan_retries: int = _int("MAX_PLAN_RETRIES", 2)
-        # Legacy: let the planner call search_umls itself. Off by default —
-        # terminology enrichment is deterministic (orchestrator-side) because
-        # tool loops made small models spiral.
-        self.planner_use_umls_tool: bool = _bool("PLANNER_USE_UMLS_TOOL", False)
 
-        # Shared LLM rate limiting (all agents draw from ONE bucket).
-        # 0 disables accounting (fine for local/unlimited providers).
-        default_tpm = 15000 if self.provider == "gemini" else 0
-        legacy_budget = _env("VERIFIER_TOKEN_BUDGET", "").strip()
-        legacy_val = int(legacy_budget) if legacy_budget.isdigit() else None
-        self.tokens_per_minute: int = _int("GLOBAL_TOKENS_PER_MIN", legacy_val if legacy_val is not None else default_tpm)
-        self.max_llm_retries: int = _int("MAX_LLM_RETRIES", 4)
-        self.llm_retry_base_s: float = float(_env("LLM_RETRY_BASE_S", "2"))
 
-        # Retrieval / verification loop
-        self.max_query_rounds: int = _int("MAX_QUERY_ROUNDS", 3)
-        self.min_papers: int = _int("MIN_PAPERS", 3)          # DISTINCT papers per subquery
-        self.verify_batch_max_docs: int = _int("VERIFY_BATCH_MAX_DOCS", 6)
-        self.verify_batch_max_tokens: int = _int("VERIFY_BATCH_MAX_TOKENS", 8000)
-        self.rewrite_enabled: bool = _bool("REWRITE_ENABLED", True)
-        self.enable_cross_encoder: bool = _bool("ENABLE_CROSS_ENCODER", False)
         self.cross_encoder_model: str = _env("CROSS_ENCODER_MODEL", "ncbi/MedCPT-Cross-Encoder")
 
-        # Trace verbosity: keep full untruncated chunk/unit texts in logs.txt.
-        self.full_text_trace: bool = _bool("TRACE_FULL_TEXTS", False)
 
-        # Agentic decomposition (src/agentic): max distinct subqueries kept.
-        self.max_subqueries: int = _int("MAX_SUBQUERIES", 4)
-        self.max_agent_rounds: int = _int("MAX_AGENT_ROUNDS", 6)
-        self.agent_min_evidence: int = _int("AGENT_MIN_EVIDENCE", 3)
-
-        # Agentic v2 (src/agentic_v2): orchestrator research loop budget.
-        self.agentic_v2_max_rounds: int = _int("AGENTIC_V2_MAX_ROUNDS", 12)
-        self.agentic_v2_max_global_retrieves: int = _int("AGENTIC_V2_MAX_GLOBAL_RETRIEVES", 6)
-        # Per-call async timeouts (seconds) — a hanging decide/execute must not
-        # stall the whole run; the state machine falls back / pivots instead.
-        self.agentic_v2_orchestrator_timeout: float = float(_env("AGENTIC_V2_ORCHESTRATOR_TIMEOUT", "120"))
-        self.agentic_v2_action_timeout: float = float(_env("AGENTIC_V2_ACTION_TIMEOUT", "180"))
-
-        # Agentic v3 (src/agents): master -> parallel workers ->
-        # contradiction -> resolution -> final answer (V1 spec).
+        # Research budgets (singular agents flow; stage timeouts and worker
+        # fan-out live in src/agents/timeouts.py as XDEEP_* env knobs).
         self.agentic_v3_evidence_target: int = _int("AGENTIC_V3_EVIDENCE_TARGET", 3)
         self.agentic_v3_max_searches: int = _int("AGENTIC_V3_MAX_SEARCHES", 5)
         self.agentic_v3_max_retrieval_rounds: int = _int("AGENTIC_V3_MAX_RETRIEVAL_ROUNDS", 5)
         self.agentic_v3_papers_per_search: int = _int("AGENTIC_V3_PAPERS_PER_SEARCH", 5)
-        self.agentic_v3_max_deep_inspections: int = _int("AGENTIC_V3_MAX_DEEP_INSPECTIONS", 3)
-        self.agentic_v3_max_workers: int = _int("AGENTIC_V3_MAX_WORKERS", 4)
-        # Per-stage async timeouts (seconds); a stalled stage must not hang the run.
-        self.agentic_v3_master_timeout: float = float(_env("AGENTIC_V3_MASTER_TIMEOUT", "120"))
-        self.agentic_v3_worker_timeout: float = float(_env("AGENTIC_V3_WORKER_TIMEOUT", "360"))
-        self.agentic_v3_contradiction_timeout: float = float(
-            _env("AGENTIC_V3_CONTRADICTION_TIMEOUT", "120"))
-        self.agentic_v3_resolution_timeout: float = float(
-            _env("AGENTIC_V3_RESOLUTION_TIMEOUT", "180"))
-        self.agentic_v3_synthesis_timeout: float = float(
-            _env("AGENTIC_V3_SYNTHESIS_TIMEOUT", "180"))
 
         # Logfire observability (PydanticAI GenAI tracing + app trace events).
         # LOGFIRE_ENABLED: auto (default; enabled iff credentials/token are

@@ -1,27 +1,31 @@
 {
-  "name": "medpat-web",
-  "version": "0.1.0",
+  "name": "medrag-assistant-frontend",
   "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^1.39.0",
-    "next": "^16.3.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "@assistant-ui/react": "^0.15.17",
+    "@assistant-ui/react-markdown": "^0.14.13",
+    "lucide-react": "^1.40.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remark-gfm": "^4.0.1",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^24.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.4.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "puppeteer-core": "^25.10.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2"
   }
 }

@@ -99,16 +99,16 @@ query ?= Does vitamin D supplementation lower blood pressure?
 
 # (progress, web searxng calls, corpus retrievals, verifier verdicts, ...).
 xdeep:
-	.venv/bin/python -m src.x_deepagents "$(query)" --run
+	.venv/bin/python -m src.agents "$(query)" --run
 
 xdeep-json:
-	.venv/bin/python -m src.x_deepagents "$(query)" --run --json
+	.venv/bin/python -m src.agents "$(query)" --run --json
 
 xdeep-log:
 	@tail -60 logs.txt
 
 xdeep-tests:
-	.venv/bin/python -m pytest tests/test_xdeep_smoke.py tests/test_xdeep_state_rules.py tests/test_xdeep_graph.py tests/test_xdeep_tools.py tests/test_xdeep_routing.py tests/test_xdeep_reputation.py -q
+	.venv/bin/python -m pytest tests/test_agents_smoke.py tests/test_agents_state_rules.py tests/test_agents_graph.py tests/test_agents_tools.py tests/test_agents_routing.py tests/test_agents_reputation.py -q
 
 help:
 	@echo "Targets:"

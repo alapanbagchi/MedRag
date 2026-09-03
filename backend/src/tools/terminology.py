@@ -1,4 +1,4 @@
-"""Agentic v3 - Stage 4: UMLS terminology enrichment (per Worker).
+"""UMLS terminology enrichment (per task).
 
 The Worker's FIRST retrieval step is medical-terminology enrichment: take the
 task's concepts and build a terminology pool of concept -> surface variants
@@ -22,17 +22,16 @@ The pool becomes search-planning vocabulary (Stage 5) and the search-term
 planner picks the most probable medical formulations from it.
 
 Implementation reuses the maintained UMLS client through
-src.agentic.umls_tool.UMLSEnricher (no modifications to agentic v1/v2).
-Degrades gracefully: no API key / network failure leaves the task's own
-entities as the pool.
+src.tools.umls.UMLSEnricher. Degrades gracefully: no API key / network
+failure leaves the task's own entities as the pool.
 """
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from src.agentic.state import ResearchTask, TermConcept
 from src.tools import register
+from src.tools.models import ResearchTask, TermConcept
 
 logger = logging.getLogger("src.tools.terminology")
 

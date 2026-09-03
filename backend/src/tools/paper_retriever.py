@@ -1,4 +1,4 @@
-"""Agentic v3 - Stage 6 + 7: the paper retriever tool + context expansion.
+"""The paper retriever tool + context expansion.
 
 The selected search terms are passed to the retriever, which searches the
 medical literature and returns CANDIDATE papers with their relevant excerpts.
@@ -16,10 +16,9 @@ If a search result returns only a small excerpt, the system retrieves the
 surrounding paragraph and evaluates THE EXPANDED CONTEXT - never a truncated
 snippet. That is why every candidate here carries the full unit text.
 
-The implementation reuses src.agentic.retriever_tool.HybridRetrieverTool
-(BM25/SPLADE + dense hybrid, full-unit restoration via the StructuralUnitIndex)
-and adapts the worker's evidence requirement into the SubQueryPlan
-retrieval expects. Loop-avoidance: excluded already-seen chunk ids are passed
+The implementation reuses the HybridRetrieverTool (BM25/SPLADE + dense
+hybrid, full-unit restoration via the StructuralUnitIndex) and adapts the
+worker's evidence requirement into the SubQueryPlan retrieval expects. Loop-avoidance: excluded already-seen chunk ids are passed
 in so later rounds return FRESH candidates.
 """
 from __future__ import annotations
@@ -27,9 +26,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.agentic.state import EvidenceRequirement, ResearchTask, RetrievedPaper
 from src.retrieval.plans import SubQueryPlan
 from src.tools import register
+from src.tools.models import EvidenceRequirement, ResearchTask, RetrievedPaper
 
 logger = logging.getLogger("src.tools.paper_retriever")
 
@@ -80,7 +79,7 @@ class PaperRetrieverTool:
                          for c in getattr(task, "terminology", [])],
         )
         k = top_k or getattr(self.config, "agentic_v3_papers_per_search", None) or self.config.max_documents
-        trace.tool("v3_retrieve", {"query": query, "requirement": requirement.id,
+        trace.tool("retrieve", {"query": query, "requirement": requirement.id,
                                    "top_k": k, "exclude": len(exclude_chunk_ids or [])})
         try:
             results = await self._tool_obj().search(

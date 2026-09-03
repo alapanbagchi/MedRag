@@ -11,20 +11,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
-from src.agentic.pipeline import AgenticV3Pipeline
-from src.agentic.state import (
-    EvidenceRequirement,
-    EvidenceSource,
-    MasterPlan,
-    ResearchTask,
-    SupportDirection,
-    VerifiedEvidence,
-    WorkerReport,
-)
-from src.agents.synthesize import SynthesisReport
-from src.config import AppConfig
 from src.memory.api import MemoryAPI
 from src.memory.config import MemoryConfig
 from src.memory.embed import HashEmbedder
@@ -142,95 +128,65 @@ def test_new_question_stays_open_after_followup():
 
 
 # ---------------------------------------------------------------------------
-# End-to-end: the planner actually receives the continuity framing
+# End-to-end: the orchestrator actually receives the continuity framing
+# (singular flow: memory context reaches decompose_requirements via the
+# graph state's memory_context, advisory-only, never evidence)
 # ---------------------------------------------------------------------------
 
-class CapturingMaster:
-    """Records every memory context handed to the planner."""
+def test_decompose_receives_answered_framing_on_followup(monkeypatch):
+    from src.agents import graph as G
+    from src.agents.agents import stages as sm
+    from src.agents.state import XDeepRunState
 
-    def __init__(self):
-        self.seen: list[str] = []
-
-    async def plan(self, query, budget, memory_context=""):
-        self.seen.append(memory_context or "")
-        return MasterPlan(question=query, tasks=[
-            ResearchTask(
-                id="T1", title=f"tasks for: {query[:40]}",
-                objective=query[:100], intent="answer the new question",
-                evidence_requirements=[
-                    EvidenceRequirement(id="T1.R1", text=query[:80],
-                                        target_n=budget.evidence_target or 3)],
-                stop_criteria=["evidence satisfied", "budget exhausted"],
-            )])
-
-
-class FakeWorker:
-    async def run(self, task, budget, run_id=""):
-        for req in task.evidence_requirements:
-            req.add_evidence(VerifiedEvidence(
-                id=f"E-{task.id}-{req.id}-1", task_id=task.id,
-                requirement_id=req.id, document_id="PMC999", chunk_id="c1",
-                excerpt="finding", claim="A follow-up finding was established.",
-                support=SupportDirection.SUPPORTS, confidence=0.9,
-                source=EvidenceSource.RETRIEVAL))
-        task.finalize()
-        return WorkerReport(run_id=run_id, task_id=task.id,
-                            task_title=task.title, status=task.status.value,
-                            stop_reason="satisfied", requirements=[],
-                            evidence=[e for r in task.evidence_requirements
-                                      for e in r.accepted])
-
-
-class NoContradictions:
-    async def detect(self, state):
-        return []
-
-
-class NoResolution:
-    async def resolve(self, contradiction, state):
-        return None
-
-
-class FakeSynthesizer:
-    async def synthesize(self, state):
-        return SynthesisReport(
-            summary="Follow-up answer.", sections=[], limitations=[],
-            unresolved_gaps=[], unresolved_contradictions=[],
-            resolved_contradictions=[], confidence=0.7, citations=[])
-
-
-def _pipeline(api, master):
-    return AgenticV3Pipeline(
-        config=AppConfig(), master=master, worker=FakeWorker(),
-        contradiction_agent=NoContradictions(),
-        resolution_agent=NoResolution(),
-        synthesizer=FakeSynthesizer(), memory=api)
-
-
-def test_planner_receives_answered_framing_on_followup():
     api = build_api()
     api.record_run(hypertension_run())          # simulate completed run 1
-    master = CapturingMaster()
-    asyncio.run(_pipeline(api, master).answer("how does hypertension lead to diseases"))
+    prep = api.prepare_run("how does hypertension lead to diseases")
+    ctx = prep.context_text()
+    assert ctx  # sanity: follow-up really has prior context
 
-    ctx = master.seen[-1]                       # the follow-up planner context
-    assert ctx
-    assert "question [answered]" in ctx
-    assert "ALREADY INVESTIGATED" in ctx
-    assert "do NOT re-derive" in ctx or "do NOT recreate" in ctx
-    assert "Hypertension is associated with reduced life expectancy" in ctx
+    seen: list[str] = []
+
+    async def fake_decompose(agent, question, memory_context=""):
+        seen.append(memory_context or "")
+        return []
+
+    monkeypatch.setattr(sm, "decompose_requirements", fake_decompose)
+    run = XDeepRunState(run_id="t1",
+                        question="how does hypertension lead to diseases")
+    asyncio.run(G.decompose_node({"question": run.question, "state": run,
+                                  "memory_context": ctx}))
+
+    assert seen and seen[-1]                    # the follow-up planner context
+    assert "question [answered]" in seen[-1]
+    assert "ALREADY INVESTIGATED" in seen[-1]
+    assert "Hypertension is associated with reduced life expectancy" in seen[-1]
 
 
-def test_planner_context_contains_planning_rules_only_when_memory():
-    from src.agents.master import MasterOrchestratorAgent
-    # no memory -> historical prompt, no rules block
-    plain = MasterOrchestratorAgent._plan_prompt("q", memory_context="")
-    assert "PLANNING RULES" not in plain
-    # with memory -> rules present
-    with_mem = MasterOrchestratorAgent._plan_prompt("q", memory_context="[PRIOR…]")
-    assert "PLANNING RULES" in with_mem
-    assert "do NOT recreate" in with_mem
-    assert "Plan tasks ONLY for the NEW USER QUESTION" in with_mem
+def test_decompose_appends_memory_as_advisory_block():
+    body_seen: list[str] = []
+
+    class _Agent:
+        async def ainvoke(self, payload):
+            body_seen.append(payload["messages"][0]["content"])
+            return {"messages": [
+                '[{"id": "R1", "text": "effect of X", "entities": [], '
+                '"target_n": 3}]']}
+
+    import asyncio as _asyncio
+
+    from src.agents.agents import stages as sm
+
+    out = _asyncio.run(sm._decompose_call(
+        _Agent(), "Does X lower BP?", memory_context="[PRIOR…]"))
+    assert out and out[0].id == "R1"
+    assert "PRIOR RESEARCH MEMORY" in body_seen[0]
+    assert "advisory only" in body_seen[0]
+    assert "[PRIOR…]" in body_seen[0]
+
+    # no memory -> no advisory block (historical prompt unchanged)
+    plain = _asyncio.run(sm._decompose_call(_Agent(), "Does X lower BP?"))
+    assert "PRIOR RESEARCH MEMORY" not in body_seen[-1]
+    assert plain and plain[0].id == "R1"
 
 
 # ---------------------------------------------------------------------------

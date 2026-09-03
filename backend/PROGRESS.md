@@ -940,3 +940,22 @@ framing, planning rules present only when memory attached. PostgreSQL
 smoke-validated (4 questions all answered, summary set, follow-up resumes
 same session, [answered] framing in context; rows cleaned).
 Full backend suite: 226 passing (same 2 pre-existing failures), 1 skipped.
+
+----------------------------------------------------------------------------
+SINGULAR DEEPAGENTS MERGE (2026-09-03)
+----------------------------------------------------------------------------
+
+Retired the v3 pipeline (src/agentic/, pydantic-ai src/agents/*); the
+deepagents flow is now the only runtime, renamed src/x_deepagents ->
+src/agents. Fixes landed with the merge: per-request stream sinks
+(contextvars, no cross-talk), worker web evidence counts toward coverage
+(stable web: document ids), resolution findings fold into the owning
+requirement, memory layer wired into the flow (prepare/record + planner
+context), budgets sourced from AppConfig, paper_inspect phantom removed,
+gap web-augment capped per requirement, verifier confidence surfaced.
+Shared tools kept working via src/tools/models.py (pure-data contracts
+moved out of the retired v3 state). API is a single path (no engine
+switch); frontend engine reduced to "xdeep". Verified: full pytest suite
+green (2 pre-existing unrelated failures), tsc + vite build clean, live
+end-to-end run (qwen think + mistral verify + pg corpus + searxng) reached
+synthesis with 12 verified items. See MERGE_PLAN.md.

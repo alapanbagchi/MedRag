@@ -1,5 +1,13 @@
 # MedRAG
 
+> NOTE (2026-09): the agentic backend is now a SINGULAR deepagents flow in
+> `src/agents/` (LangGraph: decompose → parallel workers → conflict →
+> resolution → gap resolution → synthesis), served at `POST /v1/chat/stream`
+> with no engine switch. The v3 pipeline (`src/agentic/`, pydantic-ai agents)
+> was retired. Much of the detail below predates that merge and is kept as
+> history — see `src/agents/README.md` and the repo-root `MERGE_PLAN.md` for
+> the current architecture.
+
 Structure-aware RAG pipeline for PMC/JATS biomedical articles.
 
 The code lives in a single `src` package. There is no plugin system; each

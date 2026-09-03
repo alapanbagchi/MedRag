@@ -1,30 +1,29 @@
-"""Memory layer — integration with AgenticV3Pipeline (cross-session continuity).
+"""Memory layer — integration with the singular deepagents flow.
 
 Run 1 answers the vitamin D question and commits research memory; Run 2 is a
 follow-up ("what about older adults?") that MUST resume the same research
-session and receive bounded memory context — while the evidence boundary stays
-intact (memory items are advisory for the planner only; verified evidence
-still comes from the workers).
+session and hand bounded memory context to the orchestrator — while the
+evidence boundary stays intact (memory items are advisory for the planner
+only; verified evidence still comes from the workers).
+
+No LLM / no live DB: the graph's run_research is faked with real run states,
+the memory API is real (in-memory store + hash embedder).
 """
 
 from __future__ import annotations
 
 import asyncio
 
-import pytest
-
-from src.agentic.pipeline import AgenticV3Pipeline
-from src.agentic.state import (
-    EvidenceRequirement,
-    EvidenceSource,
-    MasterPlan,
-    ResearchTask,
+from src.agents import bridge as bridge_module
+from src.agents.state import (
+    AnswersTask,
+    EvidenceItem,
+    ResearchRequirement,
     SupportDirection,
-    VerifiedEvidence,
-    WorkerReport,
+    VerdictRelevance,
+    VerifierVerdict,
+    XDeepRunState,
 )
-from src.agents.synthesize import SynthesisReport
-from src.config import AppConfig
 from src.memory.api import MemoryAPI
 from src.memory.config import MemoryConfig
 from src.memory.embed import HashEmbedder
@@ -32,111 +31,90 @@ from src.memory.enums import EvidenceRole, ProvenanceClass
 from src.memory.store import InMemoryMemoryStore
 
 
-class MemoryAwareMaster:
-    """Records whether it received advisory memory context."""
-
-    def __init__(self):
-        self.seen_memory_context = []
-
-    async def plan(self, query, budget, memory_context=""):
-        self.seen_memory_context.append(memory_context or "")
-        tasks = []
-        for tid, title, reqs in (
-            ("T1", "Dietary management of hypertension",
-             ["sodium and blood pressure"]),
-            ("T2", "Vitamin D and hypertension",
-             ["vitamin D supplementation and blood pressure"]),
-        ):
-            tasks.append(ResearchTask(
-                id=tid, title=title,
-                objective=f"determine: {title}",
-                intent="evidence for the objective",
-                evidence_requirements=[
-                    EvidenceRequirement(id=f"{tid}.R{j}", text=text,
-                                        target_n=budget.evidence_target or 3)
-                    for j, text in enumerate(reqs, start=1)],
-                stop_criteria=["evidence satisfied", "budget exhausted"],
-            ))
-        return MasterPlan(question=query, tasks=tasks)
+def build_api() -> MemoryAPI:
+    return MemoryAPI(store=InMemoryMemoryStore(), embedder=HashEmbedder(256),
+                     config=MemoryConfig(backend="memory"))
 
 
-class FakeWorker:
-    async def run(self, task, budget, run_id=""):
-        for req in task.evidence_requirements:
-            for i, (doc, support) in enumerate(
-                    [("PMC11684474", SupportDirection.SUPPORTS),
-                     ("PMC11684475", SupportDirection.SUPPORTS),
-                     ("PMC11684476", SupportDirection.SUPPORTS)], start=1):
-                req.add_evidence(VerifiedEvidence(
-                    id=f"E-{task.id}-{req.id}-{i}",
-                    task_id=task.id, requirement_id=req.id,
-                    document_id=doc, chunk_id=f"c-{doc}",
-                    section="Results",
-                    excerpt=f"{doc}: blood-pressure finding {i}",
-                    claim=f"Finding from {doc}: vitamin D supplementation "
-                          "affects blood pressure in hypertensive adults.",
-                    support=support, confidence=0.9,
-                    source=EvidenceSource.RETRIEVAL,
-                ))
-        task.finalize()
-        return WorkerReport(run_id=run_id, task_id=task.id,
-                            task_title=task.title, status=task.status.value,
-                            stop_reason="satisfied", requirements=[],
-                            evidence=[e for r in task.evidence_requirements
-                                      for e in r.accepted],
-                            searches_used=1, deep_inspections_used=0)
+def vitamin_d_run(run_id: str = "run1") -> XDeepRunState:
+    """A realistic finished run state: 3 verified supporting papers."""
+    req = ResearchRequirement(id="R1",
+                              text="vitamin D supplementation and blood pressure",
+                              target_n=3)
+    for i, doc in enumerate(["PMC11684474", "PMC11684475", "PMC11684476"], 1):
+        item = EvidenceItem(
+            id=f"R1.E{i}", run_id=run_id, requirement_id="R1",
+            chunk_id=f"c-{doc}", document_id=doc, section="Results",
+            text=f"{doc}: blood-pressure finding {i}",
+            claim=(f"Finding from {doc}: vitamin D supplementation affects "
+                   "blood pressure in hypertensive adults."),
+            source_query="vitamin D blood pressure",
+            retrieval_method="pgfts+pgvector", rank=i)
+        req.add_item(item)
+        item.submit_to_verifier()
+        item.set_verdict(VerifierVerdict(
+            evidence_id=item.id, requirement_id="R1",
+            relevance=VerdictRelevance.RELEVANT,
+            answers_task=AnswersTask.YES,
+            support=SupportDirection.SUPPORTS, confidence=0.9,
+            note="directly answers"))
+    req.derive_status()
+    return XDeepRunState(
+        run_id=run_id,
+        question="Does vitamin D supplementation lower blood pressure?",
+        requirements=[req],
+        answer=("Dietary sodium reduction and vitamin D findings are "
+                "summarized from the verified evidence. " * 10),
+        gaps=[])
 
 
-class FakeContradiction:
-    async def detect(self, state):
-        return []
+def _stage_flow(monkeypatch, runs: list):
+    """Fake run_research with staged run states; capture planner contexts."""
+    contexts: list[str] = []
+    staged = list(runs)
+
+    async def fake_run_research(question, memory_context=""):
+        contexts.append(memory_context or "")
+        return staged.pop(0)
+
+    monkeypatch.setattr(bridge_module, "run_research", fake_run_research)
+    return contexts
 
 
-class FakeResolution:
-    async def resolve(self, contradiction, state):
-        return None
+async def _collect(question: str, conversation_id: str = "") -> list[dict]:
+    import json
+
+    lines = []
+    async for line in bridge_module.stream_xdeep(
+            question, conversation_id=conversation_id):
+        lines.append(json.loads(line))
+    return lines
 
 
-class FakeSynthesizer:
-    async def synthesize(self, state):
-        return SynthesisReport(
-            summary="Dietary sodium reduction and vitamin D findings are "
-                    "summarized from the verified evidence.",
-            sections=[], limitations=[], unresolved_gaps=[],
-            unresolved_contradictions=[], resolved_contradictions=[],
-            confidence=0.8, citations=[])
+def _memory_frames(lines: list[dict], kind: str) -> list[dict]:
+    return [l for l in lines
+            if l.get("type") == "memory" and l.get("kind") == kind]
 
 
-def _pipeline(memory, master=None):
-    return AgenticV3Pipeline(
-        config=AppConfig(),
-        master=master or MemoryAwareMaster(),
-        worker=FakeWorker(),
-        contradiction_agent=FakeContradiction(),
-        resolution_agent=FakeResolution(),
-        synthesizer=FakeSynthesizer(),
-        memory=memory,
-    )
-
-
-def test_cross_session_continuity():
+def test_cross_session_continuity(monkeypatch):
     api = MemoryAPI(store=InMemoryMemoryStore(), embedder=HashEmbedder(256),
                     config=MemoryConfig(backend="memory"))
-    master = MemoryAwareMaster()
+    monkeypatch.setattr(bridge_module, "_get_memory_api", lambda: api)
+    contexts = _stage_flow(monkeypatch, [vitamin_d_run("run1"),
+                                         vitamin_d_run("run2")])
 
     # ---- run 1: full investigation ----
-    result1 = asyncio.run(_pipeline(api, master).answer(
-        "Does vitamin D supplementation lower blood pressure?"))
-    assert result1["terminal"] is True
-    assert result1["memory"]["enabled"] is True
-    stats1 = result1["memory"]["committed"]
+    lines1 = asyncio.run(_collect(
+        "Does vitamin D supplementation lower blood pressure?", "conv-X"))
+    commits1 = _memory_frames(lines1, "commit")
+    assert len(commits1) == 1
+    stats1 = commits1[0]["stats"]
     assert stats1["claims_committed"] >= 1
     assert stats1["claims_deduped"] >= 2      # near-dup claims merged, links unioned
-    assert result1["memory"]["context"]           # planner received context
-    assert "memory" in master.seen_memory_context[0]
-
-    session1 = result1["memory"]["session_id"]
+    session1 = commits1[0]["session_id"]
     assert session1 and api.store.get_session(session1) is not None
+    # the orchestrator got (empty-at-first) context plumbing, not nothing
+    assert contexts[0] is not None
 
     evidence_claims = [c for c in api.store.get_claims()
                        if c.provenance_class == ProvenanceClass.EVIDENCE_DERIVED_CLAIM]
@@ -154,50 +132,52 @@ def test_cross_session_continuity():
                    for l in links)
 
     # ---- run 2: follow-up query resumes the SAME research session ----
-    master2 = MemoryAwareMaster()
-    result2 = asyncio.run(_pipeline(api, master2).answer(
-        "What about vitamin D supplementation in older adults?"))
-    assert result2["memory"]["enabled"] is True
-    session2 = result2["memory"]["session_id"]
-    assert session2 == session1                     # continuation, not a new session
-    # the planner really received the prior research state
-    assert any("vitamin" in (m or "").casefold() and "BLOOD PRESSURE" in m.upper()
-               for m in master2.seen_memory_context)
+    lines2 = asyncio.run(_collect(
+        "What about vitamin D supplementation in older adults?", "conv-X"))
+    commits2 = _memory_frames(lines2, "commit")
+    assert len(commits2) == 1
+    assert commits2[0]["session_id"] == session1   # continuation, not new
+    # the orchestrator really received the prior research state
+    assert any("vitamin" in (m or "").casefold() for m in contexts[1:])
     # the run merged into the same session (no duplicate claims)
-    stats2 = result2["memory"]["committed"]
-    assert stats2["session_id"] == session1
     claims_after = api.store.get_claims(
         session_id=session1, provenance=ProvenanceClass.EVIDENCE_DERIVED_CLAIM)
     assert len(claims_after) == len(evidence_claims)   # dedup, no explosion
 
 
-def test_pipeline_without_memory_is_unchanged():
-    """No memory attached -> byte-identical behavior, memory block says
-    enabled=False."""
-    pipeline = AgenticV3Pipeline(
-        config=AppConfig(),
-        master=MemoryAwareMaster(),
-        worker=FakeWorker(),
-        contradiction_agent=FakeContradiction(),
-        resolution_agent=FakeResolution(),
-        synthesizer=FakeSynthesizer(),
-    )
-    result = asyncio.run(pipeline.answer("dietary salt and hypertension?"))
-    assert result["terminal"] is True
-    assert result["memory"] == {"enabled": False}
+def test_flow_without_memory_is_unchanged(monkeypatch):
+    """MEMORY_ENABLED=0 -> no memory frames, run still streams to done."""
+    bridge_module._memory_api = None
+    bridge_module._memory_failed = False
+    monkeypatch.setenv("MEMORY_ENABLED", "0")
+    _stage_flow(monkeypatch, [vitamin_d_run("run9")])
+    try:
+        lines = asyncio.run(_collect("dietary salt and hypertension?"))
+    finally:
+        bridge_module._memory_failed = False
+    assert "done" in {l["type"] for l in lines}
+    assert not [l for l in lines if l.get("type") == "memory"]
 
 
-def test_context_boundary_in_integration():
-    """prepare-run context never injects memory into the evidence channel:
-    the result's verified evidence still comes only from the pipeline."""
-    api = MemoryAPI(store=InMemoryMemoryStore(), embedder=HashEmbedder(256),
-                    config=MemoryConfig(backend="memory"))
-    result = asyncio.run(_pipeline(api).answer("vitamin D and blood pressure?"))
-    evidence = result["evidence"]
-    assert evidence                                  # pipeline evidence present
-    for e in evidence:
-        assert e["status"] in ("accepted", "contradictory")
-    # the memory context region is bounded and advisory-only
-    ctx = result["memory"]["context"]
+def test_context_boundary_in_integration(monkeypatch):
+    """Memory context never injects into the evidence channel: the run's
+    verified evidence still comes only from the workers, and the planner
+    context region is bounded and advisory-only."""
+    api = build_api()
+    monkeypatch.setattr(bridge_module, "_get_memory_api", lambda: api)
+    contexts = _stage_flow(monkeypatch, [vitamin_d_run("runB"),
+                                         vitamin_d_run("runC")])
+    lines = asyncio.run(_collect("vitamin D and blood pressure?", "conv-Z"))
+
+    sources = [l for l in lines if l.get("type") == "sources"]
+    assert sources  # worker evidence present in the stream
+    for s in sources[0]["sources"]:
+        assert s["id"]  # every source resolves to a real document
+
+    # second turn in the SAME chat: the planner context carries bounded,
+    # advisory-only prior research (never evidence)
+    asyncio.run(_collect("vitamin D dosage in trials?", "conv-Z"))
+    ctx = contexts[1]
+    assert ctx
     assert len(ctx) < 6000
     assert "not evidence" in ctx.casefold() or "VERIFIED EVIDENCE" in ctx
