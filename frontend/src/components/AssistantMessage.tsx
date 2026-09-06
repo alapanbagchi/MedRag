@@ -1,107 +1,146 @@
-import { ActionBarPrimitive, AuiIf, MessagePrimitive, useAuiState } from "@assistant-ui/react";
-import { CopyIcon, RotateCcwIcon, SparklesIcon } from "lucide-react";
+import { MessagePrimitive, useAuiState } from "@assistant-ui/react";
+import { ChevronDownIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ThinkingIndicator } from "./assistant-ui/elements/thinking-indicator";
+import { StreamingText } from "./assistant-ui/elements/streaming-text";
+import { TypingIndicator } from "./assistant-ui/elements/typing-indicator";
+import { ToolCalls, type ToolEntry } from "./ToolCalls";
+import { STAGE_LABELS } from "../lib/labels";
 import type { StepArgs } from "../lib/xdeep";
 import { MarkdownText } from "./MarkdownText";
-import { StepCard, ThinkingPanel } from "./ThinkingPanel";
 
 /**
- * Tool-call parts that belong inside the collapsible thinking panel:
- *  - "step"   → one research step (tool-card row)
- *  - "status" → the live pipeline stage (pinned to the top)
- *  - "memory" → memory-layer events
- * "plan" and "sources" are standalone and render on their own.
+ * Subscribe to the message content by reference (stable across renders) and
+ * derive everything with useMemo. Selectors must NOT build fresh arrays —
+ * useSyncExternalStore treats each new reference as a change and loops.
+ *
+ * Split: `thought` steps feed the streaming thought text; every other step
+ * is a tool trace entry for the ToolCall rows + timeline.
  */
-function groupPath(part: {
-  type: string;
-  toolName?: string;
-  args?: unknown;
-}): readonly `group-${string}`[] | null {
-  if (part.type !== "tool-call") return null;
-  if (part.toolName === "status") return ["group-work", "group-status-pin"];
-  if (part.toolName === "step") {
-    const kind = (part.args as StepArgs | undefined)?.kind ?? "thought";
-    return [`group-work`, `group-tool-${kind}`];
-  }
-  if (part.toolName === "memory") return ["group-work", "group-tool-memory"];
-  return null; // plan + sources stay standalone
+function useThinking(): {
+  lines: string[];
+  tools: ToolEntry[];
+  stage: string;
+} {
+  const content = useAuiState((s) => s.message.content);
+  return useMemo(() => {
+    const lines: string[] = [];
+    const tools: ToolEntry[] = [];
+    let stage = "";
+    content.forEach((p, index) => {
+      if (p?.type !== "tool-call") return;
+      if (p.toolName === "step") {
+        const args = (p as unknown as { args?: StepArgs }).args;
+        if (!args) return;
+        if (args.kind === "thought") {
+          const text = (args.detail || args.label || "").trim();
+          if (text) lines.push(text);
+        } else {
+          const key =
+            (p as { toolCallId?: string }).toolCallId ??
+            args.callId ??
+            `step-${index}`;
+          tools.push({ key, step: args });
+        }
+      } else if (p.toolName === "status") {
+        stage = ((p as { args?: { stage?: string } }).args?.stage ?? "") as string;
+      }
+    });
+    return { lines, tools, stage };
+  }, [content]);
 }
 
+function useElapsed(running: boolean): string {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (!running) return undefined;
+    const start = Date.now();
+    setSeconds(0);
+    const id = setInterval(
+      () => setSeconds(Math.round((Date.now() - start) / 1000)),
+      1000,
+    );
+    return () => clearInterval(id);
+  }, [running]);
+  return `${seconds}s`;
+}
+
+/**
+ * Assistant message: thinking indicator + streaming thought lines directly
+ * on the background below the question, then the final answer.
+ * All tool-call cards, panels, pills, and action bars stay removed —
+ * every non-text part renders nothing.
+ */
 export function AssistantMessage() {
-  // Primitive selector: CSV of step kinds currently in flight (stable string).
-  const runningKinds = useAuiState((s) => {
-    const out: string[] = [];
-    for (const p of s.message.content) {
-      if (p?.type === "tool-call" && p.toolName === "step") {
-        const a = (p.args as StepArgs | undefined);
-        if (a && !a.done) out.push(a.kind ?? "thought");
-      }
-    }
-    return out.join(",");
-  });
+  const { lines, tools, stage } = useThinking();
+  const isRunning = useAuiState((s) => s.thread.isRunning);
+  const [thoughtsOpen, setThoughtsOpen] = useState(true);
+  const elapsed = useElapsed(isRunning);
+
+  const segments = useMemo(() => lines.map((text) => ({ text })), [lines]);
+  const wordCount = useMemo(
+    () => segments.reduce((n, s) => n + s.text.split(" ").length, 0),
+    [segments],
+  );
+  const stageLabel = (STAGE_LABELS[stage] ?? stage).trim() || "Thinking";
 
   return (
-    <MessagePrimitive.Root className="group flex w-full gap-3.5">
-      <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4b8cf5] to-[#9d7bfb] text-white shadow-sm">
-        <SparklesIcon className="size-4" />
-      </div>
+    <MessagePrimitive.Root className="flex w-full">
+      <div className="min-w-0 flex-1">
+        {isRunning ? (
+          <div className="px-1 py-1">
+            <ThinkingIndicator label={stageLabel} elapsed={elapsed} />
+          </div>
+        ) : null}
 
-      <div className="min-w-0 flex-1 space-y-2.5">
-        <MessagePrimitive.GroupedParts groupBy={(part) => groupPath(part as never)}>
-          {({ part, children }) => {
-            if (part.type.startsWith("group-")) {
-              const group = part as never as { type: string; indices: number[] };
-              if (group.type === "group-work") {
-                return <ThinkingPanel count={group.indices.length}>{children}</ThinkingPanel>;
-              }
-              if (group.type === "group-status-pin") {
-                return <div className="mx-1 mb-1.5 rounded-xl bg-muted/30">{children}</div>;
-              }
-              if (group.type.startsWith("group-tool-")) {
-                const kind = group.type.replace("group-tool-", "");
-                const running = runningKinds.split(",").includes(kind);
-                return (
-                  <StepCard kind={kind} count={group.indices.length} running={running}>
-                    {children}
-                  </StepCard>
-                );
-              }
+        {lines.length === 0 && isRunning ? (
+          <div className="px-1 py-1">
+            <TypingIndicator variant="bare" />
+          </div>
+        ) : null}
+
+        {segments.length > 0 ? (
+          <div className="px-1 py-1">
+            <button
+              type="button"
+              onClick={() => setThoughtsOpen((v) => !v)}
+              aria-expanded={thoughtsOpen}
+              className="flex items-center gap-2 rounded-md py-1 text-[13.5px] text-foreground/55 transition-colors outline-none hover:text-foreground/90"
+            >
+              <ChevronDownIcon
+                className={`size-3.5 shrink-0 opacity-60 transition-transform duration-200 ${thoughtsOpen ? "" : "-rotate-90"}`}
+              />
+              Thinking
+            </button>
+            {thoughtsOpen ? (
+              <div className="ms-2 mt-1 border-l-2 border-border/70 ps-4 opacity-60">
+                <StreamingText
+                  segments={segments}
+                  count={wordCount}
+                  streaming={isRunning}
+                  className="max-w-none"
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <ToolCalls entries={tools} isRunning={isRunning} stageLabel={stageLabel} />
+
+        <MessagePrimitive.GroupedParts groupBy={() => null}>
+          {({ part }) => {
+            if (part.type === "text") {
+              return (
+                <div className="anim-rise py-1">
+                  <div className="answer-body">
+                    <MarkdownText />
+                  </div>
+                </div>
+              );
             }
-            if (part.type === "tool-call") return part.toolUI ?? null;
-            if (part.type === "text") return <MarkdownText />;
             return null;
           }}
         </MessagePrimitive.GroupedParts>
-
-        {/* While running with no answer text yet, show a working indicator. */}
-        <AuiIf
-          condition={(s) =>
-            s.thread.isRunning &&
-            !s.message.content.some((p) => p.type === "text" && !!p.text)
-          }
-        >
-          <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-primary" />
-            </span>
-            Working…
-          </div>
-        </AuiIf>
-
-        <ActionBarPrimitive.Root hideWhenRunning className="mt-1 flex gap-1">
-          <ActionBarPrimitive.Copy
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-muted hover:text-foreground focus:opacity-100"
-            aria-label="Copy answer"
-          >
-            <CopyIcon className="size-3.5" />
-          </ActionBarPrimitive.Copy>
-          <ActionBarPrimitive.Reload
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-muted hover:text-foreground focus:opacity-100"
-            aria-label="Regenerate answer"
-          >
-            <RotateCcwIcon className="size-3.5" />
-          </ActionBarPrimitive.Reload>
-        </ActionBarPrimitive.Root>
       </div>
     </MessagePrimitive.Root>
   );

@@ -61,13 +61,13 @@ function withCitations(node: ReactNode, keyBase = 0): ReactNode[] {
 }
 
 const components: Components = {
-  p: ({ children }) => <p className="my-2.5 leading-7 text-[15px]">{withCitations(children)}</p>,
-  h1: ({ children }) => <h1 className="mb-2 mt-5 text-xl font-semibold tracking-tight">{withCitations(children)}</h1>,
-  h2: ({ children }) => <h2 className="mb-2 mt-4 text-lg font-semibold tracking-tight">{withCitations(children)}</h2>,
-  h3: ({ children }) => <h3 className="mb-2 mt-3 text-base font-semibold">{withCitations(children)}</h3>,
-  ul: ({ children }) => <ul className="my-2.5 ml-5 list-disc space-y-1.5">{withCitations(children)}</ul>,
-  ol: ({ children }) => <ol className="my-2.5 ml-5 list-decimal space-y-1.5">{withCitations(children)}</ol>,
-  li: ({ children }) => <li className="leading-7">{withCitations(children)}</li>,
+  p: ({ children }) => <p className="my-3 text-[17px] leading-8">{withCitations(children)}</p>,
+  h1: ({ children }) => <h1 className="mb-2.5 mt-6 text-2xl font-semibold tracking-tight">{withCitations(children)}</h1>,
+  h2: ({ children }) => <h2 className="mb-2.5 mt-5 text-xl font-semibold tracking-tight">{withCitations(children)}</h2>,
+  h3: ({ children }) => <h3 className="mb-2 mt-4 text-lg font-semibold">{withCitations(children)}</h3>,
+  ul: ({ children }) => <ul className="my-3 ml-5 list-disc space-y-2 text-[17px]">{withCitations(children)}</ul>,
+  ol: ({ children }) => <ol className="my-3 ml-5 list-decimal space-y-2 text-[17px]">{withCitations(children)}</ol>,
+  li: ({ children }) => <li className="leading-8">{withCitations(children)}</li>,
   blockquote: ({ children }) => (
     <blockquote className="my-3 border-l-2 border-primary/40 pl-3 text-muted-foreground">
       {withCitations(children)}

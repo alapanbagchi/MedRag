@@ -8,7 +8,7 @@ export interface ChatThread {
   archived?: boolean;
 }
 
-const STORAGE_KEY = "medrag:state:v1";
+const STORAGE_KEY = "medrag:state:v3";
 
 /** Stable empty-message reference (never reallocate: ExternalStoreRuntime
  * compares adapter snapshot references and notifies subscribers on change). */
@@ -19,12 +19,20 @@ export const uid = (): string =>
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+export interface InspectorSelection {
+  callId: string;
+}
+
 interface ChatState {
   threads: ChatThread[];
   currentThreadId: string | null;
   messages: Record<string, ThreadMessageLike[]>;
   /** Singular research pipeline (always xdeep; kept for persisted shape). */
   engine: "xdeep";
+  /** Open tool-call inspector (ephemeral; never persisted). */
+  inspector: InspectorSelection | null;
+  openInspector: (callId: string) => void;
+  closeInspector: () => void;
 
   createThread: () => string;
   selectThread: (id: string) => void;
@@ -69,9 +77,21 @@ function initialState(): PersistedState {
           : persisted.threads[0]!.id,
     };
   }
-  // Fresh start: one empty thread so the runtime always has a current thread.
-  const first: ChatThread = { id: uid(), title: "", createdAt: Date.now() };
-  return { threads: [first], currentThreadId: first.id, messages: {}, engine: "xdeep" };
+  // Fresh start: mock conversation history so the sidebar shows grouped
+  // chats right away; the first (today) thread hosts the auto-played demo.
+  const now = Date.now();
+  const H = 3600_000;
+  const D = 24 * H;
+  const mock: Array<{ title: string; createdAt: number }> = [
+    { title: "", createdAt: now - 2 * H },
+    { title: "PENK for AKI prediction in KID-ACS", createdAt: now - 5 * H },
+    { title: "Radial artery vs vein graft vasospasm", createdAt: now - D - 3 * H },
+    { title: "Perioperative AKI prediction models", createdAt: now - D - 6 * H },
+    { title: "Vasoplegia management evidence gaps", createdAt: now - 3 * D },
+    { title: "Contrast-induced nephropathy prophylaxis", createdAt: now - 12 * D },
+  ];
+  const threads: ChatThread[] = mock.map((m) => ({ id: uid(), ...m }));
+  return { threads, currentThreadId: threads[0]!.id, messages: {}, engine: "xdeep" };
 }
 
 const boot = initialState();
@@ -112,6 +132,9 @@ export const useChatStore = create<ChatState>()((set) => ({
   patchMessages: (threadId, updater) =>
     set((s) => ({ messages: { ...s.messages, [threadId]: updater(s.messages[threadId] ?? []) } })),
   setEngine: (engine) => set({ engine }),
+  inspector: null,
+  openInspector: (callId) => set({ inspector: { callId } }),
+  closeInspector: () => set({ inspector: null }),
 }));
 
 // Persist to localStorage (best-effort).

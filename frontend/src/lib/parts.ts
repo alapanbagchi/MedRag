@@ -85,6 +85,36 @@ export function pushThought(
   return appendPart(content, toolPart("thought", data, data));
 }
 
+/** Streaming model thinking: append `delta` to the single open thought step
+ * (created on first delta), so token-by-token reasoning renders as one row. */
+export function upsertThought(content: Content, delta: string, done: boolean): Content {
+  const MAX_THOUGHT = 4000;
+  type ThoughtPart = { type: string; toolName: string; toolCallId: string; args: StepArgs };
+  let index = -1;
+  for (let i = content.length - 1; i >= 0; i--) {
+    const p = content[i];
+    if (p?.type === "tool-call" && (p as { toolName?: string }).toolName === "step") {
+      const args = (p as unknown as ThoughtPart).args;
+      if (args?.kind === "thought" && !args.done) {
+        index = i;
+        break;
+      }
+    }
+  }
+  if (index < 0) {
+    if (!delta) return content;
+    return appendPart(
+      content,
+      toolPart("step", { kind: "thought", label: "Thinking", detail: delta.slice(0, MAX_THOUGHT), done }),
+    );
+  }
+  const next = [...content];
+  const part = next[index] as unknown as ThoughtPart;
+  const detail = `${part.args.detail ?? ""}${delta}`.slice(0, MAX_THOUGHT);
+  next[index] = { ...part, args: { ...part.args, detail, done } } as unknown as MessagePartLike;
+  return next;
+}
+
 /** A research step (tool-card row) — see lib/xdeep.ts for kinds. */
 export function pushStep(content: Content, step: StepArgs, cap = 260): Content {
   const count = content.filter((p) => p.type === "tool-call" && p.toolName === "step").length;
