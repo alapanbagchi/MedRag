@@ -1,15 +1,38 @@
 import { MenuIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RuntimeProvider } from "./components/RuntimeProvider";
 import { Sidebar } from "./components/Sidebar";
 import { ThreadView } from "./components/ThreadView";
+import { DEMO_QUESTION } from "./lib/demo";
+import { startDemoRun } from "./lib/demo-run";
+import { useChatStore } from "./lib/store";
 
 export default function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const seededDemo = useRef(false);
+
+  // First visit with no history: stream the demo into a background thread
+  // so the landing (greeting + input + capability cards) stays in front —
+  // the finished stream is one click away in the sidebar.
+  useEffect(() => {
+    if (seededDemo.current) return;
+    seededDemo.current = true;
+    const st = useChatStore.getState();
+    const hasMessages = Object.values(st.messages).some((list) => list.length > 0);
+    if (!hasMessages && st.currentThreadId) {
+      const landingId = st.currentThreadId;
+      const demoId = st.createThread();
+      st.renameThread(demoId, DEMO_QUESTION);
+      st.selectThread(landingId);
+      const t = setTimeout(() => void startDemoRun(demoId, DEMO_QUESTION), 600);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, []);
 
   return (
     <RuntimeProvider>
-      <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+      <div className="flex h-dvh overflow-hidden bg-white text-foreground">
         <div className="hidden md:block">
           <Sidebar />
         </div>
@@ -20,7 +43,7 @@ export default function App() {
               className="absolute inset-0 bg-black/40"
               onClick={() => setMobileNavOpen(false)}
             />
-            <div className="absolute inset-y-0 left-0 w-[280px] shadow-2xl">
+            <div className="absolute inset-y-0 left-0 shadow-2xl">
               <Sidebar />
             </div>
           </div>
@@ -36,7 +59,7 @@ export default function App() {
             >
               <MenuIcon className="size-5" />
             </button>
-            <span className="text-sm font-semibold tracking-tight">MedRAG</span>
+            <span className="font-greeting text-base font-semibold tracking-tight">MedRAG</span>
           </div>
           <ThreadView />
         </main>

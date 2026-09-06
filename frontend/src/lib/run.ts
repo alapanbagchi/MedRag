@@ -6,10 +6,12 @@ import {
   pushPlan,
   pushStep,
   type Content,
+  type MessagePartLike,
   updateStep,
   upsertSources,
   upsertStatus,
   upsertText,
+  upsertThought,
 } from "./parts";
 import { parseProgress, summaryOf, type StepArgs } from "./xdeep";
 import { useChatStore, uid } from "./store";
@@ -97,8 +99,109 @@ export async function startRun(threadId: string, options: RunOptions): Promise<v
       controller.signal,
       (event) => {
         switch (event.type) {
-          case "status":
-            patchContent((c) => upsertStatus(c, event.stage, 0));
+          case "status": {
+            const label = event.stage ?? event.state ?? "";
+            patchContent((c) => upsertStatus(c, label, 0));
+            // Mirror pipeline chatter into every still-open tool call so the
+            // inspector timeline streams while the tool runs.
+            const note = (event.message ?? label).trim();
+            if (note) {
+              patchContent((c) =>
+                c.map((p) => {
+                  if (p?.type !== "tool-call") return p;
+                  const s = (p as unknown as { toolName?: string; args?: Record<string, unknown> });
+                  if (s.toolName !== "step") return p;
+                  const args = (s.args ?? {}) as Record<string, unknown>;
+                  if (typeof args.callId !== "string" || args.done) return p;
+                  const timeline = [...((args.timeline as { t?: string; text: string }[]) ?? [])];
+                  const last = timeline[timeline.length - 1];
+                  if (last?.text !== note) timeline.push({ t: event.ts, text: note });
+                  return { ...p, args: { ...args, timeline } };
+                }),
+              );
+            }
+            break;
+          }
+
+          case "thinking":
+            if (event.delta || event.done) {
+              patchContent((c) => upsertThought(c, event.delta ?? "", event.done ?? false));
+            }
+            break;
+
+          case "tool_call": {
+            const name = event.name ?? "tool";
+            const args = event.args ?? {};
+            const argText = [args.query, args.question, args.term, args.url, args.urls]
+              .filter((v): v is string => typeof v === "string" && v.length > 0)
+              .map((v) => (Array.isArray(v) ? `${v.length} urls` : v))
+              .join(" · ")
+              .slice(0, 110);
+            const lower = name.toLowerCase();
+            const kind = lower.startsWith("plan") ? "planner"
+              : lower.startsWith("lookup") ? "research"
+              : lower.startsWith("retrieve") ? "retrieve"
+              : lower.startsWith("searx_web") ? "web_search"
+              : lower.startsWith("searx_fetch") ? "web_fetch"
+              : "research";
+            const label = { planner: "Planning evidence", research: "Research step", retrieve: "Searching literature", web_search: "Web search", web_fetch: "Fetching sources" }[kind] ?? name;
+            step({
+              kind, label, detail: argText || name, callId: event.call_id ?? name,
+              rawArgs: args, startedTs: event.ts,
+              timeline: [{ t: event.ts, text: `Called ${name}` }],
+              done: false,
+            });
+            break;
+          }
+
+          case "tool_result": {
+            const callId = event.call_id;
+            const result = event.result;
+            const failed = event.ok === false;
+            const detail = typeof result === "string"
+              ? result.replace(/\s+/g, " ").slice(0, 110)
+              : failed ? "failed" : "done";
+            patchContent((c) =>
+              c.map((p) => {
+                if (p?.type !== "tool-call") return p;
+                const s = (p as unknown as { toolName?: string; args?: StepArgs });
+                if (s.toolName !== "step") return p;
+                const args = s.args ?? ({} as StepArgs);
+                if (!callId || args.callId !== callId) return p;
+                const prev = args.timeline ?? [];
+                const text = failed ? "Failed" : "Completed";
+                return {
+                  ...p,
+                  args: {
+                    ...args, done: true, detail,
+                    rawResult: result as Record<string, unknown>,
+                    finishedTs: event.ts,
+                    timeline: [...prev, { t: event.ts, text }],
+                    ...(failed ? { error: "tool failed" } : {}),
+                  },
+                } as MessagePartLike;
+              }),
+            );
+            break;
+          }
+
+          case "verdict_table": {
+            const rows = Array.isArray(event.rows) ? event.rows : [];
+            step({ kind: "verdict", label: "Evidence verdicts", detail: `${rows.length} passage verdict${rows.length === 1 ? "" : "s"}`, done: true });
+            break;
+          }
+
+          case "plan": {
+            // Task-list planner output, streamed first — renders the plan
+            // UI above the composer via the `plan` tool part.
+            const items = Array.isArray(event.items) ? event.items : [];
+            step({ kind: "planner", label: "Planning research", detail: `${items.length} research task${items.length === 1 ? "" : "s"}`, done: true });
+            patchContent((c) => pushPlan(c, { items }));
+            break;
+          }
+
+          case "answer":
+            if (event.delta) patchContent((c) => upsertText(c, event.delta!));
             break;
 
           case "pipeline": {

@@ -6,6 +6,7 @@ import {
   AlertTriangleIcon,
   BookOpenIcon,
   CheckIcon,
+  ChevronRightIcon,
   DatabaseIcon,
   ExternalLinkIcon,
   FlaskConicalIcon,
@@ -27,6 +28,8 @@ import { STAGE_LABELS } from "./labels";
 import type { Source } from "./types";
 import { firstArray, type StepArgs } from "./xdeep";
 import type { ComponentType } from "react";
+import { SourceLogo, SourceOrigin } from "../components/SourceBadge";
+import { useChatStore } from "./store";
 
 // ---------------------------------------------------------------------------
 // Step metadata: icon + display label per step kind.
@@ -39,23 +42,23 @@ interface StepMeta {
 }
 
 export const STEP_META: Record<string, StepMeta> = {
-  retrieve: { label: "Searching literature", icon: SearchIcon, tone: "text-[#4285f4]" },
-  web_search: { label: "Web search", icon: GlobeIcon, tone: "text-[#0f9d58]" },
-  web_fetch: { label: "Fetching source", icon: ExternalLinkIcon, tone: "text-[#4285f4]" },
-  reliability: { label: "Reliability check", icon: ShieldCheckIcon, tone: "text-[#0f9d58]" },
-  verdict: { label: "Evidence verdict", icon: ScaleIcon, tone: "text-[#f4b400]" },
-  decompose: { label: "Decomposing the question", icon: NetworkIcon, tone: "text-[#9d7bfb]" },
-  research: { label: "Research task", icon: FlaskConicalIcon, tone: "text-[#4285f4]" },
-  search_round: { label: "Search round", icon: RefreshCwIcon, tone: "text-[#4285f4]" },
-  contradiction: { label: "Contradiction", icon: AlertTriangleIcon, tone: "text-[#f4b400]" },
-  resolution: { label: "Resolved", icon: CheckIcon, tone: "text-[#0f9d58]" },
-  gap_probe: { label: "Evidence gap", icon: TargetIcon, tone: "text-[#f4b400]" },
-  gap_resolution: { label: "Gap resolved", icon: PuzzleIcon, tone: "text-[#0f9d58]" },
-  evidence: { label: "Verified evidence", icon: DatabaseIcon, tone: "text-[#9d7bfb]" },
-  synthesize: { label: "Synthesizing answer", icon: PenLineIcon, tone: "text-[#9d7bfb]" },
-  planner: { label: "Planning", icon: RouteIcon, tone: "text-[#9d7bfb]" },
-  join: { label: "Joining findings", icon: GitMergeIcon, tone: "text-[#4285f4]" },
-  done: { label: "Finished", icon: CheckIcon, tone: "text-[#0f9d58]" },
+  retrieve: { label: "Searching literature", icon: SearchIcon, tone: "text-[#1883AE]" },
+  web_search: { label: "Web search", icon: GlobeIcon, tone: "text-[#18AE95]" },
+  web_fetch: { label: "Fetching source", icon: ExternalLinkIcon, tone: "text-[#1883AE]" },
+  reliability: { label: "Reliability check", icon: ShieldCheckIcon, tone: "text-[#18AE95]" },
+  verdict: { label: "Evidence verdict", icon: ScaleIcon, tone: "text-[#b07d10]" },
+  decompose: { label: "Decomposing the question", icon: NetworkIcon, tone: "text-[#1883AE]" },
+  research: { label: "Research task", icon: FlaskConicalIcon, tone: "text-[#1883AE]" },
+  search_round: { label: "Search round", icon: RefreshCwIcon, tone: "text-[#1883AE]" },
+  contradiction: { label: "Contradiction", icon: AlertTriangleIcon, tone: "text-[#b07d10]" },
+  resolution: { label: "Resolved", icon: CheckIcon, tone: "text-[#18AE95]" },
+  gap_probe: { label: "Evidence gap", icon: TargetIcon, tone: "text-[#b07d10]" },
+  gap_resolution: { label: "Gap resolved", icon: PuzzleIcon, tone: "text-[#18AE95]" },
+  evidence: { label: "Verified evidence", icon: DatabaseIcon, tone: "text-[#1883AE]" },
+  synthesize: { label: "Synthesizing answer", icon: PenLineIcon, tone: "text-[#1883AE]" },
+  planner: { label: "Planning", icon: RouteIcon, tone: "text-[#1883AE]" },
+  join: { label: "Joining findings", icon: GitMergeIcon, tone: "text-[#1883AE]" },
+  done: { label: "Finished", icon: CheckIcon, tone: "text-[#18AE95]" },
   thought: { label: "Thought", icon: BookOpenIcon, tone: "text-muted-foreground" },
   error: { label: "Error", icon: AlertTriangleIcon, tone: "text-destructive" },
 };
@@ -71,9 +74,30 @@ export function stepMeta(kind: string): StepMeta {
 export const StepUI: ToolCallMessagePartComponent<StepArgs> = ({ args }) => {
   const a = (args ?? {}) as StepArgs;
   const running = !a.done;
+  if (a.kind === "thought") {
+    return (
+      <div className="flex items-start gap-2.5 px-4 py-1.5">
+        <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#18AE95]" />
+        <p className="min-w-0 flex-1 text-[13px] leading-5 text-[#3c4450]">
+          {a.detail || a.label}
+        </p>
+      </div>
+    );
+  }
+  const inspectable = typeof a.callId === "string" && a.callId.length > 0;
+  const open = () => {
+    if (inspectable) useChatStore.getState().openInspector(a.callId as string);
+  };
   return (
-    <div className="flex items-center gap-2.5 px-3 py-1.5">
-      <span className="min-w-0 flex-1 truncate text-[13px]" title={a.detail ?? a.label}>
+    <div
+      className={inspectable ? "flex cursor-pointer items-center gap-2.5 px-4 py-1.5 transition-colors hover:bg-muted/60" : "flex items-center gap-2.5 px-4 py-1.5"}
+      onClick={inspectable ? open : undefined}
+      onKeyDown={inspectable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } } : undefined}
+      role={inspectable ? "button" : undefined}
+      tabIndex={inspectable ? 0 : undefined}
+      title={inspectable ? "Open tool-call inspector" : undefined}
+    >
+      <span className="min-w-0 flex-1 truncate text-[13px] text-[#232838]" title={a.detail ?? a.label}>
         {a.detail || a.label}
       </span>
       {a.error ? (
@@ -82,11 +106,14 @@ export const StepUI: ToolCallMessagePartComponent<StepArgs> = ({ args }) => {
         </span>
       ) : running ? (
         <span className="shrink-0">
-          <span className="block size-3 animate-spin rounded-full border-[1.5px] border-primary/30 border-t-primary" />
+          <span className="block size-3 animate-spin rounded-full border-[1.5px] border-[#1883AE]/30 border-t-[#1883AE]" />
         </span>
       ) : (
-        <CheckIcon className="size-3.5 shrink-0 text-[#0f9d58]" />
+        <CheckIcon className="size-3.5 shrink-0 text-[#18AE95]" />
       )}
+      {inspectable ? (
+        <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground" />
+      ) : null}
     </div>
   );
 };
@@ -102,18 +129,17 @@ export const StageUI: ToolCallMessagePartComponent<StatusArgs> = ({ args, status
   const running = status.type === "running";
   const label = STAGE_LABELS[stage] ?? stage;
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-2.5">
+    <div className="flex items-center gap-2.5 px-4 py-2">
       {running ? (
-        <span className="relative flex size-3 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-40" />
-          <span className="relative inline-flex size-3 rounded-full bg-primary" />
+        <span className="flex shrink-0 gap-1" aria-hidden>
+          <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
+          <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
+          <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
         </span>
       ) : (
-        <span className="flex size-3 shrink-0 items-center justify-center rounded-full bg-[#0f9d58]/10">
-          <CheckIcon className="size-2.5 text-[#0f9d58]" />
-        </span>
+        <CheckIcon className="size-3.5 shrink-0 text-[#18AE95]" />
       )}
-      <span className="truncate text-[13px] font-medium">{label}</span>
+      <span className="truncate text-[13px] font-medium text-[#0D0E1A]">{label}</span>
       {running && args?.message ? (
         <span className="min-w-0 flex-1 truncate text-right text-[11px] text-muted-foreground">
           {args.message.replace(/\s+/g, " ").slice(0, 90)}
@@ -127,14 +153,35 @@ export const StageUI: ToolCallMessagePartComponent<StatusArgs> = ({ args, status
 // Planner card — the decomposed research plan (standalone).
 // ---------------------------------------------------------------------------
 
-interface PlanStep {
+export interface PlanStep {
   id: string;
   text: string;
   sub?: string;
 }
 
-function extractPlanSteps(fields: Record<string, unknown> | undefined): PlanStep[] {
+export function extractPlanSteps(fields: Record<string, unknown> | undefined): PlanStep[] {
   if (!fields) return [];
+  // Task-list planner shape: { items: [{ id, question, deep_research }] }.
+  const items = fields.items;
+  if (Array.isArray(items)) {
+    return items
+      .map((t, i) => {
+        if (t && typeof t === "object") {
+          const o = t as Record<string, unknown>;
+          const text =
+            (typeof o.question === "string" && o.question.trim()) ||
+            (typeof o.text === "string" && o.text.trim()) ||
+            JSON.stringify(o).slice(0, 140);
+          return {
+            id: typeof o.id === "string" ? o.id : `T${i + 1}`,
+            text: text.slice(0, 150),
+            sub: o.deep_research === true ? "deep research" : undefined,
+          };
+        }
+        return { id: `T${i + 1}`, text: String(t).slice(0, 150) };
+      })
+      .filter((s) => s.text.length > 0);
+  }
   const requirements = fields.requirements;
   if (Array.isArray(requirements)) {
     return requirements
@@ -184,22 +231,22 @@ const PlanUI: ToolCallMessagePartComponent<{ fields?: Record<string, unknown> }>
   const steps = extractPlanSteps(args?.fields);
   if (!steps.length) return null;
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border bg-accent/40 px-4 py-2.5">
-        <ListChecksIcon className="size-4 text-primary" />
-        <span className="text-sm font-semibold">Research plan</span>
-        <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+    <div className="anim-rise overflow-hidden rounded-2xl border border-border bg-white shadow-[0_8px_30px_rgba(13,14,26,0.06)]">
+      <div className="flex items-center gap-2 border-b border-border/70 bg-[#F3F8F9] px-4 py-2.5">
+        <ListChecksIcon className="size-4 text-[#1883AE]" />
+        <span className="text-sm font-semibold text-[#0D0E1A]">Research plan</span>
+        <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] text-muted-foreground ring-1 ring-border">
           {steps.length} task{steps.length === 1 ? "" : "s"}
         </span>
       </div>
-      <ol className="divide-y divide-border">
+      <ol className="divide-y divide-border/70">
         {steps.map((step, i) => (
           <li key={`${step.id}-${i}`} className="flex items-start gap-3 px-4 py-2.5 text-sm">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-[11px] font-semibold text-primary">
+            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#1883AE]/10 font-mono text-[11px] font-semibold text-[#1883AE]">
               {step.id.replace(/^T/, "")}
             </span>
             <div className="min-w-0">
-              <p className="leading-5">{step.text}</p>
+              <p className="leading-5 text-[#232838]">{step.text}</p>
               {step.sub ? (
                 <p className="mt-0.5 text-xs text-muted-foreground">{step.sub}</p>
               ) : null}
@@ -213,9 +260,10 @@ const PlanUI: ToolCallMessagePartComponent<{ fields?: Record<string, unknown> }>
 
 // ---------------------------------------------------------------------------
 // Sources card — verified evidence with citation numbers (standalone).
+// Live state ("Reading N sources…") vs complete state share one card.
 // ---------------------------------------------------------------------------
 
-const SourcesUI: ToolCallMessagePartComponent<{ count?: number }> = ({ result }) => {
+const SourcesUI: ToolCallMessagePartComponent<{ count?: number }> = ({ result, status }) => {
   const sources = (
     result && Array.isArray(result)
       ? result
@@ -224,53 +272,61 @@ const SourcesUI: ToolCallMessagePartComponent<{ count?: number }> = ({ result })
         : []
   ) as Source[];
   if (!sources.length) return null;
+  const running = status.type === "running";
+  const visible = sources.slice(0, 4);
+  const overflow = sources.length - visible.length;
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-        <BookOpenIcon className="size-4 text-primary" />
-        <span className="text-sm font-semibold">Sources</span>
-        <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-          {sources.length}
+    <div className="anim-rise overflow-hidden rounded-2xl border border-[#d7e5e9] bg-[#F4F9FA] shadow-[0_8px_30px_rgba(24,131,174,0.08)]">
+      <div className="flex items-center gap-2 px-4 pb-1 pt-3">
+        {running ? (
+          <span className="flex shrink-0 gap-1" aria-hidden>
+            <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
+            <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
+            <span className="medrag-dot size-1.5 rounded-full bg-[#1883AE]" />
+          </span>
+        ) : null}
+        <span className="text-[13px] font-medium text-[#5b6672]">
+          {running ? `Reading ${sources.length} sources…` : `${sources.length} sources`}
         </span>
       </div>
-      <ul className="grid grid-cols-1 gap-px sm:grid-cols-2">
-        {sources.map((source, index) => {
+      <ul className="space-y-0.5 px-4 pb-3 pt-1">
+        {visible.map((source, index) => {
           const href = source.url ?? (source.pmcid ? `https://pmc.ncbi.nlm.nih.gov/articles/${source.pmcid}/` : undefined);
-          const meta = [source.journal, source.year ? String(source.year) : ""].filter(Boolean).join(" · ");
-          const isWeb = (source as Source & { isWeb?: boolean }).isWeb;
-          const inner = (
+          const label = source.title || source.id || "Untitled source";
+          const row = (
             <>
-              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-muted-foreground">
-                {index + 1}
-              </span>
-              <span className="min-w-0">
-                <span className="line-clamp-2 text-[13px] font-medium leading-5">
-                  {source.title || source.id || "Untitled source"}
+              <span className="mt-[7px] size-1 shrink-0 rounded-full bg-[#9fb0ba]" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-medium leading-5 text-[#0D0E1A]">
+                  {label}
                 </span>
-                <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  {isWeb ? <GlobeIcon className="size-3 shrink-0" /> : null}
-                  <span className="truncate">{meta || (isWeb ? "web" : "source")}</span>
+                <span className="mt-0.5 flex items-center gap-1.5">
+                  <SourceLogo source={source} size="sm" />
+                  <SourceOrigin source={source} />
                 </span>
-                {source.snippet ? (
-                  <span className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground/90">
-                    {source.snippet}
-                  </span>
-                ) : null}
               </span>
             </>
           );
           return (
             <li key={`${source.id ?? source.pmcid ?? index}-${index}`}>
               {href ? (
-                <a href={href} target="_blank" rel="noreferrer" className="flex items-start gap-2.5 px-4 py-3 transition hover:bg-accent/40">
-                  {inner}
+                <a href={href} target="_blank" rel="noreferrer" className="flex items-start gap-2 rounded-lg px-1 py-1.5 transition hover:bg-white">
+                  {row}
                 </a>
               ) : (
-                <div className="flex items-start gap-2.5 px-4 py-3">{inner}</div>
+                <div className="flex items-start gap-2 px-1 py-1.5">{row}</div>
               )}
             </li>
           );
         })}
+        {overflow > 0 ? (
+          <li className="flex items-center gap-2 px-1 pt-0.5">
+            <span className="mt-0 size-1 shrink-0 rounded-full bg-[#9fb0ba]" />
+            <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[11px] text-muted-foreground ring-1 ring-border">
+              +{overflow}
+            </span>
+          </li>
+        ) : null}
       </ul>
     </div>
   );
@@ -298,13 +354,13 @@ const MemoryUI: ToolCallMessagePartComponent<MemoryArgs> = ({ args, status }) =>
   if (typeof args?.prior_contradictions === "number") detail.push(`${args.prior_contradictions} contradictions`);
   if (typeof args?.prior_gaps === "number") detail.push(`${args.prior_gaps} gaps`);
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 text-[13px]">
+    <div className="flex items-center gap-2 px-4 py-1.5 text-[13px]">
       {running ? (
-        <span className="block size-3 animate-spin rounded-full border-[1.5px] border-primary/30 border-t-primary" />
+        <span className="block size-3 animate-spin rounded-full border-[1.5px] border-[#1883AE]/30 border-t-[#1883AE]" />
       ) : (
         <MemoryStickIcon className="size-3.5 shrink-0 text-muted-foreground" />
       )}
-      <span className="font-medium">{label}</span>
+      <span className="font-medium text-[#0D0E1A]">{label}</span>
       {detail.length ? <span className="truncate text-muted-foreground">{detail.join(" · ")}</span> : null}
     </div>
   );

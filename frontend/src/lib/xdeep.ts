@@ -47,6 +47,14 @@ export interface StepArgs {
   query?: string;
   url?: string;
   error?: string;
+  /** Backend tool-call id (opens the inspector); raw payloads for it. */
+  callId?: string;
+  rawArgs?: unknown;
+  rawResult?: unknown;
+  startedTs?: string;
+  finishedTs?: string;
+  /** Streamed processing timeline for the inspector (append-only). */
+  timeline?: { t?: string; text: string }[];
   [key: string]: unknown;
 }
 

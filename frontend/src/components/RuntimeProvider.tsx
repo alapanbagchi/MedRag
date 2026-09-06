@@ -11,9 +11,15 @@ import {
 import { useCallback, useMemo, type ReactNode } from "react";
 import { toolkit } from "../lib/toolkit";
 import { cancelRun, startRun } from "../lib/run";
+import { DEMO_QUESTION } from "../lib/demo";
 import { EMPTY_MESSAGES, useChatStore, uid } from "../lib/store";
 
 const SUGGESTIONS: ThreadSuggestion[] = [
+  {
+    title: "AI in radiology",
+    label: "thinking, sources, cited answer",
+    prompt: DEMO_QUESTION,
+  },
   {
     title: "Radial artery vs CABG",
     label: "vasospasm risk by harvest technique",
@@ -30,11 +36,6 @@ const SUGGESTIONS: ThreadSuggestion[] = [
     label: "one answer across many papers",
     prompt:
       "Map the current evidence on perioperative acute kidney injury prediction models in cardiac surgery.",
-  },
-  {
-    title: "Research gaps",
-    label: "what's still understudied",
-    prompt: "What are the main research gaps in post-cardiac-surgery vasoplegia management?",
   },
 ];
 
@@ -58,7 +59,7 @@ function textOfMessage(message: ThreadMessageLike): string {
 
 /**
  * Bridges the zustand store to assistant-ui's ExternalStoreRuntime.
- * The backend speaks NDJSON, so we own streaming ourselves.
+ * Live mode: every submit streams from POST /v1/chat/stream (no demo).
  */
 export function RuntimeProvider({ children }: { children: ReactNode }) {
   const currentThreadId = useChatStore((s) => s.currentThreadId);
@@ -95,7 +96,8 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
       createdAt: new Date(),
     };
     const pre = index >= 0 ? [...list.slice(0, index), edited] : [...list, edited];
-    await startRun(threadId, { question: text, preMessages: pre, appendUser: false });
+    st.patchMessages(threadId, () => pre);
+    await startRun(threadId, { question: text });
   }, []);
 
   const onReload = useCallback(async (parentId: string | null) => {
@@ -108,7 +110,8 @@ export function RuntimeProvider({ children }: { children: ReactNode }) {
     const last = pre[pre.length - 1];
     const question = last && last.role === "user" ? textOfMessage(last) : "";
     if (!question) return;
-    await startRun(threadId, { question, preMessages: pre, appendUser: false });
+    st.patchMessages(threadId, () => pre);
+    await startRun(threadId, { question });
   }, []);
 
   const onCancel = useCallback(async () => {

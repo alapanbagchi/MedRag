@@ -3,10 +3,13 @@
 export const STAGE_LABELS: Record<string, string> = {
   understanding: "Understanding your question",
   decomposing: "Decomposing into sub-queries",
+  planning: "Making a plan",
   retrieving: "Searching the literature",
   reranking: "Ranking retrieved evidence",
   verifying: "Verifying evidence against sources",
   synthesizing: "Synthesizing the answer",
+  answering: "Composing the answer",
+  started: "Starting",
   complete: "Complete",
 };
 
