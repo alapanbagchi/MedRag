@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MedRAG — Evidence-aware medical research</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Apply the persisted theme before paint to avoid a flash. Dark is the
+      // product default; the toggle in the sidebar persists the choice.
+      (function () {
+        try {
+          var stored = localStorage.getItem("medrag:theme");
+          var theme = stored === "light" || stored === "dark" ? stored : "dark";
+          document.documentElement.classList.toggle("dark", theme === "dark");
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

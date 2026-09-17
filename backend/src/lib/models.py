@@ -156,6 +156,9 @@ class Chunk:
 
     table_id: Optional[str] = None
     figure_id: Optional[str] = None
+    # resolved image URL for figure chunks (first-class so it is queryable
+    # without digging into metadata)
+    figure_link: Optional[str] = None
     equation_id: Optional[str] = None
     reference_id: Optional[str] = None
 

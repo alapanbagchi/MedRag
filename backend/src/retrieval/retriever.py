@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from src.config import AppConfig
+from src.retrieval.pgvector_store import current_schema
 from src.retrieval.plans import QueryPlan, SubQuery
 from src.retrieval.reranker import union_rerank_diversify
 from src.lib.trace import get_trace
@@ -82,8 +83,9 @@ class PgFtsSparse:
             cur.close()
             return []
         cur.execute(
-            "SELECT count(*) FROM medrag.chunks "
-            "WHERE tsv IS NOT NULL AND tsv <> ''::tsvector"
+            ("SELECT count(*) FROM {SCHEMA}.chunks "
+             "WHERE tsv IS NOT NULL AND tsv <> ''::tsvector")
+            .format(SCHEMA=current_schema())
         )
         n_docs = max(1, cur.fetchone()[0])
         self.meta["n_docs"] = n_docs
@@ -91,8 +93,10 @@ class PgFtsSparse:
         idf: Dict[str, float] = {}
         for t in tokens:
             cur.execute(
-                "SELECT count(*) FROM medrag.chunks "
-                "WHERE tsv @@ to_tsquery('simple', %s)", (t,)
+                ("SELECT count(*) FROM {SCHEMA}.chunks "
+                 "WHERE tsv @@ to_tsquery('simple', %s)")
+                .format(SCHEMA=current_schema()),
+                (t,),
             )
             df = cur.fetchone()[0]
             if df > n_docs * 0.55:      # ~stopword: no signal
@@ -102,9 +106,9 @@ class PgFtsSparse:
         acc: Dict[str, float] = {}
         for t, w in idf.items():
             cur.execute(
-                "SELECT id, ts_rank_cd(tsv, to_tsquery('simple', %s), 1) AS r "
-                "FROM medrag.chunks WHERE tsv @@ to_tsquery('simple', %s) "
-                "ORDER BY r DESC LIMIT %s",
+                ("SELECT id, ts_rank_cd(tsv, to_tsquery('simple', %s), 1) AS r "
+                 "FROM {SCHEMA}.chunks WHERE tsv @@ to_tsquery('simple', %s) "
+                 "ORDER BY r DESC LIMIT %s").format(SCHEMA=current_schema()),
                 (t, t, top_k),
             )
             for cid, r in cur.fetchall():

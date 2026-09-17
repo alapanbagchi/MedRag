@@ -1,0 +1,14 @@
+Task: {question}
+
+Solve the task with the available tools. Your verified evidence is
+written into the shared ledger automatically with every tool call, and
+the orchestrator synthesizes from that ledger — so spend your effort on
+gathering, not on writing up.
+
+Rules: retrieve broadly, then close the gaps the gap checker reports;
+verify every claim against passages you actually received (never invent
+passage ids); list meaningful gaps via the gap checker instead of
+filling them from memory. When the evidence covers the requirements and
+the gaps are empty (or budget guidance says to stop), finish with a
+brief completion note — one or two sentences on what was established.
+The ledger already holds the evidence; do not paste it all back.

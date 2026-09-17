@@ -43,6 +43,15 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-input: var(--input);
+  --color-composer: var(--composer-tint);
+  --color-answer: var(--answer-tint);
+  --color-user-bubble: var(--user-bubble-bg);
+  --color-chat-ai: var(--chat-ai-bg);
+  --color-chat-ai-ink: var(--chat-ai-ink);
+  --color-chat-tool: var(--chat-tool-bg);
+  --color-chat-tool-ink: var(--chat-tool-ink);
+  --color-tree-line: var(--tree-line);
+  --color-tree-line-strong: var(--tree-line-strong);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --radius-xl: calc(var(--radius) * 1.4);
@@ -79,15 +88,31 @@
 
   --radius: 0.625rem;
 
-  --cerulean: #1883ae;
+  --cerulean: #4b8cf5;
   --lagoon: #18ae95;
   --eclipse: #0d0e1a;
   --answer-tint: #edf5f6;
-  --composer-tint: #f3f8f9;
+  --composer-tint: #f7fafb;
+
+  /* Composer plan tree + scroll surfaces (theme-aware). */
+  --tree-line: #a7c7d2;
+  --tree-line-strong: #8fb9c7;
+  --scroll-thumb: #c9d4d9;
+  --answer-ink: #232838;
+  --answer-strong: #0d0e1a;
+  --answer-marker: #8a97a3;
+  --answer-quote-line: #c4d3d9;
+  --answer-quote-ink: #3c4450;
 
   --sidebar: oklch(0.985 0 0);
-  --user-bubble-bg: #f1f4f5;
+  --user-bubble-bg: #eaf4f6;
   --user-bubble-ink: #0d0e1a;
+
+  /* Chat transcript: AI thoughts are gray bubbles, tool calls white cards. */
+  --chat-ai-bg: #f0f1f3;
+  --chat-ai-ink: #1b1c20;
+  --chat-tool-bg: #ffffff;
+  --chat-tool-ink: #1b1c20;
 
   --font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -133,14 +158,14 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c9d4d9 transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #c9d4d9;
+  background: var(--scroll-thumb);
   border-radius: 9999px;
 }
 *::-webkit-scrollbar-track {
@@ -163,6 +188,18 @@ body {
 }
 .anim-rise { animation: medrag-rise 0.35s ease both; }
 
+/* Live tool / sub-agent rows: enter from the left, leave to the right. */
+@keyframes medrag-slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes medrag-slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(20px); }
+}
+.anim-tool-in { animation: medrag-slide-in-left 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-tool-out { animation: medrag-slide-out-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
 /* Inspector slide-over entrance */
 @keyframes medrag-slide-in {
   from { opacity: 0.4; transform: translateX(24px); }
@@ -170,8 +207,148 @@ body {
 }
 .anim-slide-in { animation: medrag-slide-in 0.18s ease-out both; }
 
+/* Sub-agent stage: collapses to zero height until the first agent spawns,
+   then expands while its chips/bubbles slide in from the left. */
+.subagent-stage {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    grid-template-rows 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease,
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.subagent-stage[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+}
+.subagent-stage__inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@keyframes medrag-agent-in {
+  from { opacity: 0; transform: translateX(-14px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+.anim-agent-in { animation: medrag-agent-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* iOS-style chat bubbles. `ios-pop` springs each message in from the sender's
+   side; `ios-bubble` draws the rounded bubble with a tail on the bottom
+   corner that points back at the sender (the tail inherits the bubble fill). */
+@keyframes ios-pop {
+  0% { opacity: 0; transform: translateY(12px) scale(0.6); }
+  62% { opacity: 1; transform: translateY(-1px) scale(1.035); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ios-pop {
+  transform-origin: bottom left;
+  animation: ios-pop 0.44s cubic-bezier(0.2, 1.35, 0.4, 1) both;
+}
+.ios-pop--out { transform-origin: bottom right; }
+
+.ios-bubble { position: relative; }
+
+/* The "…" typing indicator: three dots bouncing in sequence. */
+@keyframes ios-typing {
+  0%, 60%, 100% { transform: translateY(0) scale(0.8); opacity: 0.35; }
+  30% { transform: translateY(-4px) scale(1); opacity: 0.85; }
+}
+.ios-typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: currentColor;
+  animation: ios-typing 1.15s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .medrag-dot, .anim-rise, .anim-slide-in { animation: none; }
+  .ios-pop, .ios-typing-dot { animation: none; }
+}
+
+@keyframes medrag-stage-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.anim-stage-pop { animation: medrag-stage-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Pill hover for the in-message agentic-flow trigger. A plain :hover rule
+   (not Tailwind's `hover:` variant, which v4 wraps in @media (hover: hover)). */
+.pill-hover {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.pill-hover:hover {
+  background-color: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+}
+
+/* Animated agent faces: bob, glance, blink, and chatter while working.
+   `--face-delay` (set per agent) desyncs the loop so the roster is not in
+   lockstep; a negative delay means motion is already mid-cycle on mount. */
+.agent-face__bob {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-face-bob 3.8s ease-in-out infinite;
+  animation-delay: calc(-1 * var(--face-delay, 0s));
+}
+.agent-face__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-face-look 6.5s ease-in-out infinite;
+  animation-delay: calc(-1 * var(--face-delay, 0s));
+}
+.agent-face__eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-face-blink 4.4s infinite;
+  animation-delay: calc(-1 * var(--face-delay, 0s));
+}
+.agent-face__mouth-open {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-face-talk 0.42s ease-in-out infinite alternate;
+}
+.agent-face__mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-face-chatter 2.4s ease-in-out infinite;
+  animation-delay: calc(-1 * var(--face-delay, 0s));
+}
+
+@keyframes agent-face-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(1.4deg); }
+}
+@keyframes agent-face-look {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-1.6px); }
+  48% { transform: translateX(1.6px); }
+  70% { transform: translateX(0); }
+}
+@keyframes agent-face-blink {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94%, 96% { transform: scaleY(0.1); }
+}
+@keyframes agent-face-talk {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(1.15); }
+}
+@keyframes agent-face-chatter {
+  0%, 100% { transform: scale(1, 1); }
+  28% { transform: scale(1.05, 0.7); }
+  52% { transform: scale(0.97, 1.14); }
+  76% { transform: scale(1.03, 0.86); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-face__bob, .agent-face__eyes, .agent-face__eye, .agent-face__mouth, .agent-face__mouth-open { animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medrag-dot, .anim-rise, .anim-slide-in, .anim-tool-in, .anim-tool-out, .anim-agent-in, .anim-stage-pop { animation: none; }
+  .subagent-stage { transition: none; }
 }
 
 /* Inline citation chip [n] */
@@ -185,7 +362,7 @@ body {
   padding: 0 0.25em;
   border: 1px solid var(--border);
   border-radius: 9999px;
-  background: #fff;
+  background: var(--card);
   color: var(--cerulean);
   font-family: var(--font-mono);
   font-size: 0.72em;
@@ -195,52 +372,102 @@ body {
 }
 
 /* Structured answer typography */
-.answer-body { font-size: 17px; line-height: 1.75; color: #232838; }
+.answer-body { font-size: 17px; line-height: 1.75; color: var(--answer-ink); }
 .answer-body p { margin: 0.55em 0; }
-.answer-body strong { color: var(--eclipse); }
+.answer-body strong { color: var(--answer-strong); }
 .answer-body ul { margin: 0.4em 0 0.6em; padding-left: 1.1em; list-style: disc; }
 .answer-body li { margin: 0.28em 0; }
-.answer-body li::marker { color: #8a97a3; }
+.answer-body li::marker { color: var(--answer-marker); }
 .answer-body blockquote {
   margin: 0.7em 0 0.7em 0.2em;
   padding-left: 0.9em;
-  border-left: 2px solid #c4d3d9;
+  border-left: 2px solid var(--answer-quote-line);
   font-style: italic;
-  color: #3c4450;
+  color: var(--answer-quote-ink);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #08080c;
+  --foreground: #f2f3f7;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-foreground: #f2f3f7;
+  --popover: #14151c;
+  --popover-foreground: #f2f3f7;
+  --primary: #6ea2ff;
+  --primary-foreground: #0a0b12;
+  --secondary: rgba(255, 255, 255, 0.07);
+  --secondary-foreground: #f2f3f7;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #99a1b0;
+  --accent: rgba(255, 255, 255, 0.08);
+  --accent-foreground: #f2f3f7;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: rgba(110, 162, 255, 0.5);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: transparent;
+  --sidebar-foreground: #f2f3f7;
+  --sidebar-primary: #6ea2ff;
+  --sidebar-primary-foreground: #0a0b12;
+  --sidebar-accent: rgba(255, 255, 255, 0.07);
+  --sidebar-accent-foreground: #f2f3f7;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: rgba(110, 162, 255, 0.5);
+
+  /* Dark counterparts for the app-specific palette. */
+  --composer-tint: rgba(255, 255, 255, 0.05);
+  --answer-tint: rgba(75, 140, 245, 0.06);
+  --user-bubble-bg: rgba(255, 255, 255, 0.07);
+  --chat-ai-bg: #2c2d31;
+  --chat-ai-ink: #e9eaee;
+  --chat-tool-bg: #ececec;
+  --chat-tool-ink: #17181c;
+  --tree-line: #3f5a73;
+  --tree-line-strong: #527391;
+  --scroll-thumb: rgba(255, 255, 255, 0.16);
+  --answer-ink: #d9dde6;
+  --answer-strong: #ffffff;
+  --answer-marker: #6b7480;
+  --answer-quote-line: rgba(255, 255, 255, 0.12);
+  --answer-quote-ink: #aab3bd;
+}
+
+/* Deep gradient canvas behind the glass surfaces (dark theme only). */
+.dark body {
+  background-color: #0a0a10;
+  background-image:
+    radial-gradient(900px 520px at 12% -8%, rgba(75, 140, 245, 0.22), transparent 60%),
+    radial-gradient(820px 520px at 90% -4%, rgba(157, 123, 251, 0.2), transparent 58%),
+    radial-gradient(1200px 700px at 50% 120%, rgba(75, 140, 245, 0.08), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* Same canvas for opaque panels that overlay content (e.g. the agent sheet) so
+   they read as part of the page rather than a separate card. */
+.app-canvas {
+  background-color: var(--background);
+}
+.dark .app-canvas {
+  background-color: #0a0a10;
+  background-image:
+    radial-gradient(900px 520px at 12% -8%, rgba(75, 140, 245, 0.22), transparent 60%),
+    radial-gradient(820px 520px at 90% -4%, rgba(157, 123, 251, 0.2), transparent 58%),
+    radial-gradient(1200px 700px at 50% 120%, rgba(75, 140, 245, 0.08), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* Frost the translucent card surfaces so they read as glass over the
+   gradient. Limited to the large surfaces; tiny chips stay crisp. */
+.dark .bg-card,
+.dark .bg-composer,
+.dark .bg-user-bubble {
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
 }
 
 @layer base {

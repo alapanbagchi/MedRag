@@ -3,3 +3,25 @@
 .venv
 .bench_tmp/
 .impeccable/
+
+# Secrets — never commit env files
+.env
+.env.*
+!.env.example
+
+# Machine-specific tooling / IDE / agent state
+.idea/
+.muse/
+.agents/
+backend/.playwright-mcp/
+frontend/.morph-test/
+# Local pre-rewrite backups (never commit)
+.git-backup/
+
+# Postgres client credential file
+.pgpass
+*.pgpass
+
+# Generated 72MB IDE symbol index (unreviewable, contains third-party docstrings)
+.vscode/PythonImportHelper-v2-Completion.json
+

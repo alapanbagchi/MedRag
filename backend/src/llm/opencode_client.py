@@ -41,9 +41,14 @@ class OpenCodeClient:
         self.timeout = timeout
 
     def _headers(self) -> dict:
+        # Share the one process-wide session so this legacy client's calls
+        # hit the same prompt cache as the pydantic-ai lanes.
+        from src.llm.models import session_id
+
         return {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
+            "x-opencode-session": session_id(),
         }
 
     def _convert_messages_to_input(self, messages: list[dict]) -> str | list[dict]:
@@ -72,7 +77,7 @@ class OpenCodeClient:
     def complete_sync(
         self,
         messages: list[dict],
-        max_tokens: int = 2048,
+        max_tokens: int = 8192,
         temperature: float | None = None,
         reasoning_effort: str = "low",
     ) -> dict:
@@ -86,11 +91,19 @@ class OpenCodeClient:
             "reasoning": {"effort": reasoning_effort},
         }
         url = f"{self.base_url}/responses"
-        with httpx.Client(timeout=self.timeout) as client:
-            resp = client.post(url, headers=self._headers(), json=body)
-            resp.raise_for_status()
-            data = resp.json()
-        return self._to_chat_completion(data)
+        delays = [5.0, 15.0, 30.0]
+        attempt = 0
+        while True:
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.post(url, headers=self._headers(), json=body)
+                if resp.status_code != 429:
+                    resp.raise_for_status()
+                    return self._to_chat_completion(resp.json())
+            if attempt >= len(delays):
+                resp.raise_for_status()
+            wait = delays[attempt]
+            attempt += 1
+            time.sleep(wait)
 
     def _to_chat_completion(self, data: dict) -> dict:
         """Convert Responses API response to Chat Completions format."""
@@ -161,6 +174,11 @@ class OpenCodeChatModel(BaseChatModel):
                 result.append({"role": "user", "content": str(msg.content)})
         return result
 
+    # No-op tool binding: think agents on this model run tool-free, but the
+    # deepagents middleware stack calls bind_tools on every invocation.
+    def bind_tools(self, tools, **kwargs):
+        return self
+
     def _generate(
         self,
         messages: list[BaseMessage],
@@ -170,7 +188,7 @@ class OpenCodeChatModel(BaseChatModel):
     ) -> ChatResult:
         """Synchronous generation."""
         plain_msgs = self._to_langchain_messages(messages)
-        max_tokens = kwargs.get("max_tokens", 2048)
+        max_tokens = kwargs.get("max_tokens", 8192)
         data = self._client.complete_sync(
             messages=plain_msgs,
             max_tokens=max_tokens,
@@ -178,9 +196,18 @@ class OpenCodeChatModel(BaseChatModel):
         )
         text = data["choices"][0]["message"]["content"]
         usage = data.get("usage", {})
+        # usage_metadata (not just llm_output) is what LangChain callback
+        # handlers — including Langfuse's — read for token/cost tracking.
         return ChatResult(
             generations=[
-                ChatGeneration(message=AIMessage(content=text))
+                ChatGeneration(message=AIMessage(
+                    content=text,
+                    usage_metadata={
+                        "input_tokens": int(usage.get("prompt_tokens", 0) or 0),
+                        "output_tokens": int(usage.get("completion_tokens", 0) or 0),
+                        "total_tokens": int(usage.get("total_tokens", 0) or 0),
+                    },
+                ))
             ],
             llm_output={
                 "model": self.model_name,

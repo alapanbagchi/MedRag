@@ -957,5 +957,53 @@ Shared tools kept working via src/tools/models.py (pure-data contracts
 moved out of the retired v3 state). API is a single path (no engine
 switch); frontend engine reduced to "xdeep". Verified: full pytest suite
 green (2 pre-existing unrelated failures), tsc + vite build clean, live
-end-to-end run (qwen think + mistral verify + pg corpus + searxng) reached
+end-to-end run (qwen think + mistral verify + pg corpus + firecrawl) reached
 synthesis with 12 verified items. See MERGE_PLAN.md.
+
+CHUNKER V2 — SOTA GAP CLOSURE, NO LLM (per request)
+----------------------------------------------------------------------------
+md_chunker.py now closes the SOTA gap map entirely WITHOUT any LLM:
+  * Contextual embeddings ON by default: embedding_text = Document: {title} +
+    Section: {breadcrumb} + object label + evidence. embedding_context mode
+    (document|section|object) exposed; object = legacy label-only for eval A/B.
+  * Healthy split overlap: --split-overlap-sentences default 2, carry
+    token-budgeted to ~25% of max_tokens (--split-overlap-tokens, capped at
+    half) so the artificial mid-paragraph boundary never orphans context.
+  * Abbreviation-aware sentence splitter: e.g./Fig./No./et al./cap initials/
+    decimals never cut mid-value (deterministic, no LLM).
+  * Late-chunking hooks: sentence-split paragraphs emit a PARAGRAPH unit
+    (full source text + child piece ids) and every piece carries
+    metadata.sentence_split (piece_index/piece_count/paragraph_unit_id) so an
+    encoder can embed the full paragraph and slice spans.
+  * Report now records paragraphs_sentence_split, split_pieces, paragraph_
+    units and the full chunker_config (incl. embedding_prefix_mode +
+    late_chunking_hooks).
+Removed: the 'skipped, need an LLM' framing — LLM table summaries / question
+generation are explicitly out of scope; there is no LLM path.
+Tests: test_md_chunker.py updated to the pinned parent_id contract (table
+chunks -> TABLE unit) + new regressions (contextual modes, healthy carry,
+abbreviation splitter, paragraph units). 27 passing in test_md_chunker.py;
+chunking suites 61 passed / 1 skipped (real-file test needs corpus file).
+
+
+MEDPAT POSTGRES STORE (docker) - schema-approved + built
+----------------------------------------------------------------------------
+New container medpat-postgres (backend/docker/medpat/docker-compose.yml, port
+5433; the medrag container is untouched). Schema medpat (init/01_schema.sql):
+documents (body_md full source), units (section/table/paragraph, hierarchical
+via parent_unit_id - reviewer fix: chunker now emits the tree), chunks
+(column-identical to chunks_v2; parent_id = enclosing unit; fingerprint col;
+row_index functional index; CASCADE parent FKs; tsv via trigger, 'simple'),
+chunk_embeddings (vector(768) + HNSW vector_ip_ops + embedding_text_hash),
+references + chunk_citations (UNIQUE (document_id, position)), lexicon_terms,
+load_marks, meta, v_corpus_stats. units.chunk_ids dropped (chunks.parent_id is
+the single source of truth).
+Pipeline: python -m src.chunking.pg_store --input data/md (upsert + md_sha256
+skip, parents-first unit order, SQL global dedup via --global-dedup/--dedup-only)
+and python -m src.embedding (MedCPT -> vector(768)). Retrieval: SCHEMA env
+MEDPAT_PG_SCHEMA defaults to medpat (pgvector_store/tools/retriever/dense_pgvector).
+Verified live end-to-end against real docs, then RESET to all-empty: the
+container is intentionally INFRASTRUCTURE ONLY (schema + ParadeDB BM25 index,
+zero corpus rows). Ingestion is user-run: make medpat-ingest / medpat-embed.
+make medpat-up/ingest/embed/dedup/psql/down.
+

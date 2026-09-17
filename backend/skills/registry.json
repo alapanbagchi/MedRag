@@ -1,0 +1,31 @@
+{
+  "$schema_note": "Machine-readable skill index for the MedRag synthesizer. The synthesizer ALWAYS composes: base (evidence discipline) + one writing-style skill + humanizer. Loader: backend/src/lib/skills.py (load_skill / detect_writing_mode / build_synthesis_prompt).",
+  "loader": "backend/src/lib/skills.py",
+  "always_used": [
+    "base",
+    "humanizer"
+  ],
+  "styles": {
+    "concise-clinical": {
+      "path": "writing/concise-clinical/SKILL.md",
+      "trigger": "default; direct short answers (what dose / does X work / what is the risk)"
+    },
+    "structured-review": {
+      "path": "writing/structured-review/SKILL.md",
+      "trigger": "review / summarize / map the evidence on X; multi-part clinical topics"
+    },
+    "patient-facing": {
+      "path": "writing/patient-facing/SKILL.md",
+      "trigger": "lay audiences: 'I have...', 'for me', 'should I', plain-language asks"
+    },
+    "evidence-critique": {
+      "path": "writing/evidence-critique/SKILL.md",
+      "trigger": "'how strong is the evidence', 'are findings consistent', critical appraisal"
+    }
+  },
+  "humanizer": {
+    "path": "writing/humanizer/SKILL.md",
+    "mandatory": true,
+    "note": "always applied as the final prose pass on every answer"
+  }
+}

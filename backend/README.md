@@ -23,11 +23,13 @@ Different agents can use different providers: `build_model_for(config, role)`
 (`ORCHESTRATOR_`, `VERIFIER_`, `SYNTHESIZER_`, `PLANNER_`, … — see
 `.env.example`) with the global provider as fallback; e.g.
 `VERIFIER_PROVIDER=mistral` runs just the critic on Mistral while the rest of
-the pipeline stays on the global model (Gemma). Critic verifications run as **parallel single requests**: every passage
-retrieved in a worker round is judged concurrently, one LLM call per passage,
-with requests started at most one per second (1 req/s) so free-tier rate
-limits are respected - the Mistral free tier cannot submit Batch API jobs, so
-batching is not used.
+the pipeline stays on the global model (Gemma). Critic verification is a
+**TypeSafe System One** call (Jev): one Noul probability per evidence
+requirement plus one intent Noul per passage, fanned out as **one System One
+request per passage**. Coverage is a code-side threshold on the returned
+probability and the verbatim excerpt is selected by a Choice over code-built
+spans, so the judge never generates text. See `.env.example` for the
+`TYPESAFE_*` knobs.
 
 ```
 src/agents + src/orchestration              any /v1/chat/completions
@@ -43,9 +45,9 @@ src/agents + src/orchestration              any /v1/chat/completions
 
 Key architectural properties:
 
-- **Parallel paced verification** – every candidate unit of a round is judged
-  as its own single request, run concurrently at 1 req/s;
-  duplicate units across subqueries are verified once via a memo.
+- **Parallel System One verification** – each passage is one System One
+  request, fanned out concurrently (bounded by `TYPESAFE_MAX_INFLIGHT`);
+  duplicate passages are scored once per process via the verdict cache.
 - **Failure ≠ irrelevance** – quota/timeouts/parse errors mark units `unknown`;
   they are retried on later rounds and reported in `warnings`, never silently
   dropped like judged rejections.
@@ -82,7 +84,7 @@ to `logs.txt` (`LOG_FILE` to change). Long chunk/unit texts are truncated to
 | --- | --- | --- |
 | Query Planner | `src/agents/planner.py` | typed `QueryPlan` (subqueries); UMLS enrichment is deterministic, orchestrator-side |
 | Retrieval tool | `src/agents/retriever.py` | shared-service hybrid search (BM25/SPLADE + dense) |
-| Verifier | `src/agents/verifier_new.py` | batched unit↔intent classification; `unknown` on failure |
+| Verifier | `src/tools/verifier.py` | TypeSafe System One (Jev): one Noul per requirement + an intent Noul per passage, span Choice for verbatim; rejects on empty coverage |
 | Evidence Extraction | `src/agents/evidence.py` | per (subquery, unit), tolerant verbatim-quote grounding |
 | Evidence Aggregator | `src/agents/evidence.py` | deterministic grouping/dedupe/contradictions |
 | Query Rewriter | `src/orchestration/orchestrator.py` | coverage-driven LLM rewrite + deterministic fallback |
@@ -333,95 +335,6 @@ present) | `1`/`on` (force on) | `0`/`off` (force off). Other knobs:
 token in `LOGFIRE_TOKEN`. With no token present the app stays fully offline
 (no exporting).
 
-## Memory + Context layer (`src/memory`)
-
-Persistent, temporal, provenance-aware research state + context construction.
-The governing invariant: **memory is not medical evidence** — the PMC corpus
-and the verified-evidence pipeline are the only authority for medical fact;
-memory provides continuity, prior research state and personalization, and it
-can never silently become a source of unsupported medical truth.
-
-Layers (never blurred): L0 conversation (conversations/messages/summaries),
-L1 working research state (active session questions/gaps), L2 persistent
-research memory (sessions, claims, contradictions, gaps, preferences), L3 the
-evidence corpus — L3 is referenced from memory **only** through
-`EvidenceReferenceRecord` (PMCID/PMID/DOI + chunk + verification status,
-never a copy of evidence).
-
-Run with memory attached:
-
-    uv run python -m src --memory "Does vitamin D lower blood pressure?"
-    # or: MEMORY_ENABLED=1 uv run python -m src "..."
-
-What happens:
-
-* **Before the run** — `prepare_run` resumes/identifies the research session
-  and assembles a **bounded, budgeted memory context region** composed from
-  typed blocks (conversation / working research state / persistent memory /
-  user preferences) with explicit `VERIFIED EVIDENCE` vs `PERSISTENT RESEARCH
-  MEMORY` boundary markers. The planner receives it as *advisory context only*
-  — it can shape decomposition but is never citable as a source.
-* **After the run** — `record_run` persists the research questions, the
-  verified evidence references, **evidence-derived claims** (each with a full
-  lineage claim → links → evidence → PMCID), the contradictions (both sides,
-  dimension-attributed, never collapsed), the gaps and a labeled
-  `MODEL_INFERENCE` conclusion. Re-running related questions resumes the same
-  session and near-duplicate claims are deduplicated (evidence links unioned,
-  never discarded).
-* **Write pipeline** — candidate → classification → schema validation →
-  **provenance gate** (an `EVIDENCE_DERIVED_CLAIM` requires ≥1 verified
-  evidence reference; otherwise it is degraded to a labeled
-  `MODEL_INFERENCE`, never silently upgraded) → dedup → relation/temporal
-  update → commit (append-only, every write audited in `memory_events`).
-* **Background consolidation** — `consolidate()` derives claim statuses from
-  evidence links, merges near-duplicate claims (older ones `SUPERSEDED`, kept
-  for history), detects contradictions from opposing polarity, and flags
-  staleness (`MEMORY_STALENESS_DAYS`, 0 = disabled — staleness then only from
-  explicit `mark_stale` and contradicting-evidence triggers).
-* **Follow-up continuity** — a completed run marks its session's questions
-  `answered` and stores the run's conclusion as the session's rolling
-  summary. On the next related question the planner therefore receives prior
-  questions as `ALREADY INVESTIGATED — do NOT re-derive`, the established
-  conclusion surfaced up front, and mandatory PLANNING RULES ("plan ONLY for
-  the NEW question; follow-ups build ON prior findings, they are not the prior
-  question re-run"). Short follow-ups ("what about older adults?") also get
-  session-question vocabulary expansion + a continuity baseline so prior
-  findings are actually recalled (see `tests/test_memory_continuity.py`).
-
-Storage: one PostgreSQL schema `medrag_memory` (same instance as the corpus;
-`scripts/memory_init.py` creates it idempotently, pgvector optional for the
-embedding columns). `MEMORY_BACKEND=memory` runs fully in-memory (tests/local).
-
-Configuration (see `src/memory/config.py`):
-
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `MEMORY_BACKEND` | `auto` | `auto` (Postgres, fallback memory) · `postgres` · `memory` |
-| `MEMORY_EMBEDDER` | `hash` | `hash` (offline deterministic) · `medcpt` (768-dim, needs weights) |
-| `MEMORY_EMBED_DIM` | `256` | embedding width (must match schema at init) |
-| `MEMORY_CONTEXT_TOKENS` | `1800` | total budget of the memory/context region |
-| `MEMORY_CLAIM_MIN_SIM` | `0.86` | near-duplicate threshold for dedup/merge |
-| `MEMORY_RETRIEVE_MIN_SIM` | `0.30` | semantic floor of vector recall |
-| `MEMORY_STALENESS_DAYS` | `0` | revalidation horizon (0 = disabled) |
-
-Tests: `tests/test_memory_*.py` (52 tests) cover the provenance gate
-(contamination can never become evidence), store lifecycle + temporal
-supersession, hybrid retrieval precision, context budgets/boundaries, the
-run-record path and cross-session continuity through the real pipeline.
-
-Frontend linkage (`backend/api.py` + MedPat web): the API keeps one
-`MemoryAPI` per process (`auto` backend) and attaches it to every
-`/v1/chat/stream` run; `tests/test_api_memory.py` pins the wire contract.
-The stream emits first-class `memory` events — `{"type":"memory",
-"kind":"prepare", ...}` (research session resumed + prior claims surfaced
-into the planner, advisory only) before the run and `{"type":"memory",
-"kind":"commit", "stats": {...}}` (what was persisted) afterwards. The
-frontend (`lib/rag-client.ts`, `lib/types.ts`, `ChatView`, `AssistantMessage`)
-normalizes those events and renders a compact **research-memory strip** under
-each response (`MEM · sess … · N prior claims · … recorded N claims`),
-explicitly labeled as advisory context — never evidence. `MEMORY_ENABLED=0`
-disables the layer on the API side.
-
 ## Prompts
 
 Every agent system prompt is a plain-text file under `src/prompts/`, one
@@ -448,7 +361,8 @@ src/
   config.py          environment configuration
   ingestion/         collector.py  (PMC OA JATS download)
   processing/        jats_to_md.py  parser.py  jatstomd.py  (XML -> Markdown)
-  chunking/          md_chunker.py  chunker.py  classification.py
+  chunking/          documents.py  parsing.py  prose.py  tables.py  sections.py ...
+                     (one concern per file; pipeline entry: documents.chunk_document)
   lib/               utils.py  models.py  _torch.py  (shared support)
   retrieval/         dense, sparse, splade, reranker, pgvector, planner
   agents/            agentic_v3 LLM agents (master/worker/critic/...)
@@ -541,47 +455,60 @@ Encodes every `retrieval_eligible` chunk with `ncbi/MedCPT-Article-Encoder`
 Inference is batched and single-process/GPU-bound, so this stage does not
 parallelize across files.
 
-### 4. Chunker v2 — Markdown-native (optional, no LLM)
+### 4. Chunker v2 — Markdown-native (no LLM, SOTA shape)
 
 The XML pipeline (`medrag-chunk`, above) is untouched. A separate **chunker
-v2** chunks the *Markdown* files instead (`src/chunking/md_chunker.py`), emitting the
-same `Chunk` schema so the embedding/retrieval stages work unchanged:
+v2** chunks the *Markdown* files instead (`src/chunking` — one concern per
+module, composed by `documents.chunk_document()`), emitting the same `Chunk`
+schema so the embedding/retrieval stages work unchanged:
 
 ```bash
-make chunk-md                                        # data/md -> chunks_v2 + units_v2
-make chunk-md MD_INPUT=data/md/cardiology CHUNKS_OUT=chunks_v2 UNITS_OUT=units_v2
-# or directly (tokens/overlap/lexicon/global-dedup/overwrite):
-python -m src.chunking.md_chunker --input data/md --chunks-out chunks_v2 --units-out units_v2 \
-    --max-tokens 480 --overlap 0.12 --lexicon entities.json --global-dedup
+make chunks                                        # data/md -> chunks + units in medpat (ParadeDB)
+make chunks DIR=data/md/cardiology                  # a different directory
+# or directly (tuning / overwrite):
+python -m src.chunking --input data/md --max-tokens 480 --split-overlap-sentences 2
+
+# Browse what was stored (pgAdmin frontend on the medpat container):
+make medpat-up      # postgres + pgAdmin -> http://localhost:5050
 ```
 
 What it adds over the XML chunker:
 
-- **Structure-first on Markdown**: headings → sections (`##`/`###` nesting),
-  YAML front matter → per-chunk metadata, header-path + article title/journal/
-  date injected into every `embedding_text`.
-- **Token-budget prose**: chunks sized to the embedding model's context
-  (~480 tokens), oversized paragraphs split at sentence boundaries, and
-  **tail overlap** between consecutive prose windows (no LLM).
-- **Tables**: summary + per-row + footnotes chunks (parent-linked to the
-  summary), plus a per-**table unit** with the full table text.
-- **Parent/child units** (`units_v2/{stem}.parquet`): one unit per
-  section/table with its full text and the ids of its granular child chunks —
-  a first-class artifact for "retrieve fine, expand to context".
-- **Entity tags** (`Chunk.concept_ids`): deterministic, word-boundary matches
-  against an optional local lexicon JSON (`{"CUI": ["surface forms"]}`) —
-  no LLM, no network. UMLS CUIs work well as keys.
-- **Exact-duplicate suppression** (per-doc always; `--global-dedup` across
-  files) with `dedup_of` provenance; **incremental rebuilds** via an
-  `md_sha256` sidecar (unchanged files are skipped); a per-document coverage
-  report in `chunks_v2/{stem}.meta.json`.
+- **Pure chunking, no embedding logic**: `embedding_text` is the chunk text
+  (encoding is a separate step — `make medpat-embed` — that POSTs the stored
+  `embedding_text` to the OpenAI-compatible MedCPT server at
+  `EMBEDDING_BASE_URL`).
+- **Structure-first on Markdown**: headings → sections (`##`/`###` nesting);
+  YAML front matter → per-chunk metadata.
+- **Token-budget prose with healthy split overlap**: chunks sized to the
+  embedding model's window (~320 soft / 640 hard tokens), oversized
+  paragraphs split at sentence boundaries with **abbreviation-aware**
+  splitting (`e.g.`, `Fig.`, `No.`, decimals are never cut), and a healthy
+  intra-paragraph carry — the last `--split-overlap-sentences` (default 2)
+  sentences seed the next piece, token-budgeted to ~25% of `--max-tokens`
+  (`--split-overlap-tokens`, capped at half).
+- **Late-chunking hooks** (no duplicated vectors): a sentence-split paragraph
+  emits a **paragraph unit** (full source text + child piece ids) and every
+  piece carries `metadata.sentence_split` (piece_index / piece_count /
+  paragraph_unit_id) — an encoder can embed the full paragraph and slice
+  piece spans without any LLM.
+- **Tables**: summary + per-row + footnotes chunks, ALL parent-linked to the
+  per-**table unit** (uniform `parent_id` = "the unit that contains me"), with
+  a per-**table unit** holding the full table text.
+- **Parent/child units** (medpat.units): one unit per section, table, and
+  split paragraph, each with its full text and the ids of its granular
+  child chunks — a first-class artifact for "retrieve fine, expand to
+  context".
+- **Incremental rebuilds**: unchanged documents are skipped on re-run via
+  `md_sha256`.
 
-Skipped by design (need an LLM or new embedding code): LLM-generated table
-summaries / question generation, and late-chunking multi-vector indexing.
-Chunk parquets stay compatible with the corpus schema
-(`id, document_id, text, embedding_text, chunk_type, section, subsection,
-breadcrumb, parent_id, table_id, figure_id, document_position,
-retrieval_eligible`).
+There is no LLM path: table summaries stay structural, and late-chunking is
+supported at chunk level (hooks above) rather than with LLM-generated text.
+Chunks land in `medpat.chunks` (schema `id, document_id, text,
+embedding_text, chunk_type, section, subsection, breadcrumb, parent_id,
+table_id, figure_id, document_position, retrieval_eligible`), units in
+`medpat.units`; `medpat.chunk_embeddings` is filled by `make medpat-embed`
+(OpenAI-compatible MedCPT server, L2-normalized vector(768)).
 
 ### 6. Build and query the index
 
@@ -698,3 +625,45 @@ format as `BM25Index`).
 ```bash
 uv run pytest -q
 ```
+
+### 7. medpat Postgres (docker) — the corpus store (no disk artifacts)
+
+The medpat pipeline persists everything (documents, chunks, units, references,
+citations, embeddings, load marks) into a dedicated Docker Postgres container instead
+of parquet files. The existing `medrag` container is left untouched.
+
+```bash
+make medpat-up            # start medpat postgres (port 5433) + pgAdmin UI
+                          # schema + BM25 index ship EMPTY; you load the corpus
+                          # yourself with `make chunks`
+make medpat-ui            # pgAdmin frontend -> http://localhost:5050
+make chunks DIR=data/md   # data/md -> medpat (documents, units, chunks, refs, citations)
+make medpat-embed         # MedCPT Article-Encoder -> medpat.chunk_embeddings (vector(768))
+make medpat-psql          # psql shell into the container
+make medpat-down          # stop the containers (data volume persists)
+```
+
+- **Schema** (`backend/docker/medpat/init/01_schema.sql`, applied on first boot):
+  `documents` (body_md = full Markdown source), `units` (section/table/paragraph,
+  hierarchical via `parent_unit_id`), `chunks` (column-for-column the chunks_v2
+  schema; `parent_id` = enclosing unit, `fingerprint` for exact-dup),
+  `chunk_embeddings` (vector(768), HNSW, hash-based change detection),
+  `references` + `chunk_citations` (normalized citation graph), `lexicon_terms`,
+  `load_marks` (idempotent ingest), `meta`, `v_corpus_stats`.
+- **Ingest**: `make chunks DIR=data/md` (or `python -m src.chunking
+  --input data/md`). Deterministic ids + ON CONFLICT upserts + md_sha256 skip
+  make re-runs idempotent (unchanged docs are skipped). References/citations
+  and the FTS `tsv` column are maintained by the writer itself (plus a
+  Postgres trigger).
+- **Embed**: `python -m src.embedding [--limit N] [--model ...]`
+  (MedCPT Article-Encoder, CLS pooled, L2-normalized vector(768)).
+- **Connection**: `MEDPAT_DSN` env or `--dsn`, default
+  `postgresql://medpat:CHANGEME@localhost:5433/medpat` (password via
+  `MEDPAT_PG_PASSWORD` when the container is created). Runtime retrieval reads
+  schema `medpat` by default (`MEDPAT_PG_SCHEMA=medrag` points at the legacy
+  container).
+`make medpat-up` also starts **pgAdmin**, the browser frontend for the
+medpat database (pre-registered "medpat (ParadeDB)" server; login defaults
+`admin@medpat.io` / `medpat`, overridable via `PGADMIN_EMAIL` /
+`PGADMIN_PASSWORD` in `backend/.env`).
+

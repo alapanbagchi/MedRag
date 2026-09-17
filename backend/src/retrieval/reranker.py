@@ -20,15 +20,6 @@ from typing import Any, Dict, List, Sequence
 
 from src.retrieval.plans import SubQuery
 
-def rerank_candidates(sub: SubQuery, documents: Sequence[Any]) -> List[Any]:
-    """Compat shim (legacy probe scripts): sort docs by rrf_score."""
-    scored = sorted(enumerate(documents), key=lambda t: -getattr(t[1], "rrf_score", 0.0))
-    for rank, (idx, doc) in enumerate(scored, 1):
-        doc.rank = rank
-    return [doc for _, doc in scored]
-
-
-
 PERCENT_RE = re.compile(r"\b(?:percent|percentage|proportion|rate)\b", re.IGNORECASE)
 PVALUE_RE = re.compile(r"\bp-?values?\b|\bstatistically significant\b|confidence interval", re.IGNORECASE)
 ODDS_RE = re.compile(r"\bodds ratio\b|\bhazard ratio\b|\brisk ratio\b", re.IGNORECASE)
