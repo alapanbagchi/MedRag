@@ -1,0 +1,21 @@
+#!/bin/sh
+# Lightweight secret guard for MedRAG.
+# Enable once per clone:  git config core.hooksPath .githooks
+set -e
+files=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$files" ] && exit 0
+
+blocked=$(echo "$files" | grep -E '(^|/)([.]env([.].*)?|[.]pgpass|id_rsa|id_ed25519)$' | grep -vE '[.]example$' || true)
+if [ -n "$blocked" ]; then
+  echo "pre-commit: refusing to commit credential file(s):" >&2
+  echo "$blocked" >&2
+  exit 1
+fi
+
+hits=$(git diff --cached -U0 -- $files | grep -E '^[+]' | grep -vE '^[+][+][+]' | grep -E 'sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY|postgres(ql)?://[^:/@]+:[^:/@]+@' | grep -vE 'CHANGEME|<[^>]*>|[.]example' || true)
+if [ -n "$hits" ]; then
+  echo "pre-commit: possible secret in staged changes:" >&2
+  echo "$hits" | cut -c1-120 >&2
+  exit 1
+fi
+exit 0

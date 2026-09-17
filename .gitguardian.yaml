@@ -1,0 +1,6 @@
+version: 2
+secret:
+  # Template files contain placeholders (CHANGEME), never real secrets.
+  ignored_paths:
+    - '**/.env.example'
+    - '**/*.env.example'

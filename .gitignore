@@ -18,6 +18,9 @@ frontend/.morph-test/
 # Local pre-rewrite backups (never commit)
 .git-backup/
 
+# SearXNG instance config (contains a per-instance secret; untracked)
+backend/searxng/settings.yml
+
 # Postgres client credential file
 .pgpass
 *.pgpass
