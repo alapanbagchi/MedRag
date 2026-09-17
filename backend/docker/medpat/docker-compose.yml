@@ -1,0 +1,91 @@
+# medpat postgres + pgAdmin - the storage container and browser UI for the
+# medpat corpus pipeline. Entirely separate from the existing medrag
+# container (left untouched).
+name: medpat
+services:
+  medpat:
+    image: paradedb/paradedb:v0.25.4-pg16
+    # ParadeDB image: bundles pg_search 0.25.4 + pgvector 0.8.4 + pgcrypto (PG16).
+    container_name: medpat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: medpat
+      POSTGRES_USER: medpat
+      POSTGRES_PASSWORD: ${MEDPAT_PG_PASSWORD:-medpat}
+    ports:
+      - "5433:5432"
+    # Docker's default /dev/shm is 64 MB. Postgres uses POSIX shared memory for
+    # parallel workers and parallel index (HNSW) builds, which then fail with
+    # "could not resize shared memory segment ... No space left on device".
+    # 4 GB gives parallel maintenance plenty of room. Override with
+    # MEDPAT_SHM=8gb when the host has RAM to spare.
+    shm_size: ${MEDPAT_SHM:-4gb}
+    # Server-wide Postgres tuning for a multi-million-row retrieval corpus.
+    # These are floors/ceilings; `make medpat-index MWM=...` still raises
+    # maintenance_work_mem per session for the one big index build. Override
+    # any value from the environment without editing this file, e.g.
+    #   MEDPAT_SHARED_BUFFERS=4GB MEDPAT_WORK_MEM=128MB make medpat-up
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${MEDPAT_SHARED_BUFFERS:-2GB}
+      - -c
+      - effective_cache_size=${MEDPAT_EFFECTIVE_CACHE:-6GB}
+      - -c
+      - work_mem=${MEDPAT_WORK_MEM:-64MB}
+      - -c
+      - maintenance_work_mem=${MEDPAT_MAINTENANCE_WORK_MEM:-512MB}
+      - -c
+      - max_wal_size=${MEDPAT_MAX_WAL_SIZE:-8GB}
+      - -c
+      - min_wal_size=${MEDPAT_MIN_WAL_SIZE:-1GB}
+      - -c
+      - checkpoint_timeout=${MEDPAT_CHECKPOINT_TIMEOUT:-15min}
+      - -c
+      - max_worker_processes=${MEDPAT_MAX_WORKER_PROCESSES:-12}
+      - -c
+      - max_parallel_workers=${MEDPAT_MAX_PARALLEL_WORKERS:-8}
+      - -c
+      - max_parallel_workers_per_gather=${MEDPAT_MAX_PARALLEL_GATHER:-4}
+      - -c
+      - max_parallel_maintenance_workers=${MEDPAT_MAX_PARALLEL_MAINT:-4}
+      - -c
+      - random_page_cost=${MEDPAT_RANDOM_PAGE_COST:-1.1}
+      - -c
+      - effective_io_concurrency=${MEDPAT_EFFECTIVE_IO_CONCURRENCY:-200}
+    volumes:
+      - medpat_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medpat -d medpat"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  # pgAdmin frontend: browse the medpat schema (documents/units/chunks) and
+  # run queries. Open http://localhost:5050 after `make medpat-up`.
+  # Login: email/password below (defaults admin@medpat.local / medpat).
+  # The "medpat (ParadeDB)" server is pre-registered via pgadmin/servers.json
+  # + pgadmin/.pgpass (host medpat-postgres:5432, internal port).
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: medpat-pgadmin
+    restart: unless-stopped
+    depends_on:
+      medpat:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@medpat.io}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-medpat}
+      # Re-read the server definition on every launch so compose changes apply.
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      # Password source for the pre-registered server (copied to .pgpass).
+      PGPASS_FILE: /pgadmin4/.pgpass
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/.pgpass:/pgadmin4/.pgpass:ro
+volumes:
+  medpat_data:
+  pgadmin_data:

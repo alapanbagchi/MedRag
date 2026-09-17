@@ -1,9 +1,8 @@
-"""Shared retrieval plan models (relocated from the legacy agentic planners).
+"""Shared retrieval plan models for the deep-agents research workers.
 
-These pydantic models are the data contract between the v3 worker's
-evidence requirements and the shared retrieval service. They were
-historically defined inside the now-removed legacy planner modules
-(src.agentic, src.agents); they are pure data, so they live here.
+These pydantic models are the data contract between the worker's
+evidence requirements and the shared retrieval service. They are pure
+data, so they live here.
 """
 
 from __future__ import annotations

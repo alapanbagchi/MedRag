@@ -2,19 +2,20 @@
 
 Replaces the FAISS flat index with a persistent, queryable pgvector store.
 
-Schema:
-    medrag.chunks        — chunk metadata (id, document_id, chunk_type, text, etc.)
-    medrag.embeddings    — vector embeddings (chunk_id, embedding vector(768))
+Schema (medpat ParadeDB by default; select the legacy db with
+``MEDPAT_PG_SCHEMA=medrag``):
+    medpat.chunks            — chunk metadata (id, document_id, chunk_type, text, ...)
+    medpat.chunk_embeddings  — vectors (chunk_id, embedding vector(768)), HNSW
+    medrag.chunks / medrag.embeddings — legacy layout (IVFFlat)
 
 The embeddings table uses pgvector's <#> (negative inner product) operator
 for cosine similarity search (vectors are stored L2-normalized).
 
 Environment variables:
-    PGHOST       database host       (default: localhost)
-    PGPORT       database port       (default: 5432)
-    PGUSER       database user       (default: postgres)
-    PGDATABASE   database name       (default: medrag)
-    PGPASSWORD   database password   (default: empty)
+    MEDPAT_PG_SCHEMA  target schema (default: medpat; medrag = legacy)
+    MEDPAT_DSN        medpat libpq DSN (default: the local ParadeDB container)
+    PGHOST / PGPORT / PGUSER / PGDATABASE / PGPASSWORD
+                      legacy medrag connection (used when schema != medpat)
 
 Usage:
     from src.retrieval.pgvector_store import PgVectorStore
@@ -38,7 +39,39 @@ import numpy as np
 from src.lib.trace import get_trace
 
 EMBEDDING_DIM = 768
-SCHEMA = "medrag"
+
+# Default DSN of the medpat ParadeDB container (docker/medpat). Matches
+# src.retrieval.pg_search and the chunking/embedding writers, so every leg of
+# the hybrid stack reads the same corpus.
+DEFAULT_MEDPAT_DSN = "postgresql://medpat:medpat@localhost:5433/medpat"
+
+
+def current_schema() -> str:
+    """Corpus schema, resolved at call time rather than import time.
+
+    ``AppConfig`` loads ``backend/.env`` *after* modules are imported, so a
+    module-level constant could freeze the wrong value. Default is the medpat
+    ParadeDB corpus; ``MEDPAT_PG_SCHEMA=medrag`` selects the legacy database.
+    """
+    return (os.environ.get("MEDPAT_PG_SCHEMA") or "medpat").strip() or "medpat"
+
+
+def embeddings_table(schema: Optional[str] = None) -> str:
+    """Vectors table for ``schema``.
+
+    medpat stores vectors in ``chunk_embeddings`` (written by src.embedding,
+    HNSW/vector_ip_ops); the legacy medrag schema uses ``embeddings``.
+    """
+    schema = schema or current_schema()
+    override = (os.environ.get("MEDPAT_PG_EMBEDDINGS_TABLE") or "").strip()
+    if override:
+        return override
+    return "chunk_embeddings" if schema == "medpat" else "embeddings"
+
+
+# Legacy constant kept for callers that only need a schema name at import time.
+# New code should call current_schema() so a late-loaded .env is honored.
+SCHEMA = current_schema()
 
 
 def _to_np(v: Any) -> np.ndarray:
@@ -59,9 +92,19 @@ class PgConfig:
     user: str = "postgres"
     password: str = "medrag"
     database: str = "medrag"
+    # Full libpq DSN; when set it wins over the host/port/... fields.
+    dsn_url: str = ""
 
     @classmethod
     def from_env(cls) -> "PgConfig":
+        # The medpat corpus lives in its own container (MEDPAT_DSN). When the
+        # target schema is medpat, use that DSN so the dense leg reads the same
+        # rows as the ParadeDB BM25 leg. Explicitly selecting a non-medpat
+        # schema keeps the legacy PG* variables in charge.
+        if current_schema() == "medpat":
+            dsn_url = (os.environ.get("MEDPAT_DSN") or DEFAULT_MEDPAT_DSN).strip()
+            if dsn_url:
+                return cls(dsn_url=dsn_url)
         return cls(
             host=os.environ.get("PGHOST", "localhost"),
             port=int(os.environ.get("PGPORT", "5432")),
@@ -71,6 +114,8 @@ class PgConfig:
         )
 
     def dsn(self) -> str:
+        if self.dsn_url:
+            return self.dsn_url
         parts = [f"host={self.host}", f"port={self.port}", f"dbname={self.database}"]
         if self.user:
             parts.append(f"user={self.user}")
@@ -84,7 +129,12 @@ class PgVectorStore:
 
     def __init__(self, config: Optional[PgConfig] = None) -> None:
         self.config = config or PgConfig.from_env()
+        # Resolved per store (not per import) so a late-loaded .env wins.
+        self.schema = current_schema()
+        self.emb_table = embeddings_table(self.schema)
         self._conn = None
+        # Connection whose pgvector typecasters are already registered.
+        self._vector_registered = None
 
     # ==================================================================
     # Connection management
@@ -99,10 +149,26 @@ class PgVectorStore:
         self._conn.autocommit = False
         return self._conn
 
+    def _register_vector(self, conn) -> None:
+        """Register pgvector typecasters on this connection exactly once.
+
+        register_vector issues a pg_type lookup and installs the adapters, so
+        calling it per query added a DB round trip to every dense search and
+        metadata read. Guarded by connection identity, so a reconnect
+        re-registers and a failure is retried next call (as before).
+        """
+        if self._vector_registered is conn:
+            return
+        from pgvector.psycopg2 import register_vector
+
+        register_vector(conn)
+        self._vector_registered = conn
+
     def close(self) -> None:
         if self._conn is not None and not self._conn.closed:
             self._conn.close()
         self._conn = None
+        self._vector_registered = None
 
     def __enter__(self) -> "PgVectorStore":
         self.connect()
@@ -116,12 +182,18 @@ class PgVectorStore:
     # ==================================================================
 
     def ensure_schema(self) -> None:
-        """Create the medrag schema, pgvector extension, and tables if missing."""
+        """Create the legacy medrag schema/tables if missing.
+
+        Never issues DDL against medpat: that corpus is created and migrated by
+        docker/medpat/init/*.sql and written by src.chunking / src.embedding.
+        """
+        if self.schema == "medpat":
+            return
         conn = self.connect()
         cur = conn.cursor()
 
         # 1. Schema (commit immediately so rollback from later steps doesn't undo it)
-        cur.execute("CREATE SCHEMA IF NOT EXISTS medrag")
+        cur.execute(f"CREATE SCHEMA IF NOT EXISTS {self.schema}")
         conn.commit()
 
         # 2. Extension — try CREATE EXTENSION; if it fails, check for manual install
@@ -139,7 +211,7 @@ class PgVectorStore:
             conn.commit()
 
         cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS {SCHEMA}.chunks (
+            CREATE TABLE IF NOT EXISTS {self.schema}.chunks (
                 id              TEXT PRIMARY KEY,
                 document_id     TEXT,
                 chunk_type      TEXT,
@@ -157,8 +229,8 @@ class PgVectorStore:
         """)
 
         cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS {SCHEMA}.embeddings (
-                chunk_id    TEXT PRIMARY KEY REFERENCES {SCHEMA}.chunks(id) ON DELETE CASCADE,
+            CREATE TABLE IF NOT EXISTS {self.schema}.{self.emb_table} (
+                chunk_id    TEXT PRIMARY KEY REFERENCES {self.schema}.chunks(id) ON DELETE CASCADE,
                 embedding   vector({EMBEDDING_DIM}),
                 created_at  TIMESTAMPTZ DEFAULT now()
             )
@@ -170,7 +242,7 @@ class PgVectorStore:
         try:
             cur.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_embeddings_vector
-                ON {SCHEMA}.embeddings
+                ON {self.schema}.{self.emb_table}
                 USING ivfflat (embedding vector_cosine_ops)
                 WITH (lists = 100)
             """)
@@ -181,23 +253,29 @@ class PgVectorStore:
 
         cur.execute(f"""
             CREATE INDEX IF NOT EXISTS idx_chunks_document_id
-            ON {SCHEMA}.chunks (document_id)
+            ON {self.schema}.chunks (document_id)
         """)
 
         cur.execute(f"""
             CREATE INDEX IF NOT EXISTS idx_chunks_chunk_type
-            ON {SCHEMA}.chunks (chunk_type)
+            ON {self.schema}.chunks (chunk_type)
         """)
 
         conn.commit()
         cur.close()
 
     def rebuild_index(self) -> None:
-        """Rebuild the IVFFlat index (call after bulk inserts)."""
+        """Rebuild the legacy IVFFlat index (call after bulk inserts).
+
+        medpat's HNSW index is managed by scripts/medpat_fullvec_migrate.py and
+        the embedding CLI (--drop-index), never from the retrieval path.
+        """
+        if self.schema == "medpat":
+            return
         conn = self.connect()
         cur = conn.cursor()
         try:
-            cur.execute(f"REINDEX INDEX {SCHEMA}.idx_embeddings_vector")
+            cur.execute(f"REINDEX INDEX {self.schema}.idx_embeddings_vector")
             conn.commit()
         except Exception:
             conn.rollback()
@@ -242,7 +320,7 @@ class PgVectorStore:
                 ))
 
             cur.executemany(f"""
-                INSERT INTO {SCHEMA}.chunks
+                INSERT INTO {self.schema}.chunks
                     (id, document_id, chunk_type, section, subsection,
                      breadcrumb, parent_id, table_id, figure_id,
                      document_position, text, embedding_text, metadata)
@@ -283,10 +361,9 @@ class PgVectorStore:
         Vectors are L2-normalized before storage for cosine similarity search.
         """
         trace = get_trace()
-        from pgvector.psycopg2 import register_vector
 
         conn = self.connect()
-        register_vector(conn)
+        self._register_vector(conn)
         cur = conn.cursor()
 
         n = len(chunk_ids)
@@ -315,7 +392,7 @@ class PgVectorStore:
             values = list(zip(batch_ids, [v.tolist() for v in batch_vecs]))
 
             cur.executemany(f"""
-                INSERT INTO {SCHEMA}.embeddings (chunk_id, embedding)
+                INSERT INTO {self.schema}.{self.emb_table} (chunk_id, embedding)
                 VALUES (%s, %s)
                 ON CONFLICT (chunk_id) DO UPDATE SET
                     embedding = EXCLUDED.embedding,
@@ -344,11 +421,10 @@ class PgVectorStore:
         """
         import time as _time
         trace = get_trace()
-        from pgvector.psycopg2 import register_vector
 
         t0 = _time.perf_counter()
         conn = self.connect()
-        register_vector(conn)
+        self._register_vector(conn)
         cur = conn.cursor()
 
         q = np.asarray(query_vector, dtype=np.float32).flatten()
@@ -360,19 +436,28 @@ class PgVectorStore:
         # pgvector HNSW only explores ~ef_search candidates per query; the
         # default (40) would cap results below top_k. Raise it for this scan.
         cur.execute("SET LOCAL hnsw.ef_search = %s", (max(top_k + 64, 160),))
+        # IVFFlat recall knob: how many of the ~2115 lists the scan touches.
+        # It must NOT scale with top_k - the old max(top_k, 16) made a top_k=60
+        # dense leg scan 60 lists (~0.4s). Each probe is ~7ms here, so 8 probes
+        # is ~40ms and 16 is ~100ms. Tune with IVFFLAT_PROBES.
+        try:
+            probes = max(1, int(os.environ.get("IVFFLAT_PROBES", "16")))
+        except (TypeError, ValueError):
+            probes = 16
+        cur.execute("SET LOCAL ivfflat.probes = %s", (probes,))
 
         if method == "cosine":
             # <#> returns negative inner product; negate for similarity
             cur.execute(f"""
                 SELECT chunk_id, - (embedding <#> %s::vector) AS similarity
-                FROM {SCHEMA}.embeddings
+                FROM {self.schema}.{self.emb_table}
                 ORDER BY embedding <#> %s::vector
                 LIMIT %s
             """, (q.tolist(), q.tolist(), top_k))
         elif method == "l2":
             cur.execute(f"""
                 SELECT chunk_id, -(embedding <-> %s::vector) AS similarity
-                FROM {SCHEMA}.embeddings
+                FROM {self.schema}.{self.emb_table}
                 ORDER BY embedding <-> %s::vector
                 LIMIT %s
             """, (q.tolist(), q.tolist(), top_k))
@@ -431,11 +516,10 @@ class PgVectorStore:
             store.search_filtered(qvec, top_k=40, document_id="PMC11743015")
         """
         import time as _time
-        from pgvector.psycopg2 import register_vector
 
         t0 = _time.perf_counter()
         conn = self.connect()
-        register_vector(conn)
+        self._register_vector(conn)
         cur = conn.cursor()
 
         q = np.asarray(query_vector, dtype=np.float32).flatten()
@@ -443,6 +527,15 @@ class PgVectorStore:
         if norm > 0:
             q = q / norm
         cur.execute("SET LOCAL hnsw.ef_search = %s", (max(top_k + 64, 160),))
+        # IVFFlat recall knob: how many of the ~2115 lists the scan touches.
+        # It must NOT scale with top_k - the old max(top_k, 16) made a top_k=60
+        # dense leg scan 60 lists (~0.4s). Each probe is ~7ms here, so 8 probes
+        # is ~40ms and 16 is ~100ms. Tune with IVFFLAT_PROBES.
+        try:
+            probes = max(1, int(os.environ.get("IVFFLAT_PROBES", "16")))
+        except (TypeError, ValueError):
+            probes = 16
+        cur.execute("SET LOCAL ivfflat.probes = %s", (probes,))
 
         where: List[str] = []
         params: List[Any] = []
@@ -455,7 +548,7 @@ class PgVectorStore:
         if method == "cosine":
             sql = (
                 f"SELECT e.chunk_id, -(e.embedding <#> %s::vector) AS similarity "
-                f"FROM {SCHEMA}.embeddings e JOIN {SCHEMA}.chunks c ON c.id = e.chunk_id "
+                f"FROM {self.schema}.{self.emb_table} e JOIN {self.schema}.chunks c ON c.id = e.chunk_id "
             )
             if where:
                 sql += "WHERE " + " AND ".join(where) + " "
@@ -464,7 +557,7 @@ class PgVectorStore:
         elif method == "l2":
             sql = (
                 f"SELECT e.chunk_id, -(e.embedding <-> %s::vector) AS similarity "
-                f"FROM {SCHEMA}.embeddings e JOIN {SCHEMA}.chunks c ON c.id = e.chunk_id "
+                f"FROM {self.schema}.{self.emb_table} e JOIN {self.schema}.chunks c ON c.id = e.chunk_id "
             )
             if where:
                 sql += "WHERE " + " AND ".join(where) + " "
@@ -489,8 +582,10 @@ class PgVectorStore:
         cur = conn.cursor()
         cur.execute(f"""
             SELECT id, document_id, chunk_type, section, subsection,
-                   breadcrumb, parent_id, document_position, text
-            FROM {SCHEMA}.chunks
+                   breadcrumb, parent_id, document_position, text,
+                   metadata->>'title' AS title,
+                   metadata->>'journal' AS journal
+            FROM {self.schema}.chunks
             WHERE id = %s
         """, (chunk_id,))
         row = cur.fetchone()
@@ -514,6 +609,8 @@ class PgVectorStore:
             "parent_id": row[6],
             "document_position": row[7],
             "text": row[8],
+            "title": row[9] or "",
+            "journal": row[10] or "",
         }
 
     def get_chunks(self, chunk_ids: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -524,8 +621,10 @@ class PgVectorStore:
         cur = conn.cursor()
         cur.execute(f"""
             SELECT id, document_id, chunk_type, section, subsection,
-                   breadcrumb, parent_id, document_position, text
-            FROM {SCHEMA}.chunks
+                   breadcrumb, parent_id, document_position, text,
+                   metadata->>'title' AS title,
+                   metadata->>'journal' AS journal
+            FROM {self.schema}.chunks
             WHERE id = ANY(%s)
         """, (chunk_ids,))
         results = {}
@@ -547,18 +646,19 @@ class PgVectorStore:
                 "parent_id": row[6],
                 "document_position": row[7],
                 "text": row[8],
+                "title": row[9] or "",
+                "journal": row[10] or "",
             }
         cur.close()
         return results
 
     def get_embedding(self, chunk_id: str) -> Optional[np.ndarray]:
         """Fetch the embedding vector for a single chunk."""
-        from pgvector.psycopg2 import register_vector
         conn = self.connect()
-        register_vector(conn)
+        self._register_vector(conn)
         cur = conn.cursor()
         cur.execute(f"""
-            SELECT embedding FROM {SCHEMA}.embeddings
+            SELECT embedding FROM {self.schema}.{self.emb_table}
             WHERE chunk_id = %s
         """, (chunk_id,))
         row = cur.fetchone()
@@ -571,12 +671,11 @@ class PgVectorStore:
         """Fetch embedding vectors for multiple chunks."""
         if not chunk_ids:
             return {}
-        from pgvector.psycopg2 import register_vector
         conn = self.connect()
-        register_vector(conn)
+        self._register_vector(conn)
         cur = conn.cursor()
         cur.execute(f"""
-            SELECT chunk_id, embedding FROM {SCHEMA}.embeddings
+            SELECT chunk_id, embedding FROM {self.schema}.{self.emb_table}
             WHERE chunk_id = ANY(%s)
         """, (chunk_ids,))
         results = {}
@@ -592,7 +691,7 @@ class PgVectorStore:
     def count_chunks(self) -> int:
         conn = self.connect()
         cur = conn.cursor()
-        cur.execute(f"SELECT COUNT(*) FROM {SCHEMA}.chunks")
+        cur.execute(f"SELECT COUNT(*) FROM {self.schema}.chunks")
         n = cur.fetchone()[0]
         cur.close()
         return n
@@ -600,7 +699,7 @@ class PgVectorStore:
     def count_embeddings(self) -> int:
         conn = self.connect()
         cur = conn.cursor()
-        cur.execute(f"SELECT COUNT(*) FROM {SCHEMA}.embeddings")
+        cur.execute(f"SELECT COUNT(*) FROM {self.schema}.{self.emb_table}")
         n = cur.fetchone()[0]
         cur.close()
         return n
@@ -608,7 +707,7 @@ class PgVectorStore:
     def count_documents(self) -> int:
         conn = self.connect()
         cur = conn.cursor()
-        cur.execute(f"SELECT COUNT(DISTINCT document_id) FROM {SCHEMA}.chunks")
+        cur.execute(f"SELECT COUNT(DISTINCT document_id) FROM {self.schema}.chunks")
         n = cur.fetchone()[0]
         cur.close()
         return n

@@ -1,9 +1,6 @@
-"""MedRag agentic runtime: the singular deepagents + LangGraph pipeline.
-
-Query -> orchestrator (decompose) -> parallel research workers ->
-conflict -> resolution -> gap resolution -> evidence-gated synthesis.
-Only prompts + non-LLM tools are reused from the shared backend
-(see agents.reuse); agents, state, graph, rules and budgets live here.
-"""
-
-__version__ = "1.0.0"
+from src.agents.deep_agent import build_deep_agent, run_deep_task
+from src.middleware.llm_as_a_judge import LLMAsJudge
+from src.tools.retrieval import local_search
+from src.tools.firecrawl import web_search
+from src.tools.umls import lookup_medical_term
+from src.agents.planner import Plan, PlanItem, generate_plan

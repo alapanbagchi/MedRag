@@ -1,1 +1,1 @@
-"""MedRAG prompt tree (see load.py)."""
+"""Prompt files for planner and deep agents."""

@@ -14,18 +14,25 @@ Usage:
         --output-dir data/raw/cardiology --min-year 2015 --max-year 2024
 """
 
-import os
-import shutil
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Protocol
 
 import boto3
 from botocore import UNSIGNED
 from botocore.config import Config
 from tqdm import tqdm
 
-from core.protocols import Collector
+
+class Collector(Protocol):
+    """Anything that discovers and downloads articles for a topic."""
+
+    topic: str
+    output_dir: Path
+    max_workers: int
+
+    def collect(self) -> None: ...
 
 
 class PMCCollector(Collector):

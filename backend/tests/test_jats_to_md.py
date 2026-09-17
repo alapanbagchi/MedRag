@@ -338,7 +338,7 @@ def test_image_hrefs_resolved_to_pmc_oa_bucket():
     reason="corpus not present",
 )
 def test_real_file_converts_and_chunks_with_tables(tmp_path):
-    from src.chunking.md_chunker import MDChunker
+    from src.chunking.documents import chunk_document
 
     xml_path = Path("data/chunked/PMC10327125.4.xml")
     md_path = tmp_path / "PMC10327125.4.md"
@@ -350,7 +350,8 @@ def test_real_file_converts_and_chunks_with_tables(tmp_path):
     assert "## References" in md             # numbered references present
     assert md.count("| ---") > 0             # real pipe tables
 
-    chunks, units, report = MDChunker(max_tokens=480).chunk_md(md, doc_id="PMC10327125.4")
+    chunks, units, report = chunk_document(md, doc_id="PMC10327125.4",
+                                    max_tokens=480)
     types = {c.chunk_type for c in chunks}
     assert {"table_summary", "table_row", "table_footnotes", "figure", "equation"} <= types
     assert report["retrieval_eligible"] > 100

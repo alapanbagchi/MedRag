@@ -80,7 +80,10 @@ class PgDenseIndex:
         if self._chunk_ids_cache is None:
             conn = self.store.connect()
             cur = conn.cursor()
-            cur.execute("SELECT chunk_id FROM medrag.embeddings ORDER BY chunk_id")
+            cur.execute(
+                f"SELECT chunk_id FROM {self.store.schema}.{self.store.emb_table} "
+                "ORDER BY chunk_id"
+            )
             self._chunk_ids_cache = np.array([row[0] for row in cur.fetchall()], dtype=object)
             cur.close()
         return self._chunk_ids_cache

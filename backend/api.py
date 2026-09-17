@@ -1,261 +1,219 @@
-"""MedRag API: streams the singular deepagents research flow to the web UI.
+"""MedRAG API: one route that streams a deep-research run as NDJSON.
 
-Every request and every internal pipeline action is mirrored to logs.txt
-(LOG_FILE to override) via the shared streaming trace, so a web run is
-fully inspectable after the fact.
+Run without autoreload (default; keeps the retrieval models warm):
+    python api.py
+    # or:  python -m uvicorn api:app --port 8000
+Run with autoreload (dev - each .py edit restarts the worker and reloads the
+retrieval models, so use it only while editing):
+    python api.py --reload
+    # or:  python -m uvicorn api:app --port 8000 --reload
+The frontend dev server proxies /v1 here (see frontend/vite.config.ts).
 """
+
 from __future__ import annotations
 
-import asyncio
+import json
 import os
-import re
-from contextlib import asynccontextmanager
-from pathlib import Path
+import time
+import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from dotenv import load_dotenv
+
 from src.lib.trace import get_trace
+from src.agents.stream_adapter import stream_deep_agent
+from src.agents.ag_ui_endpoint import handle_ag_ui
+from src.agents.clarify import submit_answer
+from src.runstate.store import get_store
 
-_DEFAULT_LOG = Path(__file__).resolve().parent / "logs.txt"
+load_dotenv()
 
-
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    trace = get_trace()
-    log_path = os.environ.get("LOG_FILE") or _DEFAULT_LOG
-    # append: keep the file across requests + server restarts
-    trace.open_stream(log_path, query="(MedPat API server)", append=True)
-    try:
-        yield
-    finally:
-        trace.close_stream()
-
-
-app = FastAPI(title="MedRag API", lifespan=lifespan)
+app = FastAPI(title="MedRAG API")
+# No cookies are used, so credentialed cross-origin requests are never
+# legitimate: "*" + credentials is the unsafe CORS combination.
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
-class ChatBody(BaseModel):
+# Optional bearer gate: inert unless MEDRAG_API_TOKEN is set, so existing
+# clients keep working while a deployment can require a token.
+@app.middleware("http")
+async def _require_token(request: Request, call_next):
+    token = os.environ.get("MEDRAG_API_TOKEN", "").strip()
+    if token and request.headers.get("authorization", "") != f"Bearer {token}":
+        return JSONResponse({"detail": "unauthorized"}, status_code=401)
+    return await call_next(request)
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    import os as _os
+
+    print(f"[api] pid {_os.getpid()} starting (reload restarts change this pid)",
+          flush=True)
+    get_trace().open_stream("logs.txt", query="api-server")
+    _preload_retriever()
+
+
+def _preload_retriever() -> None:
+    """Load the retrieval models (query encoder + cross-encoder) once at boot.
+
+    get_retriever() is a process singleton, so the weights are loaded a single
+    time and then reused by every request; doing it here instead of on the
+    first retrieval keeps that first request fast. The load runs in a daemon
+    thread so the server accepts connections immediately - a request that
+    arrives mid-load simply waits on the retriever's build lock.
+
+    Set RETRIEVER_PRELOAD=0 to skip (tests, or a process that never retrieves).
+    """
+    import os
+    import threading
+
+    if os.environ.get("RETRIEVER_PRELOAD", "1").strip().lower() in ("0", "false", "no"):
+        return
+
+    def _load() -> None:
+        try:
+            from src.tools.retrieval import get_retriever
+
+            ready = get_retriever().warmup(
+                lambda stage: print(f"[retriever] {stage}", flush=True))
+            print(f"[retriever] preload {'ready' if ready else 'PARTIAL'}", flush=True)
+        except Exception as exc:  # noqa: BLE001 - preload must never crash boot
+            print(f"[retriever] preload failed: {exc}", flush=True)
+
+    threading.Thread(target=_load, name="retriever-preload", daemon=True).start()
+
+
+@app.on_event("shutdown")
+async def _shutdown() -> None:
+    get_trace().close_stream()
+
+
+class ChatRequest(BaseModel):
     question: str
     conversation_id: str = ""
     history: list = []
-    # accepted for wire compatibility; ignored (singular deepagents flow).
     engine: str = ""
 
 
-# ---- PMC article proxy -------------------------------------------------
-# The sidebar article view: fetch the article server-side (no CORS), parse it
-# into sections + paragraphs, and locate the passage that supports the cited
-# excerpt (token overlap + longest contiguous match) so the UI can highlight
-# exactly the portion "that says it".
-# ------------------------------------------------------------------------
+class QuestionAnswerRequest(BaseModel):
+    """Answer payload for one human-in-the-loop clarification question."""
 
-_ARTICLE_CACHE: dict[str, dict] = {}
-_SECTION_LABEL = {
-    "ABSTRACT": "Abstract",
-    "INTRO": "Introduction",
-    "METHODS": "Materials & Methods",
-    "RESULTS": "Results",
-    "DISCUSS": "Discussion",
-    "CONCL": "Conclusion",
-    "CONCLUSION": "Conclusion",
-}
-# BioC section types that carry no citable body text
-_SKIP_SECTION = {"TITLE", "FIG", "TABLE", "REF", "ABBR", "ACK",
-                 "CONFLICT", "SUPPL", "SUPPLEMENT", "AUTHINFO",
-                 "AUTH_CONT", "COMP_INT"}
-_SKIP_SECTION_RE = re.compile(r"references|bibliography|footnotes|acknowledg", re.I)
-
-
-def _norm(s) -> str:
-    return " ".join((s or "").split())
-
-
-def _tok(s: str) -> set:
-    return set(re.findall(r"[a-z0-9]{3,}", s.lower()))
-
-
-async def _fetch_article(pmcid: str) -> dict | None:
-    """Fetch + parse one PMC article -> {title, url, sections, flat}.
-
-    Primary: the OA BioC API (clean text, no bot-check dance). Fallback: the
-    article HTML page via ``requests`` (httpx is TLS-fingerprinted by NCBI;
-    requests is not) for non-OA articles.
-    """
-    article = await _fetch_bioc(pmcid)
-    return article if article else await _fetch_html(pmcid)
-
-
-async def _fetch_bioc(pmcid: str) -> dict | None:
-    """Clean-text extraction via the PMC Open-Access BioC XML API."""
-    from lxml import etree
-
-    url = f"https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
-    api = ("https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/"
-           f"pmcoa.cgi/BioC_xml/{pmcid}/unicode")
-    import requests
-    resp = await asyncio.to_thread(requests.get, api, timeout=25.0)
-    if resp.status_code != 200 or not resp.text.strip():
-        return None
-    try:
-        root = etree.fromstring(resp.text.encode("utf-8"))
-    except Exception:
-        return None
-
-    title = pmcid
-    sections: list[dict] = []
-    flat: list[str] = []
-    current: dict | None = None
-    for passage in root.xpath("//passage"):
-        infons = {i.get("key"): (i.text or "") for i in passage.xpath("infon")}
-        stype = (infons.get("section_type") or "").strip().upper()
-        sub = (infons.get("section_title") or "").strip()
-        text = _norm(passage.findtext("text"))
-        if stype == "TITLE" and text and title == pmcid:
-            title = text
-            continue
-        if stype in _SKIP_SECTION or not text or len(text) < 40:
-            continue
-        heading = sub or _SECTION_LABEL.get(stype, stype.capitalize())
-        if current is None or heading != current["heading"]:
-            if current and current["paragraphs"]:
-                sections.append(current)
-            current = {"heading": heading, "paragraphs": []}
-        current["paragraphs"].append(text)
-        flat.append(text)
-    if current and current["paragraphs"]:
-        sections.append(current)
-    if not flat:
-        return None
-    return {"pmcid": pmcid, "title": title, "url": url,
-            "sections": sections, "flat": flat}
-
-
-async def _fetch_html(pmcid: str) -> dict | None:
-    """HTML-page fallback for non-OA articles (requests bypasses NCBI's
-    TLS fingerprint check that blocks httpx)."""
-    from lxml import html as lxml_html
-
-    url = f"https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/"
-    import requests
-    resp = await asyncio.to_thread(requests.get, url, timeout=25.0, headers={
-        "user-agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                       "(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"),
-        "accept": "text/html,application/xhtml+xml",
-    })
-    if resp.status_code != 200 or not resp.text:
-        return None
-    tree = lxml_html.fromstring(resp.text)
-    bodies = tree.xpath("//div[contains(@class,'body') and contains(@class,'main-article-body')]")
-    root = bodies[0] if bodies else (tree.body if tree.body is not None else tree)
-
-    titles = tree.xpath("//h1")
-    title = _norm(titles[0].text_content()) if titles else pmcid
-
-    sections: list[dict] = []
-    flat: list[str] = []
-    current: dict | None = None
-    for el in root.iter():
-        tag = el.tag if isinstance(el.tag, str) else ""
-        if tag in ("h2", "h3", "h4") and "pmc_sec_title" in (el.get("class") or ""):
-            heading = _norm(el.text_content())
-            if _SKIP_SECTION_RE.search(heading):
-                continue
-            if current and current["paragraphs"]:
-                sections.append(current)
-            current = {"heading": heading, "paragraphs": []}
-            continue
-        if tag != "p":
-            continue
-        anc = set(a.tag for a in el.iterancestors())
-        if anc & {"table", "figure", "figcaption", "aside", "ol", "ul", "blockquote", "foot"}:
-            continue
-        text = _norm(el.text_content())
-        if len(text) < 40:
-            continue
-        if current is None:
-            current = {"heading": "", "paragraphs": []}
-        current["paragraphs"].append(text)
-        flat.append(text)
-    if current and current["paragraphs"]:
-        sections.append(current)
-    if not flat:
-        return None
-    return {"pmcid": pmcid, "title": title, "url": url,
-            "sections": sections, "flat": flat}
-
-
-def _match_anchor(article: dict, anchor: str) -> dict | None:
-    """Best paragraph + contiguous span for the cited excerpt (or None)."""
-    a = _norm(anchor)[:240]
-    if not a or not article["flat"]:
-        return None
-    a_tok = _tok(a)
-    scored = []
-    for i, p in enumerate(article["flat"]):
-        p_tok = _tok(p)
-        if p_tok:
-            scored.append((len(a_tok & p_tok) / max(1, len(a_tok | p_tok)), i, p))
-    if not scored:
-        return None
-    score, idx, text = max(scored, key=lambda x: x[0])
-    if score <= 0:
-        return None
-    # longest contiguous fragment of the anchor inside the paragraph
-    for cut in range(len(a), 79, -1):
-        m = text.find(a[:cut])
-        if m >= 0:
-            return {"paragraph": idx, "start": m, "end": m + cut, "text": a[:cut]}
-    m = text.find(a)
-    if m >= 0:
-        return {"paragraph": idx, "start": m, "end": m + len(a), "text": a}
-    # no exact stretch: highlight the best whole paragraph
-    return {"paragraph": idx, "start": 0, "end": len(text), "text": text}
-
-
-@app.get("/v1/articles/{pmcid}")
-async def article_view(pmcid: str, anchor: str = ""):
-    """Article text for the sidebar with the cited passage located."""
-    pmcid = pmcid.strip().upper()
-    if not re.fullmatch(r"PMC\d+", pmcid):
-        raise HTTPException(status_code=404, detail=f"invalid PMCID {pmcid!r}")
-    if pmcid not in _ARTICLE_CACHE:
-        article = await _fetch_article(pmcid)
-        if article is None:
-            raise HTTPException(status_code=502,
-                                detail=f"could not fetch {pmcid} from PMC")
-        _ARTICLE_CACHE[pmcid] = article
-        if len(_ARTICLE_CACHE) > 96:  # ponytail: simple cap, no eviction logic
-            _ARTICLE_CACHE.pop(next(iter(_ARTICLE_CACHE)))
-    article = _ARTICLE_CACHE[pmcid]
-    match = _match_anchor(article, anchor) if anchor else None
-    return {
-        "pmcid": article["pmcid"],
-        "title": article["title"],
-        "url": article["url"],
-        "total_paragraphs": len(article["flat"]),
-        "anchor": match,
-        "sections": article["sections"],
-    }
+    selections: list[str] = []
+    other: str = ""
+    find_all: bool = False
 
 
 @app.post("/v1/chat/stream")
-async def chat_stream(body: ChatBody):
-    # Singular deepagents flow: every request runs the agents research
-    # graph streamed under the UI wire contract (status / sources /
-    # pipeline / memory / token / done).
-    from src.agents.bridge import stream_xdeep
+async def chat_stream(body: ChatRequest):
+    """Stream one research run as newline-delimited JSON (see stream_adapter)."""
+    t0 = time.perf_counter()
+    run_id = uuid.uuid4().hex[:12]
+    get_trace().log(
+        "chat_stream_start", run_id=run_id,
+        question=body.question[:160], engine=body.engine or "deep",
+    )
 
-    trace = get_trace()
-    trace.stage(f"API REQUEST (HTTP POST /v1/chat/stream) "
-                f"conv={body.conversation_id or '-'}")
-    trace.bullet(f"question: {body.question[:300]}")
-    return StreamingResponse(
-        stream_xdeep(body.question,
-                     conversation_id=body.conversation_id),
-        media_type="application/x-ndjson")
+    async def _gen():
+        # The chat owns one state JSON; every request appends a turn to
+        # it (GET /v1/chats/{chat_id}). Without a conversation id each
+        # request is its own single-turn chat.
+        chat_id = (body.conversation_id or "").strip() or run_id
+        async for event in stream_deep_agent(body.question, run_id=run_id,
+                                             conversation_id=chat_id):
+            yield json.dumps(event, ensure_ascii=False) + "\n"
+        get_trace().log(
+            "chat_stream_end", run_id=run_id,
+            elapsed_s=round(time.perf_counter() - t0, 2),
+        )
+
+    return StreamingResponse(_gen(), media_type="application/x-ndjson")
+
+
+@app.post("/v1/ag-ui")
+async def ag_ui(request: Request):
+    """AG-UI protocol endpoint (SSE). See src/agents/ag_ui_endpoint.py."""
+    return await handle_ag_ui(request)
+
+
+@app.get("/v1/health")
+async def health():
+    """Process id + retriever residency.
+
+    Curl this before and after a run: if pid is unchanged and the retriever
+    flags are true, the weights are loaded once and reused. A new pid on every
+    request means the process is being restarted (e.g. a reloader), and a flag
+    flipping false->true on a run means that run paid the load.
+    """
+    import os as _os
+
+    out: dict = {"pid": _os.getpid()}
+    try:
+        from src.tools.retrieval import get_retriever
+
+        out["retriever"] = get_retriever().status()
+    except Exception as exc:  # noqa: BLE001 - health must never 500
+        out["retriever"] = {"error": str(exc)}
+    return out
+
+
+@app.get("/v1/chats/{chat_id}")
+async def get_chat(chat_id: str):
+    """Return the per-chat state JSON (every turn in the conversation)."""
+    chat = get_store().get_chat(chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail=f"unknown chat {chat_id}")
+    return json.loads(chat.to_json())
+
+
+@app.post("/v1/chats/{chat_id}/questions/{question_id}/answer")
+async def answer_question(chat_id: str, question_id: str,
+                          body: QuestionAnswerRequest):
+    """Deliver the user's answer to a parked ask_user call (HITL).
+
+    Resolves the waiting tool inside the paused deep-agent run, which
+    then continues streaming. Returns 404 when no question is waiting
+    (e.g. the run already timed out or moved on)."""
+    resolved = submit_answer(
+        chat_id, question_id,
+        {"selections": body.selections, "other": body.other,
+         "find_all": body.find_all},
+    )
+    if not resolved:
+        raise HTTPException(
+            status_code=404,
+            detail=f"no pending question {question_id} in chat {chat_id}",
+        )
+    return {"ok": True, "question_id": question_id, "chat_id": chat_id}
+
+
+if __name__ == "__main__":
+    import argparse
+
+    import uvicorn
+
+    parser = argparse.ArgumentParser(
+        description="Run the MedRAG API (no autoreload by default)."
+    )
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Autoreload on code changes (dev). Off by default: a reload "
+             "restarts the worker and reloads the retrieval models.",
+    )
+    args = parser.parse_args()
+
+    # NB: reload requires the app as an import string, not the object.
+    uvicorn.run("api:app", host=args.host, port=args.port, reload=args.reload)

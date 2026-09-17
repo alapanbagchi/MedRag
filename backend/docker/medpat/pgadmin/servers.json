@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "medpat (ParadeDB)",
+            "Group": "Servers",
+            "Host": "medpat-postgres",
+            "Port": 5432,
+            "MaintenanceDB": "medpat",
+            "Username": "medpat",
+            "SSLMode": "prefer",
+            "Comment": "medpat corpus: documents, units, chunks, embeddings, references, citations; ParadeDB BM25 index on chunks."
+        }
+    }
+}

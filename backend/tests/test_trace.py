@@ -19,3 +19,11 @@ def test_tool_call_and_result_are_not_double_logged(tmp_path):
     text = log.read_text()
     assert text.count("[tool] search_umls") == 1
     assert text.count("[tool-result] search_umls") == 1
+
+
+async def test_api_shutdown_handlers_run_clean():
+    import api as api_mod
+
+    assert api_mod.app.router.on_shutdown != []
+    for handler in api_mod.app.router.on_shutdown:
+        await handler()

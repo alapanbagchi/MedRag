@@ -1,18 +1,9 @@
 """Query encoding for the MedCPT retrieval architecture.
 
-MedCPT is an *asymmetric* bi-encoder:
-
-* documents were embedded with ``ncbi/MedCPT-Article-Encoder`` (max_length=512)
-* queries must be embedded with ``ncbi/MedCPT-Query-Encoder`` (max_length=64)
-
-Both encoders use the [CLS] last hidden state as the representation
-(``last_hidden_state[:, 0, :]``), per the official model cards. The stored
-corpus embeddings are *not* L2-normalized, so both document vectors (at
-index build) and query vectors (here) are L2-normalized before the dot
-product, which makes the FAISS inner-product score equal cosine similarity.
-
-torch / transformers are imported lazily so the rest of the retrieval layer
-works without them (e.g. for index builds and BM25-only evaluation).
+MedCPT is an *asymmetric* bi-encoder: documents embed with Article-Encoder,
+queries with Query-Encoder (max_length=64). Both use the [CLS] last hidden
+state, and both sides are L2-normalized so the FAISS inner product equals
+cosine similarity. torch/transformers load lazily.
 """
 
 from __future__ import annotations
@@ -22,7 +13,15 @@ from typing import List, Optional
 
 import numpy as np
 
-from src.lib._torch import resolve_device
+
+def resolve_device(device: Optional[str] = None) -> str:
+    """Inference device: explicit value, else CUDA-if-available or CPU."""
+    if device is not None and device != "auto":
+        return device
+    import torch
+
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
 
 DEFAULT_QUERY_MODEL = "ncbi/MedCPT-Query-Encoder"
 DEFAULT_MAX_LENGTH = 64
@@ -58,6 +57,8 @@ class MedCPTQueryEncoder(QueryEncoder):
         if self._model is not None:
             return
         from transformers import AutoModel, AutoTokenizer
+
+        from src.lib._torch import resolve_device
 
         self._resolved_device = resolve_device(self.device)
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)

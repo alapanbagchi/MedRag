@@ -50,5 +50,11 @@ eval/
 # generated run traces
 logs.txt
 
+# per-chat state JSON ledgers (server-side)
+chats/
+
 # local secrets
 .env
+
+# Vendored third-party skill repos (re-fetch with backend/skills/fetch_skills.sh)
+skills/_vendor/

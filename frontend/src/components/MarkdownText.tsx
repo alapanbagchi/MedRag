@@ -2,32 +2,45 @@ import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { isValidElement, type ReactNode } from "react";
+import { InlineCiteRef } from "./assistant-ui/elements/inline-citation";
 
 /**
- * Wraps every `[n]` citation marker in a numbered chip, matching the
- * "Sources" card numbering (source index + 1).
+ * Turns every citation marker into a source badge: `[n]` indexes the
+ * Sources card (1-based), anything else (e.g. `[P1]`) matches a
+ * verified passage ref or id in the Sources card (case-insensitive).
+ * Parenthesized ref groups (`(P1, P10)`) split into one badge per ref.
+ * Unresolvable markers render as plain text.
  */
 function withCitations(node: ReactNode, keyBase = 0): ReactNode[] {
   const out: ReactNode[] = [];
   const emit = (n: ReactNode, key: number) => out.push(n);
 
   if (typeof node === "string") {
-    const parts = node.split(/(\[\d+\])/g);
+    // `[4]` / `[p8]`, reversed `p[4]`, and parenthesized ref groups
+    // `(P1, P10)` the model sometimes emits instead of brackets.
+    const parts = node.split(/(\[[A-Za-z]*\d[\w-]*\]|\b[Pp]\[\d{1,4}\]|\([Pp]\d[\w-]*(?:\s*[,;]\s*[Pp]\d[\w-]*)*\))/g);
     parts.forEach((part, i) => {
       if (!part) return;
-      const match = /^\[(\d+)\]$/.exec(part);
+      const match = /^\[([A-Za-z]*\d[\w-]*)\]$/.exec(part);
+      const reversed = /^[Pp]\[(\d{1,4})\]$/.exec(part);
+      const paren = /^\((.*)\)$/.exec(part);
       if (match) {
-        emit(
-          <sup
-            key={`cite-${keyBase}-${i}`}
-            title={`Source ${match[1]}`}
-            className="cite-chip"
-            suppressHydrationWarning
-          >
-            {match[1]}
-          </sup>,
-          i,
-        );
+        emit(<InlineCiteRef key={`cite-${keyBase}-${i}`} raw={part} id={match[1]} />, i);
+      } else if (reversed) {
+        emit(<InlineCiteRef key={`cite-${keyBase}-${i}`} raw={part} id={`p${reversed[1]}`} />, i);
+      } else if (paren && /^[Pp]\d[\w-]*(?:\s*[,;]\s*[Pp]\d[\w-]*)*$/.test(paren[1] ?? "")) {
+        // One badge per ref, keeping the original parens and separators
+        // so unresolvable ids render exactly as written.
+        emit("(", i);
+        (paren[1] ?? "").split(/(\s*[,;]\s*)/).forEach((tok, j) => {
+          if (!tok) return;
+          if (/^[Pp]\d[\w-]*$/.test(tok)) {
+            emit(<InlineCiteRef key={`cite-${keyBase}-${i}-${j}`} raw={tok} id={tok} />, i);
+          } else {
+            emit(tok, i);
+          }
+        });
+        emit(")", i);
       } else {
         emit(part, i);
       }
@@ -102,6 +115,7 @@ export function MarkdownText() {
       remarkPlugins={[remarkGfm]}
       components={components}
       className="text-foreground"
+      defer
     />
   );
 }

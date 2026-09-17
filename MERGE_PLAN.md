@@ -30,7 +30,7 @@ findings in before implementing.
   deep_inspector, contradiction, resolution, synthesize, reliability,
   gap_probe, gap_complete`) via `reuse.load_prompt` — never v3 agent classes.
 - Tools: `retrieve` (parquet hybrid), `postgres_search` (PRIMARY, pgFTS +
-  pgvector over `medrag.chunks`), `searxng_search` (trust-gated web),
+  pgvector over `medrag.chunks`), `firecrawl_search` (trust-gated web),
   `umls_lookup`, plus direct-call `fetch_page_text` and `site_reputation`.
 - Entry: `POST /v1/chat/stream` with `engine=xdeep` (or `XDEEP_ENGINE=1`) →
   `bridge.stream_xdeep`, same NDJSON wire contract. CLI: `python -m

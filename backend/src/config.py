@@ -115,29 +115,6 @@ class AppConfig:
         self.logfire_service_name: str = _env("LOGFIRE_SERVICE_NAME", "medrag")
         self.logfire_environment: str = _env("LOGFIRE_ENVIRONMENT", "development")
 
-        # Memory + Context layer (src/memory). Never a source of medical
-        # fact — only persistent research state + context construction.
-        # MEMORY_BACKEND: auto (try Postgres, fall back to in-memory) |
-        # postgres (fail hard if unconnected) | memory (no DB).
-        # MEMORY_EMBEDDER: hash (deterministic, offline, default) |
-        # medcpt (optional ncbi/MedCPT-Query-Encoder, dim must match schema).
-        self.memory_backend: str = _env("MEMORY_BACKEND", "auto").strip().lower()
-        self.memory_embedder: str = _env("MEMORY_EMBEDDER", "hash").strip().lower()
-        self.memory_embed_dim: int = _int("MEMORY_EMBED_DIM", 256)
-        self.memory_schema: str = _env("MEMORY_SCHEMA", "medrag_memory").strip()
-        # Total token budget for the memory/context region composed into
-        # downstream calls (evidence-vs-memory split happens in context.py).
-        self.memory_context_tokens: int = _int("MEMORY_CONTEXT_TOKENS", 1800)
-        # Dedup / retriave thresholds for memory objects (cosine-similarity
-        # space of the configured embedder).
-        self.memory_claim_min_sim: float = float(_env("MEMORY_CLAIM_MIN_SIM", "0.86"))
-        self.memory_retrieve_min_sim: float = float(_env("MEMORY_RETRIEVE_MIN_SIM", "0.15"))
-        # Data-driven revalidation: 0 disables the horizon check entirely
-        # (staleness is then only explicit mark_stale + contradicting-evidence
-        # triggers — no arbitrary expiration periods).
-        self.memory_staleness_days: int = _int("MEMORY_STALENESS_DAYS", 0)
-        self.memory_consolidation_batch: int = _int("MEMORY_CONSOLIDATION_BATCH", 200)
-
         # Prompts
         self.prompt_dir: Path = Path(__file__).resolve().parent / "prompts"
 

@@ -17,6 +17,7 @@
 
 export type StepKind =
   | "retrieve"
+  | "umls"
   | "web_search"
   | "web_fetch"
   | "reliability"
@@ -26,6 +27,8 @@ export type StepKind =
   | "search_round"
   | "contradiction"
   | "resolution"
+  | "delegate"
+  | "gap_check"
   | "gap_probe"
   | "gap_resolution"
   | "evidence"
@@ -55,71 +58,9 @@ export interface StepArgs {
   finishedTs?: string;
   /** Streamed processing timeline for the inspector (append-only). */
   timeline?: { t?: string; text: string }[];
+  /** Owning agent for thought steps: task id (T1, …) or "orchestrator". */
+  agent?: string;
   [key: string]: unknown;
-}
-
-/** Parse one raw progress line into a step, or null for unclassifiable lines. */
-export function parseProgress(msg: string): StepArgs | null {
-  const line = (msg ?? "").trim();
-  if (!line) return null;
-
-  const retrieve = /^retrieve:\s*(.+)$/i.exec(line);
-  if (retrieve) {
-    return { kind: "retrieve", label: "Searching literature", query: retrieve[1]!.trim(), detail: retrieve[1]!.trim() };
-  }
-  if (/SEARCH PLANNER/i.test(line) || /REPLANNER/i.test(line)) {
-    return { kind: "planner", label: "Planning research", detail: line.replace(/\s+/g, " ").slice(0, 96) };
-  }
-  if (/\[decompose\]/i.test(line)) {
-    return { kind: "decompose", label: "Decomposing the question", detail: line.replace(/\s+/g, " ").slice(0, 96) };
-  }
-  const research = /^(\s*)\[(research:)?R?([0-9A-Z_.-]+)\]\s*(.*)$/i.exec(line);
-  if (research && (research[2] || /research/i.test(research[0]))) {
-    return {
-      kind: "research",
-      label: `Task ${research[3]}`,
-      detail: (research[4] ?? "").trim() || "researching…",
-      sub: "R" + research[3],
-    };
-  }
-  if (line.startsWith("[web]") || /\[web\]/i.test(line)) {
-    return { kind: "web_search", label: "Web search", detail: line.replace(/\s+/g, " ").slice(0, 110) };
-  }
-  const fetch = /\[web-fetch:?([^\]]*)\]/i.exec(line);
-  if (fetch) {
-    return { kind: "web_fetch", label: "Fetching source", url: fetch[1]!.trim(), detail: fetch[1]!.trim() };
-  }
-  if (/\[verify\]/i.test(line)) {
-    return { kind: "verdict", label: "Verifying evidence", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  if (/\[conflict\]/i.test(line) || /contradiction/i.test(line)) {
-    return { kind: "contradiction", label: "Contradiction detected", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  if (/\[gap-resolution\]/i.test(line) || /\[gap\]/i.test(line)) {
-    return { kind: "gap_resolution", label: "Resolving evidence gaps", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  if (/\[synthesis|\[synthesize\]/i.test(line)) {
-    return { kind: "synthesize", label: "Synthesizing answer", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  if (/\[join\]/i.test(line)) {
-    return { kind: "join", label: "Joining findings", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  if (/\[done\]/i.test(line)) {
-    return { kind: "done", label: "Finished", detail: line.replace(/\s+/g, " ").slice(0, 120) };
-  }
-  return { kind: "thought", label: "Thought", detail: line.replace(/\s+/g, " ").slice(0, 140) };
-}
-
-/** First-line summary for structured-event fields (many are dicts). */
-export function summaryOf(value: unknown, max = 110): string {
-  if (typeof value === "string") return value.replace(/\s+/g, " ").slice(0, max);
-  if (!value || typeof value !== "object") return "";
-  const fields = value as Record<string, unknown>;
-  for (const key of ["query", "url", "note", "message", "reason", "text", "error", "title", "id", "document_id"]) {
-    const v = fields[key];
-    if (typeof v === "string" && v.trim()) return v.replace(/\s+/g, " ").slice(0, max);
-  }
-  return "";
 }
 
 export function firstArray(fields: Record<string, unknown> | undefined): unknown[] | null {
