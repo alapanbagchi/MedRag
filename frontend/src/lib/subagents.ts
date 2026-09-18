@@ -11,9 +11,10 @@
  * the exact same view model serves both transports.
  */
 
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { useAuiState } from "@assistant-ui/react";
 import { partArgs, partName, taskStatesOf, type Content } from "./parts";
+import { cssVar } from "./theme";
 import {
   parseJudgmentReasons,
   parseJudgmentTokens,
@@ -97,6 +98,12 @@ export interface SubagentRetrievalItem {
   tokens?: number;
   /** Critic reason per passage id (kept and rejected). */
   reasons?: Record<string, string>;
+  /** Judge intent score and covered requirement ids, per passage id. */
+  judgments?: Record<string, { intentScore?: number; coverage: string[] }>;
+  /** Latest progressive stage the tool reported (listings | gated | pages). */
+  stage?: string;
+  /** URLs the credibility gate dropped: shown grayed, never scraped or judged. */
+  droppedUrls?: string[];
 }
 
 /**
@@ -297,6 +304,8 @@ function parseRetrieval(rawResult: unknown): {
   judged: boolean;
   tokens?: number;
   reasons?: Record<string, string>;
+  judgments?: Record<string, { intentScore?: number; coverage: string[] }>;
+  droppedUrls: string[];
 } {
   const text = typeof rawResult === "string" ? rawResult : "";
   const judgment = text ? splitJudgment(text) : null;
@@ -326,7 +335,45 @@ function parseRetrieval(rawResult: unknown): {
     : [];
   const tokens = parseJudgmentTokens(judgment?.verdictsText ?? null);
   const reasons = parseJudgmentReasons(judgment?.verdictsText ?? null);
-  return { passages, relevantIds, judged: verdicts !== null, tokens, reasons };
+  // Per-passage judge detail for the expanded document row: how strongly the
+  // passage matched (intent score) and which requirements it covers.
+  const judgments: Record<string, { intentScore?: number; coverage: string[] }> = {};
+  for (const verdict of verdicts ?? []) {
+    const id = String(verdict.passage_id ?? "");
+    if (!id) continue;
+    judgments[id] = {
+      intentScore:
+        typeof verdict.intent_score === "number" ? verdict.intent_score : undefined,
+      coverage: Array.isArray(verdict.coverage)
+        ? verdict.coverage.filter((item): item is string => typeof item === "string")
+        : [],
+    };
+  }
+  // The credibility gate's per-URL verdicts: a web search reports them before
+  // the pages are scraped, so dropped URLs can gray out while the rest load.
+  const droppedUrls: string[] = [];
+  if (value && typeof value === "object") {
+    const trust = (value as { trust?: unknown }).trust;
+    if (Array.isArray(trust)) {
+      for (const entry of trust) {
+        if (!entry || typeof entry !== "object") continue;
+        const record = entry as { url?: unknown; trustworthy?: unknown };
+        if (record.trustworthy === false
+            && typeof record.url === "string" && record.url) {
+          droppedUrls.push(record.url);
+        }
+      }
+    }
+  }
+  return {
+    passages,
+    relevantIds,
+    judged: verdicts !== null,
+    tokens,
+    reasons,
+    judgments,
+    droppedUrls,
+  };
 }
 
 /**
@@ -429,15 +476,32 @@ function buildAgentItems(
       // The retrieval tool fires a progress event with the raw passages
       // *before* the judge runs, so the attachments can appear live.
       if (name === "tool_progress") {
-        const progress = partArgs(part) as { callId?: string; result?: unknown } | undefined;
+        const progress = partArgs(part) as
+          | { callId?: string; stage?: string; result?: unknown }
+          | undefined;
         if (!progress?.callId || taskIdOfCall(progress.callId) !== agentId) continue;
         const index = toolIndex.get(progress.callId);
         if (index === undefined || items[index]!.kind !== "retrieval") continue;
         const current = items[index] as SubagentRetrievalItem;
         const parsed = parseRetrieval(progress.result);
-        if (parsed.passages.length > 0) {
-          items[index] = { ...current, passages: parsed.passages };
-        }
+        // web_search reports listings -> gate -> pages while it runs. Each
+        // stage replaces only what it knows about, so a later event never
+        // clears an earlier one's data.
+        items[index] = {
+          ...current,
+          stage: progress.stage ?? current.stage,
+          passages: parsed.passages.length > 0 ? parsed.passages : current.passages,
+          droppedUrls: parsed.droppedUrls.length > 0
+            ? parsed.droppedUrls
+            : current.droppedUrls,
+          relevantIds: parsed.relevantIds.length > 0
+            ? parsed.relevantIds
+            : current.relevantIds,
+          judged: parsed.judged || current.judged,
+          reasons: parsed.reasons ?? current.reasons,
+          judgments: parsed.judgments ?? current.judgments,
+          tokens: parsed.tokens ?? current.tokens,
+        };
       }
       continue;
     }
@@ -533,6 +597,9 @@ function buildAgentItems(
         judged: parsed?.judged ?? current?.judged ?? false,
         tokens: parsed?.tokens ?? current?.tokens,
         reasons: parsed?.reasons ?? current?.reasons,
+        judgments: parsed?.judgments ?? current?.judgments,
+        stage: current?.stage,
+        droppedUrls: parsed?.droppedUrls ?? current?.droppedUrls,
       };
       if (existing !== undefined) {
         items[existing] = retrieval;
@@ -712,7 +779,7 @@ export function buildSubagents(content: readonly unknown[], isRunning: boolean):
       shortName: "",
       model: item?.model ?? task?.model,
       depth: spawn?.depth ?? "deep",
-      color: "#8b93a7",
+      color: cssVar("--agent-fallback", "#8b93a7"),
       avatarSeed: 1,
       startedTs,
       finishedTs,
@@ -776,22 +843,55 @@ export function buildSubagents(content: readonly unknown[], isRunning: boolean):
 }
 
 /**
+ * Memoized buildSubagents, keyed on the assistant content array so the two
+ * consumers (the always-mounted trigger and the open sheet) share one build per
+ * snapshot instead of each rebuilding the whole transcript.
+ */
+const subagentCache = new WeakMap<
+  readonly unknown[],
+  { running: boolean; result: Subagent[] }
+>();
+
+export function subagentsFor(
+  content: readonly unknown[],
+  isRunning: boolean,
+): Subagent[] {
+  const hit = subagentCache.get(content);
+  if (hit && hit.running === isRunning) return hit.result;
+  const result = buildSubagents(content, isRunning);
+  subagentCache.set(content, { running: isRunning, result });
+  return result;
+}
+
+/** Content array of the thread latest assistant turn (stable per snapshot). */
+function latestAssistantContent(messages: readonly unknown[]): readonly unknown[] | null {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i] as { role?: string; content?: unknown } | undefined;
+    if (!message || message.role !== "assistant") continue;
+    return Array.isArray(message.content) ? (message.content as readonly unknown[]) : null;
+  }
+  return null;
+}
+
+/**
  * Sub-agents for the full-height agent sheet, which lives outside the message
  * component: read the active thread's latest assistant turn instead of the
  * current message context.
+ *
+ * The rebuild is deferred: during a token stream the message array changes many
+ * times per frame, and folding the entire transcript on each one is what made
+ * the agent sheet stutter. Deferring lets React keep the urgent stream smooth
+ * and coalesce the expensive fold to the frames it has spare time for.
  */
 export function useThreadSubagents(): Subagent[] {
   const messages = useAuiState((s) => s.thread.messages);
   const isRunning = useAuiState((s) => s.thread.isRunning);
+  const deferredMessages = useDeferredValue(messages);
+  const deferredRunning = useDeferredValue(isRunning);
   return useMemo(() => {
-    let assistant: (typeof messages)[number] | undefined;
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i]!.role === "assistant") {
-        assistant = messages[i];
-        break;
-      }
-    }
-    if (!assistant || !Array.isArray(assistant.content)) return [];
-    return buildSubagents(assistant.content as readonly unknown[], isRunning);
-  }, [messages, isRunning]);
+    if (!deferredMessages) return [];
+    const content = latestAssistantContent(deferredMessages as readonly unknown[]);
+    if (!content) return [];
+    return subagentsFor(content, deferredRunning);
+  }, [deferredMessages, deferredRunning]);
 }

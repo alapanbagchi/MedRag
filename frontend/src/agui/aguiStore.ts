@@ -81,14 +81,19 @@ interface UiState {
   inspectedCallId: string | null;
   inspect: (callId: string) => void;
   closeInspector: () => void;
-  /** The left-sliding agentic-flow panel. */
+  /** The left-sliding agentic-flow panel, and the message it was opened for. */
   flowOpen: boolean;
-  openFlow: () => void;
+  flowMessageId: string | null;
+  openFlow: (messageId?: string) => void;
   closeFlow: () => void;
   /** Clarification call ids already answered this session. */
   answeredQuestions: Record<string, boolean>;
   markQuestionAnswered: (callId: string) => void;
   clearAnswered: () => void;
+  /** The last run error surfaced by the runtime (null when healthy). */
+  runError: string | null;
+  setRunError: (message: string) => void;
+  clearRunError: () => void;
 }
 
 /** Ephemeral UI state (never persisted): inspector, flow panel, answered ids. */
@@ -97,12 +102,18 @@ export const useAgUiUiStore = create<UiState>()((set) => ({
   inspect: (callId) => set({ inspectedCallId: callId }),
   closeInspector: () => set({ inspectedCallId: null }),
   flowOpen: false,
-  openFlow: () => set({ flowOpen: true }),
-  closeFlow: () => set({ flowOpen: false }),
+  flowMessageId: null,
+  openFlow: (messageId) =>
+    set({ flowOpen: true, flowMessageId: messageId ?? null }),
+  closeFlow: () => set({ flowOpen: false, flowMessageId: null }),
   answeredQuestions: {},
   markQuestionAnswered: (callId) =>
     set((s) => ({ answeredQuestions: { ...s.answeredQuestions, [callId]: true } })),
   clearAnswered: () => set({ answeredQuestions: {} }),
+  runError: null,
+  setRunError: (message) => set({ runError: message }),
+  // Returning the same state when already clear avoids a needless re-render.
+  clearRunError: () => set((s) => (s.runError === null ? s : { runError: null })),
 }));
 
 useAgUiStore.subscribe((s) => {

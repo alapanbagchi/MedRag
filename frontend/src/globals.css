@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@openuidev/react-ui/layered/styles/index.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -52,6 +53,27 @@
   --color-chat-tool-ink: var(--chat-tool-ink);
   --color-tree-line: var(--tree-line);
   --color-tree-line-strong: var(--tree-line-strong);
+  /* Component color roles - change the :root / .dark values to re-skin. */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-violet: var(--violet);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-canvas: var(--canvas);
+  --color-overlay: var(--overlay);
+  --color-overlay-soft: var(--overlay-soft);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --radius-xl: calc(var(--radius) * 1.4);
@@ -82,15 +104,14 @@
 
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #ffffff;
+  /* Status hue the OpenUI callout variants map onto. */
+  --warning: oklch(0.7 0.15 70);
 
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
 
   --radius: 0.625rem;
 
-  --cerulean: #4b8cf5;
-  --lagoon: #18ae95;
-  --eclipse: #0d0e1a;
   --answer-tint: #edf5f6;
   --composer-tint: #f7fafb;
 
@@ -103,6 +124,44 @@
   --answer-marker: #8a97a3;
   --answer-quote-line: #c4d3d9;
   --answer-quote-ink: #3c4450;
+
+  /* Component color roles. This block (and its .dark counterpart) is the
+     single place to change the app's accent, status and chart colours. */
+  --brand: #4b8cf5;
+  --brand-strong: #3b78e0;
+  --brand-foreground: #ffffff;
+  --violet: #9d7bfb;
+  --success: #18ae95;
+  --success-foreground: #ffffff;
+  --danger: #e2534b;
+  --danger-foreground: #ffffff;
+  --info: #0ea5e9;
+  /* Inline citation chips: white ink on a soft light-blue tint, muted;
+     hover is a clearly brighter blue so the active citation is obvious. */
+  --cite-chip-bg: color-mix(in oklab, #6ea8e8 22%, transparent);
+  --cite-chip-bg-hover: color-mix(in oklab, #6ea8e8 62%, transparent);
+  --cite-chip-fg: #ffffff;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --overlay-soft: rgba(0, 0, 0, 0.2);
+  --series-1: #4b8cf5;
+  --series-2: #18ae95;
+  --series-3: #f5a623;
+  --series-4: #e5484d;
+  --series-5: #8b5cf6;
+  --series-6: #0ea5e9;
+  --series-7: #64748b;
+  --chart-surface: #eef2f6;
+  --chart-surface-strong: #dbe7f3;
+  --chart-line: #c9d4d9;
+  --chart-track: #e8eef5;
+  --chart-heat-low: #e8f3f1;
+  --chart-heat-mid: #4b8cf5;
+  --chart-heat-high: #0b3f8f;
+  --chart-heat-green-high: #0b6b5c;
+  --canvas: #ffffff;
+  /* Agent avatars take a hex (the face derives neighbouring hues from it). */
+  --agent-fallback: #8b93a7;
+  --face-ink: #17171c;
 
   --sidebar: oklch(0.985 0 0);
   --user-bubble-bg: #eaf4f6;
@@ -138,6 +197,15 @@ html,
 body,
 #root {
   height: 100%;
+}
+
+/* Opaque page ground: without this the app can read as translucent when it is
+   hosted inside another shell. body carries the same colour in dark. */
+html {
+  background-color: var(--background);
+}
+.dark {
+  background-color: var(--canvas);
 }
 
 body {
@@ -274,6 +342,11 @@ body {
 }
 .anim-stage-pop { animation: medrag-stage-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* Brand gradient (logo mark, send button): central --brand -> --violet. */
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, var(--brand) 0%, var(--violet) 100%);
+}
+
 /* Pill hover for the in-message agentic-flow trigger. A plain :hover rule
    (not Tailwind's `hover:` variant, which v4 wraps in @media (hover: hover)). */
 .pill-hover {
@@ -351,7 +424,7 @@ body {
   .subagent-stage { transition: none; }
 }
 
-/* Inline citation chip [n] */
+/* Inline citation chip: white ink on a soft light-blue tint, kept quiet. */
 .cite-chip {
   display: inline-flex;
   align-items: center;
@@ -360,15 +433,80 @@ body {
   height: 1.15em;
   margin: 0 0.1em;
   padding: 0 0.25em;
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  background: var(--card);
-  color: var(--cerulean);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--cite-chip-bg);
+  color: var(--cite-chip-fg);
   font-family: var(--font-mono);
   font-size: 0.72em;
   font-style: normal;
   vertical-align: super;
   line-height: 1;
+  opacity: 0.9;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  text-decoration: none;
+}
+
+.cite-chip:hover,
+.cite-chip:focus-visible {
+  background: var(--cite-chip-bg-hover);
+  border-color: transparent;
+  color: var(--cite-chip-fg);
+  opacity: 1;
+  outline: none;
+}
+
+.cite-chip-open {
+  background: var(--cite-chip-bg-hover);
+  border-color: transparent;
+  color: var(--cite-chip-fg);
+  opacity: 1;
+}
+
+/* A marker the verified list does not resolve: no literal [n], but muted. */
+.cite-chip-missing {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  background: transparent;
+  color: var(--muted-foreground);
+  opacity: 1;
+  cursor: default;
+}
+
+/*
+ * Author-year inline badges carry text ("(Zhang et al., 2025)") instead of a
+ * single digit, so they sit on the baseline like prose, not superscript.
+ */
+.cite-chip-labeled {
+  height: auto;
+  min-width: 0;
+  margin: 0 0.08em;
+  padding: 0.06em 0.4em 0.06em 0.18em;
+  border-radius: 4px;
+  /* Read as ordinary prose: same family, size and weight as the text. */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.cite-reference {
+  border-radius: 8px;
+  transition: background-color 300ms ease;
+}
+
+/* Hovering an inline citation tints the sentence it supports. Painted with
+   the CSS Custom Highlight API, so no DOM is mutated for the effect. */
+::highlight(medrag-cite) {
+  background-color: color-mix(in oklab, var(--brand) 26%, transparent);
+  color: inherit;
+}
+
+.cite-target-flash {
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
 }
 
 /* Structured answer typography */
@@ -387,63 +525,96 @@ body {
 }
 
 .dark {
-  --background: #08080c;
-  --foreground: #f2f3f7;
-  --card: rgba(255, 255, 255, 0.045);
-  --card-foreground: #f2f3f7;
-  --popover: #14151c;
-  --popover-foreground: #f2f3f7;
-  --primary: #6ea2ff;
-  --primary-foreground: #0a0b12;
-  --secondary: rgba(255, 255, 255, 0.07);
-  --secondary-foreground: #f2f3f7;
-  --muted: rgba(255, 255, 255, 0.06);
-  --muted-foreground: #99a1b0;
-  --accent: rgba(255, 255, 255, 0.08);
-  --accent-foreground: #f2f3f7;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.09);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: rgba(110, 162, 255, 0.5);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: transparent;
-  --sidebar-foreground: #f2f3f7;
-  --sidebar-primary: #6ea2ff;
-  --sidebar-primary-foreground: #0a0b12;
-  --sidebar-accent: rgba(255, 255, 255, 0.07);
-  --sidebar-accent-foreground: #f2f3f7;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: rgba(110, 162, 255, 0.5);
+  --background: #151517;
+  --foreground: #f5f7f9;
+  --card: #242324;
+  --card-foreground: #f5f7f9;
+  --popover: #2e2d2f;
+  --popover-foreground: #f5f7f9;
+  --primary: #0577c4;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2a2c;
+  --secondary-foreground: #f5f7f9;
+  --muted: #26272a;
+  --muted-foreground: #9a9ea4;
+  --accent: #303032;
+  --accent-foreground: #f5f7f9;
+  --destructive: #e5484d;
+  --warning: #d8a13a;
+  --border: #383838;
+  --input: #383838;
+  --ring: rgba(5, 119, 196, 0.55);
+  --chart-1: #0577c4;
+  --chart-2: #35a7dd;
+  --chart-3: #7cc3e8;
+  --chart-4: #42587d;
+  --chart-5: #8b9198;
+  --sidebar: #1d1d1d;
+  --sidebar-foreground: #f5f7f9;
+  --sidebar-primary: #0577c4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2a2a2c;
+  --sidebar-accent-foreground: #f5f7f9;
+  --sidebar-border: #383838;
+  --sidebar-ring: rgba(5, 119, 196, 0.55);
 
-  /* Dark counterparts for the app-specific palette. */
-  --composer-tint: rgba(255, 255, 255, 0.05);
-  --answer-tint: rgba(75, 140, 245, 0.06);
-  --user-bubble-bg: rgba(255, 255, 255, 0.07);
-  --chat-ai-bg: #2c2d31;
-  --chat-ai-ink: #e9eaee;
-  --chat-tool-bg: #ececec;
-  --chat-tool-ink: #17181c;
-  --tree-line: #3f5a73;
-  --tree-line-strong: #527391;
+  /* App-specific surfaces, dark counterparts. */
+  --composer-tint: #242324;
+  --answer-tint: rgba(5, 119, 196, 0.08);
+  --user-bubble-bg: #2a2a2c;
+  --chat-ai-bg: #2a2a2c;
+  --chat-ai-ink: #e8eaed;
+  --chat-tool-bg: #242324;
+  --chat-tool-ink: #e8eaed;
+  --tree-line: #3a4450;
+  --tree-line-strong: #4a5a70;
   --scroll-thumb: rgba(255, 255, 255, 0.16);
-  --answer-ink: #d9dde6;
+  --answer-ink: #d6d9de;
   --answer-strong: #ffffff;
-  --answer-marker: #6b7480;
+  --answer-marker: #6e747c;
   --answer-quote-line: rgba(255, 255, 255, 0.12);
-  --answer-quote-ink: #aab3bd;
+  --answer-quote-ink: #aab0b6;
+
+  /* Component color roles, dark theme. The reference scheme has one azure
+     accent, so brand and its gradient partner are both blue; status hues stay
+     distinct so the UI can still signal state. */
+  --brand: #0577c4;
+  --brand-strong: #04629f;
+  --violet: #35a7dd;
+  --success: #2fa87a;
+  --danger: #e5484d;
+  --info: #5aa9e6;
+  /* Inline citation chips: white ink on a soft light-blue tint, muted;
+     hover is a clearly brighter blue so the active citation is obvious. */
+  --cite-chip-bg: color-mix(in oklab, #9ecbff 26%, transparent);
+  --cite-chip-bg-hover: color-mix(in oklab, #9ecbff 62%, transparent);
+  --cite-chip-fg: #ffffff;
+  --overlay-soft: rgba(0, 0, 0, 0.45);
+  --series-1: #0577c4;
+  --series-2: #35a7dd;
+  --series-3: #7cc3e8;
+  --series-4: #42587d;
+  --series-5: #447f8d;
+  --series-6: #a1c8e3;
+  --series-7: #8b9198;
+  --chart-surface: #242324;
+  --chart-surface-strong: #2a2a2c;
+  --chart-line: #383838;
+  --chart-track: #2a2a2c;
+  --chart-heat-low: #12242e;
+  --chart-heat-mid: #0577c4;
+  --chart-heat-high: #35a7dd;
+  --chart-heat-green-high: #2fa87a;
+  --canvas: #191c20;
+  --agent-fallback: #8b9198;
+  --canvas-glow: none;
+
 }
 
 /* Deep gradient canvas behind the glass surfaces (dark theme only). */
 .dark body {
-  background-color: #0a0a10;
-  background-image:
-    radial-gradient(900px 520px at 12% -8%, rgba(75, 140, 245, 0.22), transparent 60%),
-    radial-gradient(820px 520px at 90% -4%, rgba(157, 123, 251, 0.2), transparent 58%),
-    radial-gradient(1200px 700px at 50% 120%, rgba(75, 140, 245, 0.08), transparent 70%);
+  background-color: var(--canvas);
+  background-image: var(--canvas-glow);
   background-repeat: no-repeat;
 }
 
@@ -453,21 +624,9 @@ body {
   background-color: var(--background);
 }
 .dark .app-canvas {
-  background-color: #0a0a10;
-  background-image:
-    radial-gradient(900px 520px at 12% -8%, rgba(75, 140, 245, 0.22), transparent 60%),
-    radial-gradient(820px 520px at 90% -4%, rgba(157, 123, 251, 0.2), transparent 58%),
-    radial-gradient(1200px 700px at 50% 120%, rgba(75, 140, 245, 0.08), transparent 70%);
+  background-color: var(--canvas);
+  background-image: var(--canvas-glow);
   background-repeat: no-repeat;
-}
-
-/* Frost the translucent card surfaces so they read as glass over the
-   gradient. Limited to the large surfaces; tiny chips stay crisp. */
-.dark .bg-card,
-.dark .bg-composer,
-.dark .bg-user-bubble {
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  backdrop-filter: blur(18px) saturate(150%);
 }
 
 @layer base {

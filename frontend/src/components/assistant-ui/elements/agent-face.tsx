@@ -13,10 +13,10 @@
  * animates without JS cost, and reduced-motion users get a static face.
  */
 
-import { useId, type CSSProperties, type ReactNode } from "react";
+import { memo, useId, type CSSProperties, type ReactNode } from "react";
 
-/** Ink used for every facial stroke. */
-const INK = "#17171c";
+/* Facial strokes/fills use currentColor; the root sets it from the central
+   --face-ink token, so the ink colour is changed in globals.css. */
 
 type EyeKind = "dots" | "happy" | "sleepy" | "wink" | "line" | "side";
 type MouthKind = "smile" | "open" | "wave" | "tongue" | "flat" | "o" | "grin";
@@ -118,7 +118,7 @@ function Eyes({
     </g>
   );
   const dot = (cx: number, key: string) =>
-    blink(<circle cx={cx} cy={cy} r={r * 0.85} fill={INK} stroke="none" />, key);
+    blink(<circle cx={cx} cy={cy} r={r * 0.85} fill="currentColor" stroke="none" />, key);
 
   switch (kind) {
     case "happy":
@@ -184,7 +184,7 @@ function Mouth({ kind, y, talking }: { kind: MouthKind; y: number; talking: bool
         cy={y + 1.5}
         rx={4.2}
         ry={3.4}
-        fill={INK}
+        fill="currentColor"
         stroke="none"
         className="agent-face__mouth-open"
       />
@@ -197,7 +197,7 @@ function Mouth({ kind, y, talking }: { kind: MouthKind; y: number; talking: bool
 function mouthShape(kind: MouthKind, y: number): ReactNode {
   switch (kind) {
     case "open":
-      return <ellipse cx={50} cy={y + 1.5} rx={3.8} ry={3} fill={INK} stroke="none" />;
+      return <ellipse cx={50} cy={y + 1.5} rx={3.8} ry={3} fill="currentColor" stroke="none" />;
     case "wave":
       return (
         <path
@@ -207,7 +207,7 @@ function mouthShape(kind: MouthKind, y: number): ReactNode {
     case "flat":
       return <path d={`M45.5 ${(y + 1).toFixed(1)} L54.5 ${(y + 1).toFixed(1)}`} />;
     case "o":
-      return <circle cx={50} cy={y + 1} r={2.6} fill={INK} stroke="none" />;
+      return <circle cx={50} cy={y + 1} r={2.6} fill="currentColor" stroke="none" />;
     case "grin":
       return (
         <>
@@ -222,7 +222,7 @@ function mouthShape(kind: MouthKind, y: number): ReactNode {
           <path d={`M44.5 ${(y - 0.5).toFixed(1)} Q50 ${(y + 5).toFixed(1)} 55.5 ${(y - 0.5).toFixed(1)}`} />
           <path
             d={`M47.6 ${(y + 2.9).toFixed(1)} Q50 ${(y + 7.1).toFixed(1)} 52.4 ${(y + 2.9).toFixed(1)} Z`}
-            fill={INK}
+            fill="currentColor"
             stroke="none"
           />
         </>
@@ -232,7 +232,7 @@ function mouthShape(kind: MouthKind, y: number): ReactNode {
   }
 }
 
-export function AgentFace({
+const AgentFaceInner = memo(function AgentFace({
   color,
   size = 52,
   mood = "idle",
@@ -298,7 +298,7 @@ export function AgentFace({
       width={size}
       height={size}
       className={className}
-      style={{ ...style, "--face-delay": faceDelay } as CSSProperties}
+      style={{ ...style, "--face-delay": faceDelay, color: "var(--face-ink)" } as CSSProperties}
       aria-hidden
       focusable="false"
     >
@@ -319,11 +319,10 @@ export function AgentFace({
             rx={rx}
             fill={`url(#${gradientId})`}
             transform={`rotate(${tilt.toFixed(2)} 50 50)`}
-            style={{ filter: "drop-shadow(0 2px 3px rgba(13,14,26,0.18))" }}
           />
           <g
             fill="none"
-            stroke={INK}
+            stroke="currentColor"
             strokeWidth={2.4}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -342,4 +341,7 @@ export function AgentFace({
       </g>
     </svg>
   );
-}
+});
+
+/** Memoized: a face is pure over its stable per-agent props. */
+export const AgentFace = memo(AgentFaceInner);

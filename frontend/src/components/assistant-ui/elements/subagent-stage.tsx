@@ -14,6 +14,7 @@
 
 import {
   memo,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -23,9 +24,17 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { CheckIcon, FileTextIcon, GlobeIcon, Loader2Icon, XIcon } from "lucide-react";
 import {
-  useThreadSubagents,
+  CheckIcon,
+  ChevronDownIcon,
+  FileTextIcon,
+  GlobeIcon,
+  Loader2Icon,
+  XIcon,
+} from "lucide-react";
+import { useAuiState } from "@assistant-ui/react";
+import {
+  subagentsFor,
   type RetrievalPassage,
   type Subagent,
   type SubagentItem,
@@ -38,6 +47,7 @@ import { useAgUiUiStore } from "../../../agui/aguiStore";
 import { stepMeta } from "../../../lib/toolkit";
 import { AgentFace } from "./agent-face";
 import { domainOf } from "@/lib/url";
+import { cssVar } from "@/lib/theme";
 import { Message } from "./message";
 
 /** Clock label ("3:07 AM") for a stream timestamp. */
@@ -64,7 +74,7 @@ function AgentAvatar({ agent, size = 52 }: { agent: Subagent; size?: number }) {
 
 function AgentStatus({ agent, className }: { agent: Subagent; className?: string }) {
   if (agent.done) {
-    return <CheckIcon className={className ?? "size-3 shrink-0 text-emerald-500"} />;
+    return <CheckIcon className={className ?? "size-3 shrink-0 text-success"} />;
   }
   if (agent.live) {
     return (
@@ -128,7 +138,7 @@ function AgentRailItem({
       <span className="relative shrink-0">
         <AgentAvatar agent={agent} size={36} />
         {unread ? (
-          <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full border-2 border-popover bg-[#ff453a]" />
+          <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full border-2 border-popover bg-danger" />
         ) : null}
       </span>
       <span className="min-w-0 flex-1">
@@ -332,13 +342,13 @@ const AgentToolCard = memo(function AgentToolCard({
           <Icon className="size-3.5 shrink-0" />
           <span className="truncate text-[12px] font-medium tracking-tight">{meta.label}</span>
           {item.done ? (
-            <CheckIcon className="size-3 shrink-0 text-emerald-600" />
+            <CheckIcon className="size-3 shrink-0 text-success" />
           ) : (
             <Loader2Icon className="size-3 shrink-0 animate-spin motion-reduce:animate-none" />
           )}
         </div>
         {item.error ? (
-          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-red-600">
+          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-danger">
             {item.error}
           </p>
         ) : detail ? (
@@ -396,8 +406,15 @@ interface DocumentGroup {
   relevant: boolean;
   /** Web source (globe icon + domain) vs local-corpus document. */
   web: boolean;
+  /** The credibility gate dropped this URL: never scraped, never judged. */
+  dropped?: boolean;
   /** Critic verdict + reason per grouped passage (same order as `passages`). */
-  critique: Array<{ kept: boolean; reason: string }>;
+  critique: Array<{
+    kept: boolean;
+    reason: string;
+    intentScore?: number;
+    coverage: string[];
+  }>;
 }
 
 /** Collapse the retrieved passages into one card per source document/page. */
@@ -427,9 +444,12 @@ function groupDocuments(item: SubagentRetrievalItem): DocumentGroup[] {
       groups.set(key, group);
     }
     group.passages.push(passage);
+    const judge = item.judgments?.[passage.id];
     group.critique.push({
       kept: relevant.has(passage.id),
       reason: item.reasons?.[passage.id] ?? "",
+      intentScore: judge?.intentScore,
+      coverage: judge?.coverage ?? [],
     });
     if (
       typeof passage.score === "number" &&
@@ -439,23 +459,55 @@ function groupDocuments(item: SubagentRetrievalItem): DocumentGroup[] {
     }
     if (relevant.has(passage.id)) group.relevant = true;
   }
+  // URLs the credibility gate dropped never reached the scrape or the judge, so
+  // they carry no passages; surface them anyway so the rejection is visible.
+  for (const url of item.droppedUrls ?? []) {
+    if (!url || groups.has(url)) continue;
+    groups.set(url, {
+      key: url,
+      title: domainOf(url) || url,
+      url,
+      passages: [],
+      relevant: false,
+      web,
+      critique: [],
+      dropped: true,
+    });
+  }
   return [...groups.values()];
 }
 
-function DocChip({ children }: { children: ReactNode }) {
+function DocChip({
+  children,
+  tone = "default",
+}: {
+  children: ReactNode;
+  tone?: "default" | "ok" | "no" | "req";
+}) {
+  const tones: Record<string, string> = {
+    default: "bg-chat-tool-ink/[0.06] text-chat-tool-ink/60",
+    ok: "bg-success/10 text-success",
+    no: "bg-chat-tool-ink/[0.06] text-chat-tool-ink/45",
+    req: "bg-info/10 text-info",
+  };
   return (
-    <span className="rounded-md bg-chat-tool-ink/[0.06] px-1.5 py-0.5 font-mono text-[10px] leading-none text-chat-tool-ink/60">
+    <span
+      className={`rounded-md px-1.5 py-0.5 font-mono text-[10px] leading-none ${tones[tone]}`}
+    >
       {children}
     </span>
   );
 }
 
 /**
- * One source document as a high-fidelity card: paper title, PMC id, section,
- * best score and passage count. Plain white; rejected cards dim once the judge
- * has ruled.
+ * One source document as a compact, consistent row - icon, title, id - that
+ * expands on click into the full record: every chunk with its retrieval score,
+ * the judge verdict, intent score, covered requirements and critic reason.
+ *
+ * Small by default so a search returning eight documents stays scannable; the
+ * detail is one click away instead of always on screen.
  */
-function DocumentCard({
+function DocumentRow({
   doc,
   verified,
   index,
@@ -464,108 +516,177 @@ function DocumentCard({
   verified: boolean;
   index: number;
 }) {
-  const rejected = verified && !doc.relevant;
+  const [open, setOpen] = useState(false);
+  // Two different rejections. The credibility gate dropped the URL before it
+  // was ever read, so the URL itself is the finding: shown, grayed, labelled.
+  // The judge read the page and kept nothing from it, so the caller removes it
+  // from the list (see RejectedDocs) rather than graying it in place.
+  const dropped = doc.dropped === true;
+  // The entrance animation fills forwards, so it owns the element opacity for
+  // the rest of its life: dim a rejected card with a filter, which composes
+  // with the animation instead of being overridden by it.
+  const dimmed = dropped || (verified && !doc.relevant);
   const domain = domainOf(doc.url);
   const Icon = doc.web ? GlobeIcon : FileTextIcon;
+  const sourceId = doc.web ? domain || "web source" : doc.pmcid || "document";
+  const chunks = doc.passages.length;
+  const expandable = chunks > 0;
+
   return (
     <div
-      title={(doc.passages[0]?.text ?? "").slice(0, 300)}
       style={{ animationDelay: `${index * 55}ms` }}
-      className={`anim-agent-in group relative flex flex-col overflow-hidden rounded-2xl border p-3 transition-all duration-500 ease-out ${
-        rejected
-          ? "border-chat-tool-ink/10 bg-chat-tool/70 opacity-45"
-          : "border-chat-tool-ink/12 bg-chat-tool shadow-[0_1px_2px_rgba(13,14,26,0.05),0_12px_32px_-20px_rgba(13,14,26,0.55)] hover:-translate-y-0.5 hover:border-chat-tool-ink/20 hover:shadow-[0_2px_6px_rgba(13,14,26,0.08),0_20px_44px_-22px_rgba(13,14,26,0.65)]"
+      className={`anim-agent-in w-[340px] max-w-full overflow-hidden rounded-xl border transition-colors duration-300 ${
+        dimmed
+          ? "border-chat-tool-ink/10 bg-chat-tool/70 [filter:opacity(0.55)]"
+          : "border-chat-tool-ink/12 bg-chat-tool"
       }`}
     >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] bg-chat-tool-ink/[0.08]"
-      />
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-chat-tool-ink/[0.06] text-chat-tool-ink/50">
-          <Icon className="size-[18px]" />
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 px-2.5 py-2 text-left outline-none"
+      >
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-chat-tool-ink/[0.06] text-chat-tool-ink/55">
+          <Icon className="size-[15px]" />
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-[13.5px] leading-[1.35] font-semibold tracking-[-0.01em] text-chat-tool-ink">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] leading-[1.3] font-medium tracking-[-0.01em] text-chat-tool-ink">
             {doc.title}
-          </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            {doc.web ? (
-              <>
-                {domain ? <DocChip>{domain}</DocChip> : null}
-                {typeof doc.score === "number" ? <DocChip>{doc.score.toFixed(2)}</DocChip> : null}
-              </>
-            ) : (
-              <>
-                {doc.pmcid ? <DocChip>{doc.pmcid}</DocChip> : null}
-                {doc.section ? <DocChip>{doc.section}</DocChip> : null}
-                {typeof doc.score === "number" ? <DocChip>{doc.score.toFixed(2)}</DocChip> : null}
-              </>
-            )}
-            <span className="text-[11px] text-chat-tool-ink/45">
-              {doc.passages.length} passage{doc.passages.length === 1 ? "" : "s"}
+          </span>
+          <span className="mt-0.5 flex items-center gap-1.5 text-[10.5px] leading-[14px] text-chat-tool-ink/45">
+            <span className="truncate font-mono">{sourceId}</span>
+            <span aria-hidden>·</span>
+            <span className="shrink-0">
+              {dropped
+                ? "failed credibility check"
+                : (chunks + " chunk" + (chunks === 1 ? "" : "s"))}
             </span>
-          </div>
-        </div>
-        <span className="mt-0.5 shrink-0">
+          </span>
+        </span>
+        <span className="shrink-0">
           {!verified ? (
-            <span className="flex size-5 items-center justify-center">
-              <Loader2Icon className="size-3.5 animate-spin text-chat-tool-ink/40 motion-reduce:animate-none" />
-            </span>
+            <Loader2Icon className="size-3.5 animate-spin text-chat-tool-ink/40 motion-reduce:animate-none" />
           ) : doc.relevant ? (
-            <span className="flex size-5 items-center justify-center rounded-full bg-chat-tool-ink/[0.06] text-chat-tool-ink/60">
-              <CheckIcon className="size-3.5" />
-            </span>
+            <CheckIcon className="size-3.5 text-success" />
           ) : (
-            <span className="flex size-5 items-center justify-center rounded-full bg-chat-tool-ink/[0.06] text-chat-tool-ink/40">
-              <XIcon className="size-3.5" />
-            </span>
+            <XIcon className="size-3.5 text-chat-tool-ink/40" />
           )}
         </span>
-      </div>
-      {doc.passages.length > 0 ? (
-        <div className="mt-2.5 rounded-lg border border-chat-tool-ink/[0.06] bg-chat-tool-ink/[0.045] px-2.5 py-2 shadow-[inset_0_1px_2px_rgba(13,14,26,0.07)]">
-          <p className="text-[10.5px] font-medium tracking-[0.01em] text-chat-tool-ink/50">
-            {doc.passages.length === 1 ? "Chunk" : "Chunks"} that might be relevant:
-          </p>
-          <div className="mt-1 space-y-1.5">
-            {doc.passages.slice(0, 3).map((passage, i) => (
-              <p
-                key={i}
-                className="line-clamp-4 whitespace-pre-wrap break-words text-[12px] leading-[1.5] text-chat-tool-ink/70"
+        {expandable ? (
+          <ChevronDownIcon
+            className={`size-3.5 shrink-0 text-chat-tool-ink/35 transition-transform duration-200 ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        ) : null}
+      </button>
+
+      {open && expandable ? (
+        <div className="border-t border-chat-tool-ink/[0.08] px-2.5 pt-2 pb-2.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {doc.journal ? <DocChip>{doc.journal}</DocChip> : null}
+            {doc.section ? <DocChip>{doc.section}</DocChip> : null}
+            {doc.url ? (
+              <a
+                href={doc.url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-[10px] text-chat-tool-ink/55 underline underline-offset-2 hover:text-chat-tool-ink/85"
               >
-                {passage.text}
-              </p>
-            ))}
+                open source
+              </a>
+            ) : null}
           </div>
-          {doc.passages.length > 3 ? (
-            <p className="mt-1 text-[11px] text-chat-tool-ink/45">
-              +{doc.passages.length - 3} more chunk{doc.passages.length - 3 === 1 ? "" : "s"}
-            </p>
-          ) : null}
+
+          <div className="mt-2 space-y-1.5">
+            {doc.passages.map((passage, i) => {
+              const critic = doc.critique[i];
+              return (
+                <div
+                  key={`${passage.id}-${i}`}
+                  className="rounded-lg bg-chat-tool-ink/[0.035] px-2.5 py-2"
+                >
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="mr-0.5 max-w-[9rem] truncate font-mono text-[10px] text-chat-tool-ink/45">
+                      {passage.id}
+                    </span>
+                    {passage.chunkType ? <DocChip>{passage.chunkType}</DocChip> : null}
+                    {typeof passage.score === "number" ? (
+                      <DocChip>score {passage.score.toFixed(2)}</DocChip>
+                    ) : null}
+                    {critic ? (
+                      <DocChip tone={critic.kept ? "ok" : "no"}>
+                        {critic.kept ? "accepted" : "rejected"}
+                      </DocChip>
+                    ) : null}
+                    {typeof critic?.intentScore === "number" ? (
+                      <DocChip>intent {critic.intentScore.toFixed(2)}</DocChip>
+                    ) : null}
+                  </div>
+
+                  {critic && critic.coverage.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] text-chat-tool-ink/45">covers</span>
+                      {critic.coverage.map((requirement) => (
+                        <DocChip key={requirement} tone="req">
+                          {requirement}
+                        </DocChip>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <p className="mt-1.5 text-[12.5px] leading-[1.55] whitespace-pre-wrap break-words text-chat-tool-ink/80 [overflow-wrap:anywhere]">
+                    {passage.text}
+                  </p>
+
+                  {critic?.reason ? (
+                    <p className="mt-1.5 text-[11.5px] leading-[1.45] text-chat-tool-ink/60">
+                      <span className="font-semibold text-chat-tool-ink/70">
+                        {critic.kept ? "Accepted" : "Rejected"}
+                      </span>
+                      <span className="text-chat-tool-ink/40"> — </span>
+                      {critic.reason}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
-      {verified && doc.critique.length > 0 ? (
-        <div className="mt-2 rounded-lg border border-chat-tool-ink/[0.06] bg-chat-tool-ink/[0.03] px-2.5 py-2 shadow-[inset_0_1px_2px_rgba(13,14,26,0.05)]">
-          <p className="text-[10.5px] font-medium tracking-[0.01em] text-chat-tool-ink/50">
-            Critic’s reason:
-          </p>
-          <div className="mt-1 space-y-1">
-            {doc.critique.map((c, i) => (
-              <p
-                key={i}
-                className="whitespace-pre-wrap break-words text-[11.5px] leading-[1.45] text-chat-tool-ink/70"
-              >
-                <span className="font-semibold text-chat-tool-ink/60">
-                  {c.kept ? "Accepted" : "Rejected"}
-                </span>
-                <span className="text-chat-tool-ink/45"> — </span>
-                {c.reason || "no reason provided"}
-              </p>
-            ))}
-          </div>
-        </div>
-      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Judge-rejected documents, collapsed behind one disclosure.
+ *
+ * They leave the main list once the judge has ruled, because the answer does
+ * not lean on them, but stay one click away so the whole search is still
+ * inspectable.
+ */
+function RejectedDocs({ docs }: { docs: DocumentGroup[] }) {
+  const [open, setOpen] = useState(false);
+  const noun = docs[0]?.web ? "source" : "document";
+  return (
+    <div className="flex w-[340px] max-w-full flex-col items-stretch gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex items-center gap-1 self-end px-1 text-[11.5px] leading-4 text-chat-tool-ink/45 transition-colors hover:text-chat-tool-ink/75"
+      >
+        <ChevronDownIcon
+          className={`size-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+        {docs.length + " " + noun + (docs.length === 1 ? "" : "s") + " rejected by the judge"}
+      </button>
+      {open
+        ? docs.map((doc, index) => (
+            <DocumentRow key={doc.key} doc={doc} verified index={index} />
+          ))
+        : null}
     </div>
   );
 }
@@ -634,8 +755,27 @@ const AgentRetrievalFlow = memo(function AgentRetrievalFlow({
     () => groupDocuments(item),
     [item.key, item.passages.length, item.judged, item.done],
   );
+  const judged = verified && item.judged;
   const relevantCount = item.judged ? docs.filter((doc) => doc.relevant).length : docs.length;
   const noun = web ? "source" : "document";
+  // Once the judge has ruled, the cards it kept nothing from leave the list -
+  // the answer no longer leans on them. They stay one click away so the whole
+  // search is still inspectable.
+  const rejectedDocs = judged
+    ? docs.filter((doc) => !doc.relevant && doc.dropped !== true)
+    : [];
+  const visibleDocs = docs.filter((doc) => !rejectedDocs.includes(doc));
+  // What the tool is doing right now, so each stage is visible as it lands.
+  const stageLine =
+    item.stage === "listings"
+      ? "Found " + docs.length + " candidate " + noun + (docs.length === 1 ? "" : "s") + " - checking their credibility"
+      : item.stage === "gated"
+        ? docs.filter((doc) => doc.dropped !== true).length + " passed the credibility check - reading them now"
+        : item.stage === "pages"
+          ? "Read " + docs.length + " " + noun + (docs.length === 1 ? "" : "s") + " - verifying relevance"
+          : web
+            ? "I found some sources online. Let me check their credibility"
+            : "I found some documents that might be relevant. Wait for me to verify them";
 
   return (
     <>
@@ -652,24 +792,18 @@ const AgentRetrievalFlow = memo(function AgentRetrievalFlow({
       {searching ? <TypingBubble side="out" delayMs={delayMs + 180} /> : null}
       {found ? (
         <>
-          <ToolSay
-            text={
-              web
-                ? "I found some sources online. Let me check their credibility"
-                : "I found some documents that might be relevant. Wait for me to verify them"
-            }
-            delayMs={delayMs + 180}
-          />
+          <ToolSay text={stageLine} delayMs={delayMs + 180} />
           <div className="ios-pop ios-pop--out flex justify-end">
-            <div className="flex w-full flex-col gap-2">
-              {docs.map((doc, index) => (
-                <DocumentCard
+            <div className="flex flex-col items-end gap-2">
+              {visibleDocs.map((doc, index) => (
+                <DocumentRow
                   key={doc.key}
                   doc={doc}
-                  verified={verified && item.judged}
+                  verified={judged}
                   index={index}
                 />
               ))}
+              {rejectedDocs.length > 0 ? <RejectedDocs docs={rejectedDocs} /> : null}
             </div>
           </div>
           {verified && typeof item.tokens === "number" ? (
@@ -739,7 +873,7 @@ function DelegationDivider({
   const name =
     target?.shortName ??
     (isPlan ? "Planner" : depth === "shallow" ? "Quick answer" : "Deep research");
-  const color = target?.color ?? "#8b93a7";
+  const color = target?.color ?? cssVar("--agent-fallback", "#8b93a7");
 
   // Planner handoffs name the agent inside the sentence (and show no chip);
   // research handoffs keep the target in the clickable chip that follows.
@@ -1133,9 +1267,53 @@ function SubagentWindow({
  * sliding in from the right. The outer fixed layer clips the off-screen state
  * so the slide never adds a horizontal scrollbar.
  */
-export function AgentPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const agents = useThreadSubagents();
+/**
+ * The sheet body. Mounted only while the sheet is open (or sliding out), so a
+ * closed sheet costs nothing: the roster and the full transcripts were the
+ * heaviest thing the app derived and re-rendered on every streamed token.
+ */
+function AgentPanelBody({ onClose }: { onClose: () => void }) {
+  const messages = useAuiState((s) => s.thread.messages);
+  const isRunning = useAuiState((s) => s.thread.isRunning);
+  const flowMessageId = useAgUiUiStore((s) => s.flowMessageId);
+  const deferredMessages = useDeferredValue(messages);
+  const agents = useMemo(() => {
+    const list = (deferredMessages ?? []) as readonly {
+      id?: string;
+      role?: string;
+      content?: unknown;
+    }[];
+    if (list.length === 0) return [];
+    const last = list[list.length - 1];
+    // The trigger names the message it belongs to; a stale id (thread switch)
+    // falls back to the latest assistant turn.
+    const target =
+      (flowMessageId ? list.find((m) => m.id === flowMessageId) : null) ??
+      [...list].reverse().find((m) => m.role === "assistant");
+    if (!target || !Array.isArray(target.content)) return [];
+    return subagentsFor(
+      target.content as readonly unknown[],
+      isRunning && target === last,
+    );
+  }, [deferredMessages, flowMessageId, isRunning]);
   if (agents.length === 0) return null;
+  return <SubagentWindow agents={agents} onClose={onClose} />;
+}
+
+export function AgentPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  // Keep the body mounted through the slide-out, then drop it. `open` is used
+  // in the render condition too so opening mounts the body in the same commit
+  // as the transform change and the slide-in still animates.
+  const [showBody, setShowBody] = useState(open);
+  useEffect(() => {
+    if (open) {
+      setShowBody(true);
+      return;
+    }
+    const timer = setTimeout(() => setShowBody(false), 340);
+    return () => clearTimeout(timer);
+  }, [open]);
+  const visible = open || showBody;
   return (
     <div
       data-slot="agent-panel"
@@ -1148,28 +1326,43 @@ export function AgentPanel({ open, onClose }: { open: boolean; onClose: () => vo
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <SubagentWindow agents={agents} onClose={onClose} />
+        {visible ? <AgentPanelBody onClose={onClose} /> : null}
       </div>
     </div>
   );
 }
 
 /**
- * In-message "Thinking · Click to see the agentic flow" row. Rendered where
- * the typing dots used to sit; `fallback` shows until a run has agents.
+ * The in-message "Thinking · Click to see the agentic flow" row.
+ *
+ * Replaces the old inline tool-call rows: tool calls and their results now
+ * live only in the agent sheet, and this one-line row is the only trace left
+ * in the answer. It is derived from THIS message's content and opens the sheet
+ * for this exact turn, so each answer carries its own thoughts.
  */
-export function AgentFlowTrigger() {
-  const agents = useThreadSubagents();
-  const running = agents.some((agent) => agent.live);
+export function MessageAgentFlowTrigger({
+  content,
+  messageId,
+  isRunning,
+}: {
+  content: readonly unknown[];
+  messageId: string;
+  isRunning: boolean;
+}) {
+  const agents = useMemo(
+    () => subagentsFor(content, isRunning),
+    [content, isRunning],
+  );
   const flowOpen = useAgUiUiStore((s) => s.flowOpen);
   const openFlow = useAgUiUiStore((s) => s.openFlow);
   if (agents.length === 0) return null;
-  const content = (
+  const running = agents.some((agent) => agent.live);
+  const body = (
     <>
       <span
         className={
           "size-1.5 shrink-0 rounded-full " +
-          (running ? "medrag-dot bg-[#4b8cf5]" : "bg-emerald-500")
+          (running ? "medrag-dot bg-brand" : "bg-success")
         }
         aria-hidden
       />
@@ -1186,15 +1379,15 @@ export function AgentFlowTrigger() {
     <div className="flex justify-start px-1 py-1.5">
       {flowOpen ? (
         <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-          {content}
+          {body}
         </span>
       ) : (
         <button
           type="button"
-          onClick={openFlow}
+          onClick={() => openFlow(messageId)}
           className="pill-hover flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-foreground/20"
         >
-          {content}
+          {body}
         </button>
       )}
     </div>

@@ -18,7 +18,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       title={dark ? "Light theme" : "Dark theme"}
       onClick={() => setTheme(toggleTheme())}
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#4b8cf5]/40",
+        "flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand/40",
         className,
       )}
     >

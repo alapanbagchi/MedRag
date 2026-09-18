@@ -1,0 +1,4828 @@
+{
+  "root": "Card",
+  "components": {
+    "Card": {
+      "signature": "Card(children: (TextContent | MarkDownRenderer | CardHeader | Alert | Badge | Avatar | CodeBlock | Image | ImageBlock | Progress | Separator | BarChart | LineChart | AreaChart | PieChart | RadarChart | RadialChart | ScatterChart | WaterfallChart | SunburstChart | TreemapChart | FunnelChart | SankeyChart | GaugeChart | HeatmapChart | MapChart | Table | TagBlock | Form | Buttons | Heading | Blockquote | InlineCode | PaginationBlock | DialogBlock | AlertDialogBlock | DrawerBlock | CalendarBlock | Command | Combobox | HoverCard | Tooltip | Popover | Collapsible | ToggleGroup | Sheet | Resizable | ScrollArea | Sonner | Skeleton | Spinner | Empty | Field | Breadcrumb | NavigationMenu | DropdownMenu | ContextMenu | Menubar | Kbd | AspectRatio | ButtonGroup | InputGroup | FollowUpBlock | Tabs | Carousel)[])",
+      "description": "Vertical container for all content in a chat response. Children stack top to bottom automatically."
+    },
+    "CardHeader": {
+      "signature": "CardHeader(title: string, description?: string)",
+      "description": "Title/description header block for a Card."
+    },
+    "TextContent": {
+      "signature": "TextContent(text: string, size?: \"small\" | \"default\" | \"large\" | \"small-heavy\" | \"large-heavy\")",
+      "description": "Text block with optional size. size: \"small\" | \"default\" | \"large\" | \"small-heavy\" | \"large-heavy\". Cite inline as [n] and the app renders a clickable badge."
+    },
+    "MarkDownRenderer": {
+      "signature": "MarkDownRenderer(text: string)",
+      "description": "Renders markdown text with GFM support and clickable [n] citation badges."
+    },
+    "Alert": {
+      "signature": "Alert(title: string, description: string, variant?: \"default\" | \"destructive\" | \"info\" | \"success\" | \"warning\")",
+      "description": "Alert banner with icon, title, and description. variant: \"default\" | \"destructive\" | \"info\" | \"success\" | \"warning\"."
+    },
+    "Badge": {
+      "signature": "Badge(text: string, variant?: \"default\" | \"secondary\" | \"destructive\" | \"outline\" | \"ghost\" | \"link\")",
+      "description": "Inline label/badge. variant: \"default\" | \"secondary\" | \"destructive\" | \"outline\" | \"ghost\" | \"link\"."
+    },
+    "Avatar": {
+      "signature": "Avatar(src?: string, alt?: string, fallback: string)",
+      "description": "Circular avatar with image and fallback text."
+    },
+    "CodeBlock": {
+      "signature": "CodeBlock(code: string, language?: string, title?: string)",
+      "description": "Syntax-highlighted code block with optional language and title."
+    },
+    "Image": {
+      "signature": "Image(src: string, alt?: string)",
+      "description": "Displays an image with optional alt text."
+    },
+    "ImageBlock": {
+      "signature": "ImageBlock(src: string, alt?: string, caption?: string)",
+      "description": "Image with optional caption."
+    },
+    "Progress": {
+      "signature": "Progress(value: number, label?: string)",
+      "description": "Progress bar showing completion percentage (0-100). Optional label."
+    },
+    "Separator": {
+      "signature": "Separator(orientation?: \"horizontal\" | \"vertical\")",
+      "description": "Horizontal or vertical rule. orientation: \"horizontal\" | \"vertical\"."
+    },
+    "Table": {
+      "signature": "Table(columns: Col[], rows: any[][], title?: string, caption?: string)",
+      "description": "Data table. title: what the table shows (e.g. 'Baseline characteristics by arm'); columns: Col[] with header/type/unit; rows: 2D array of values; caption: source, n, or caveat. Every numeric column should carry its unit."
+    },
+    "Col": {
+      "signature": "Col(header: string, type?: \"string\" | \"number\" | \"boolean\", unit?: string)",
+      "description": "Column definition for Table. header: column name; type: string | number | boolean (numbers are right-aligned); unit: measurement unit shown after the header (e.g. mg, %, RR, 95% CI)."
+    },
+    "BarChart": {
+      "signature": "BarChart(labels: string[], series: Series[], variant?: \"grouped\" | \"stacked\", xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Vertical bars comparing a value across categories, or a stacked composition. Use to rank or compare discrete groups. Set meta.title, meta.unit, and both axis labels."
+    },
+    "LineChart": {
+      "signature": "LineChart(labels: string[], series: Series[], xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Line chart for a trend across an ordered axis, often time. Use when the shape of change matters more than individual points. Set meta.title, meta.unit, and both axis labels."
+    },
+    "AreaChart": {
+      "signature": "AreaChart(labels: string[], series: Series[], xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Filled area chart emphasising magnitude or cumulative volume over an ordered axis. Use for totals/volume, not precise comparisons. Set meta.title, meta.unit, and both axis labels."
+    },
+    "RadarChart": {
+      "signature": "RadarChart(labels: string[], series: Series[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Radar/spider comparing entities across the same 3-8 dimensions on one 0-100 scale. Never mix units on a radar. Set meta.title and meta.unit."
+    },
+    "Series": {
+      "signature": "Series(category: string, values: number[])",
+      "description": "One named data series with values matching labels."
+    },
+    "PieChart": {
+      "signature": "PieChart(slices: Slice[], donut?: boolean, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Pie or donut for parts of a whole at one point in time (2-7 slices). Use a bar chart or Table when the reader must compare exact values. Set meta.title and meta.unit."
+    },
+    "RadialChart": {
+      "signature": "RadialChart(slices: Slice[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Radial bar (concentric rings) for a small ranked set on independent scales or progress per category. Use a bar chart when values share one scale. Set meta.title and meta.unit."
+    },
+    "Slice": {
+      "signature": "Slice(category: string, value: number)",
+      "description": "A single slice in a PieChart or RadialChart."
+    },
+    "ScatterChart": {
+      "signature": "ScatterChart(series: ScatterSeries[], xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, showValues?: boolean})",
+      "description": "Scatter relating two numeric variables, one point per study. Use to show correlation, clusters, or effect against a baseline. Label both axes and their units in meta."
+    },
+    "ScatterSeries": {
+      "signature": "ScatterSeries(category: string, points: Point[])",
+      "description": "Named scatter series with Point references."
+    },
+    "Point": {
+      "signature": "Point(x: number, y: number, label?: string)",
+      "description": "A single data point in a ScatterChart series."
+    },
+    "WaterfallChart": {
+      "signature": "WaterfallChart(items: WaterfallItem[], xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Waterfall: how a starting value moves through signed increments to a final total. Use for additive effect decomposition. Mark the last bar total: true. Set meta.title and meta.unit."
+    },
+    "WaterfallItem": {
+      "signature": "WaterfallItem(category: string, value: number, total?: boolean)",
+      "description": "One step in a WaterfallChart. category: step label; value: signed change (negative decreases); total: true renders the running cumulative total bar."
+    },
+    "SunburstChart": {
+      "signature": "SunburstChart(nodes: SunburstNode[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Sunburst: a two-to-four level part-of-whole hierarchy as concentric rings. Use for nested categories; use a pie chart for a flat one-level split. Set meta.title and meta.unit."
+    },
+    "SunburstNode": {
+      "signature": "SunburstNode(name: string, value?: number, parent?: string)",
+      "description": "One node of a SunburstChart hierarchy. name: unique label; value: leaf size (omit for branch nodes); parent: parent node name (omit for a root)."
+    },
+    "TreemapChart": {
+      "signature": "TreemapChart(nodes: TreemapNode[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Treemap: nested part-of-whole as area-proportional rectangles. Use when many categories or two levels must fit at once; pair with a Table for exact values. Set meta.title and meta.unit."
+    },
+    "TreemapNode": {
+      "signature": "TreemapNode(name: string, value?: number, parent?: string)",
+      "description": "One node of a TreemapChart hierarchy. name: unique label; value: leaf size; parent: parent node name (omit for a root)."
+    },
+    "FunnelChart": {
+      "signature": "FunnelChart(stages: FunnelStage[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Funnel: progressive attrition through ordered stages (screened > eligible > included > analysed). Use for any screening or selection flow. Set meta.title and meta.unit."
+    },
+    "FunnelStage": {
+      "signature": "FunnelStage(name: string, value: number)",
+      "description": "One stage in a FunnelChart. name: stage label; value: stage count."
+    },
+    "SankeyChart": {
+      "signature": "SankeyChart(nodes: FlowNode[], links: FlowLink[], meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Sankey: how quantities flow between stages or groups. Use for movement/allocation, never simple category totals. Set meta.title and meta.unit."
+    },
+    "FlowNode": {
+      "signature": "FlowNode(name: string)",
+      "description": "One node (source or target) in a SankeyChart. name: unique label used by FlowLink."
+    },
+    "FlowLink": {
+      "signature": "FlowLink(source: string, target: string, value: number)",
+      "description": "One flow in a SankeyChart. source/target: FlowNode names; value: flow magnitude."
+    },
+    "GaugeChart": {
+      "signature": "GaugeChart(value: number, max?: number, label?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Gauge: one headline number against a maximum (pooled estimate, certainty score, completion). Use only for a single KPI, never comparisons. Set meta.title and meta.unit."
+    },
+    "HeatmapChart": {
+      "signature": "HeatmapChart(cells: HeatCell[], xLabel?: string, yLabel?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean})",
+      "description": "Heatmap matrix: a value at every row x column combination (e.g. outcome x study). Use to expose patterns and gaps across two categorical axes. Always label both axes. Set meta.title and meta.unit."
+    },
+    "HeatCell": {
+      "signature": "HeatCell(x: string, y: string, value: number)",
+      "description": "One cell in a HeatmapChart. x: column label; y: row label; value: cell magnitude."
+    },
+    "MapChart": {
+      "signature": "MapChart(points?: MapPoint[], regions?: MapRegion[], region?: string, meta?: {title?: string, caption?: string, unit?: string, legend?: boolean, roam?: boolean})",
+      "description": "World map for geographic evidence: shaded countries (regions) and/or located study sites (points). Use for geographic distribution or country-level rates. Any country shading must come from a cited numeric value."
+    },
+    "MapPoint": {
+      "signature": "MapPoint(lat: number, lng: number, label?: string, value?: number)",
+      "description": "One marker on a MapChart. lat/lng: coordinates in decimal degrees; label: place or study name; value: optional magnitude used for the marker size and tooltip."
+    },
+    "MapRegion": {
+      "signature": "MapRegion(name: string, value: number, label?: string)",
+      "description": "One shaded country on a MapChart. name: country name in common English (United States, China, Brazil); value: magnitude that drives the color scale; label: optional display name."
+    },
+    "Form": {
+      "signature": "Form(name: string, buttons: Buttons, fields?: FormControl[])",
+      "description": "Form container with fields and explicit action buttons. fields: FormControl[], buttons: Buttons."
+    },
+    "FormControl": {
+      "signature": "FormControl(label: string, field: any)",
+      "description": "Wraps a form field with a label and error display."
+    },
+    "Label": {
+      "signature": "Label(text: string, htmlFor?: string)",
+      "description": "Form label. Optionally links to an input via htmlFor."
+    },
+    "Input": {
+      "signature": "Input(name: string, placeholder?: string, type?: \"text\" | \"email\" | \"password\" | \"number\" | \"url\", rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string})",
+      "description": "Text input field. type: \"text\" | \"email\" | \"password\" | \"number\" | \"url\". rules for validation."
+    },
+    "TextArea": {
+      "signature": "TextArea(name: string, placeholder?: string, rows?: number, rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string})",
+      "description": "Multi-line text input. rows sets visible height. rules for validation."
+    },
+    "Select": {
+      "signature": "Select(name: string, items: SelectItem[], placeholder?: string, rules?: {required?: boolean, email?: boolean, url?: boolean, numeric?: boolean, min?: number, max?: number, minLength?: number, maxLength?: number, pattern?: string})",
+      "description": "Dropdown select. items: SelectItem[], placeholder, rules for validation."
+    },
+    "SelectItem": {
+      "signature": "SelectItem(value: string, label: string)",
+      "description": "Option for Select dropdown."
+    },
+    "DatePicker": {
+      "signature": "DatePicker(name: string, placeholder?: string)",
+      "description": "Date selection input with calendar popover."
+    },
+    "Slider": {
+      "signature": "Slider(name: string, min?: number, max?: number, step?: number, defaultValue?: number)",
+      "description": "Range slider input. min, max, step, defaultValue."
+    },
+    "CheckBoxGroup": {
+      "signature": "CheckBoxGroup(name: string, items: CheckBoxItem[])",
+      "description": "Multiple checkbox options. items: CheckBoxItem[]."
+    },
+    "CheckBoxItem": {
+      "signature": "CheckBoxItem(value: string, label: string)",
+      "description": "Option in a CheckBoxGroup."
+    },
+    "RadioGroup": {
+      "signature": "RadioGroup(name: string, items: RadioItem[])",
+      "description": "Radio selection group. items: RadioItem[]."
+    },
+    "RadioItem": {
+      "signature": "RadioItem(value: string, label: string)",
+      "description": "Option in a RadioGroup."
+    },
+    "SwitchGroup": {
+      "signature": "SwitchGroup(name: string, items: SwitchItem[])",
+      "description": "Group of toggle switches. items: SwitchItem[]."
+    },
+    "SwitchItem": {
+      "signature": "SwitchItem(value: string, label: string)",
+      "description": "Toggle option in a SwitchGroup."
+    },
+    "Button": {
+      "signature": "Button(label: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>}, variant?: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\", size?: \"default\" | \"xs\" | \"sm\" | \"lg\" | \"icon\")",
+      "description": "Clickable button. variant: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\". size: \"default\" | \"xs\" | \"sm\" | \"lg\" | \"icon\". action: { type: \"continue_conversation\" | \"open_url\", url? }."
+    },
+    "Buttons": {
+      "signature": "Buttons(buttons: Button[], direction?: \"row\" | \"column\")",
+      "description": "Group of Button components. direction: \"row\" | \"column\"."
+    },
+    "FollowUpBlock": {
+      "signature": "FollowUpBlock(items: FollowUpItem[])",
+      "description": "List of follow-up suggestion chips at the end of a response."
+    },
+    "FollowUpItem": {
+      "signature": "FollowUpItem(text: string)",
+      "description": "Clickable follow-up suggestion — sends text as user message when clicked."
+    },
+    "Tabs": {
+      "signature": "Tabs(items: TabItem[], defaultValue?: string)",
+      "description": "Tabbed content. items: TabItem[]. defaultValue: initially active tab."
+    },
+    "TabItem": {
+      "signature": "TabItem(value: string, trigger: string, content: (TextContent | MarkDownRenderer | CardHeader | Alert | Badge | Avatar | CodeBlock | Image | ImageBlock | Progress | Separator | BarChart | LineChart | AreaChart | PieChart | RadarChart | RadialChart | ScatterChart | WaterfallChart | SunburstChart | TreemapChart | FunnelChart | SankeyChart | GaugeChart | HeatmapChart | MapChart | Table | TagBlock | Form | Buttons | Heading | Blockquote | InlineCode | PaginationBlock | DialogBlock | AlertDialogBlock | DrawerBlock | CalendarBlock | Command | Combobox | HoverCard | Tooltip | Popover | Collapsible | ToggleGroup | Sheet | Resizable | ScrollArea | Sonner | Skeleton | Spinner | Empty | Field | Breadcrumb | NavigationMenu | DropdownMenu | ContextMenu | Menubar | Kbd | AspectRatio | ButtonGroup | InputGroup)[])",
+      "description": "Tab panel. value: unique id, trigger: tab label, content: children."
+    },
+    "Accordion": {
+      "signature": "Accordion(items: AccordionItem[], type?: \"single\" | \"multiple\")",
+      "description": "Collapsible sections. type: \"single\" | \"multiple\". items: AccordionItem[]."
+    },
+    "AccordionItem": {
+      "signature": "AccordionItem(value: string, trigger: string, content: (TextContent | MarkDownRenderer | CardHeader | Alert | Badge | Avatar | CodeBlock | Image | ImageBlock | Progress | Separator | BarChart | LineChart | AreaChart | PieChart | RadarChart | RadialChart | ScatterChart | WaterfallChart | SunburstChart | TreemapChart | FunnelChart | SankeyChart | GaugeChart | HeatmapChart | MapChart | Table | TagBlock | Form | Buttons | Heading | Blockquote | InlineCode | PaginationBlock | DialogBlock | AlertDialogBlock | DrawerBlock | CalendarBlock | Command | Combobox | HoverCard | Tooltip | Popover | Collapsible | ToggleGroup | Sheet | Resizable | ScrollArea | Sonner | Skeleton | Spinner | Empty | Field | Breadcrumb | NavigationMenu | DropdownMenu | ContextMenu | Menubar | Kbd | AspectRatio | ButtonGroup | InputGroup)[])",
+      "description": "Collapsible item inside Accordion. value: unique id, trigger: header text."
+    },
+    "Carousel": {
+      "signature": "Carousel(slides: any[][], variant?: \"default\" | \"card\")",
+      "description": "Horizontal sliding content. slides: array of slide arrays. variant: \"default\" | \"card\"."
+    },
+    "TagBlock": {
+      "signature": "TagBlock(tags: (string | Tag)[])",
+      "description": "Group of tags. Accepts string array or Tag references."
+    },
+    "Tag": {
+      "signature": "Tag(text: string, variant?: \"default\" | \"secondary\" | \"destructive\" | \"outline\" | \"ghost\")",
+      "description": "Styled tag/badge. Used inside TagBlock."
+    },
+    "Heading": {
+      "signature": "Heading(text: string, level?: \"h1\" | \"h2\" | \"h3\" | \"h4\")",
+      "description": "Heading text. level: \"h1\" | \"h2\" | \"h3\" | \"h4\". Defaults to \"h2\"."
+    },
+    "Blockquote": {
+      "signature": "Blockquote(text: string, cite?: string)",
+      "description": "Styled blockquote. Optional cite for attribution."
+    },
+    "InlineCode": {
+      "signature": "InlineCode(code: string)",
+      "description": "Inline code snippet rendered with monospace font."
+    },
+    "PaginationBlock": {
+      "signature": "PaginationBlock(currentPage: number, totalPages: number)",
+      "description": "Page navigation. currentPage and totalPages control which pages are shown."
+    },
+    "DialogBlock": {
+      "signature": "DialogBlock(triggerLabel: string, title: string, description?: string, content?: any[], triggerVariant?: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\")",
+      "description": "Modal dialog triggered by a button. triggerLabel: button text, title/description in header, content: children rendered inside."
+    },
+    "AlertDialogBlock": {
+      "signature": "AlertDialogBlock(triggerLabel: string, title: string, description: string, confirmLabel?: string, cancelLabel?: string, triggerVariant?: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\")",
+      "description": "Confirmation dialog with cancel and confirm buttons. Clicking confirm sends the confirmLabel as a message."
+    },
+    "DrawerBlock": {
+      "signature": "DrawerBlock(triggerLabel: string, title: string, description?: string, content?: any[])",
+      "description": "Bottom drawer panel triggered by a button. triggerLabel: button text, title/description in header, content: children rendered inside."
+    },
+    "CalendarBlock": {
+      "signature": "CalendarBlock(mode?: \"single\" | \"multiple\" | \"range\", defaultMonth?: string, numberOfMonths?: number, captionLayout?: \"label\" | \"dropdown\")",
+      "description": "Standalone calendar display. mode: \"single\" | \"multiple\" | \"range\". captionLayout: \"label\" | \"dropdown\" (default \"dropdown\"). numberOfMonths defaults to 1."
+    },
+    "Command": {
+      "signature": "Command(placeholder?: string, items?: CommandItem[], empty?: string, dialog?: boolean)",
+      "description": "Evidence search palette (Cmd+K). placeholder: input hint; items: CommandItem[]; empty: no-results text; dialog: true renders a button that opens the palette modally."
+    },
+    "CommandItem": {
+      "signature": "CommandItem(label: string, description?: string, keywords?: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>})",
+      "description": "One selectable row in a Command palette. label: primary text; description: secondary text; keywords: extra search terms; action: fired on select."
+    },
+    "Combobox": {
+      "signature": "Combobox(trigger: string, items?: ComboboxItem[], placeholder?: string, searchPlaceholder?: string)",
+      "description": "Searchable select for filtering studies (design, population, intervention). trigger: button label; items: ComboboxItem[]; placeholder: idle text; searchPlaceholder: input hint."
+    },
+    "ComboboxItem": {
+      "signature": "ComboboxItem(value: string, label: string, description?: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>})",
+      "description": "One option for Combobox. value: unique id; label: visible text; description: secondary text; action: fired on select."
+    },
+    "ToggleGroup": {
+      "signature": "ToggleGroup(items?: string[], multiple?: boolean, defaultValue?: string)",
+      "description": "Study-design filter as toggle buttons (e.g. RCT / Cohort / Case-control). items: labels; multiple: allow more than one on; defaultValue: initially active label. Never write \"you can filter by...\" in prose."
+    },
+    "HoverCard": {
+      "signature": "HoverCard(trigger: any, content?: any[])",
+      "description": "Citation preview on hover. trigger: the visible node (e.g. a Badge marker); content: nodes revealed in the card. Never repeat the full citation inline."
+    },
+    "Tooltip": {
+      "signature": "Tooltip(trigger: any, text: string)",
+      "description": "One-line definition shown on hover. trigger: the term node (e.g. TextContent 'GRADE certainty'); text: the definition. Never parenthesize definitions in prose."
+    },
+    "Popover": {
+      "signature": "Popover(trigger: any, content?: any[])",
+      "description": "Inline detail on click for a single data point. trigger: the clickable node; content: nodes shown in the floating panel. Use instead of a full Dialog for one number."
+    },
+    "Collapsible": {
+      "signature": "Collapsible(trigger: any, content?: any[], defaultOpen?: boolean)",
+      "description": "Single expandable section for nested evidence (e.g. subgroup analyses). trigger: header node; content: revealed nodes; defaultOpen: start expanded."
+    },
+    "Sheet": {
+      "signature": "Sheet(trigger: string, side?: \"top\" | \"right\" | \"bottom\" | \"left\", title: string, description?: string, content?: any[])",
+      "description": "Side panel for full-text context without covering the answer. trigger: button text; side: \"top\" | \"right\" | \"bottom\" | \"left\" (default right); title/description: header; content: panel nodes."
+    },
+    "Resizable": {
+      "signature": "Resizable(panels?: ResizablePanel[], direction?: \"horizontal\" | \"vertical\", initialRatio?: number)",
+      "description": "Side-by-side evidence comparison with a draggable divider. panels: ResizablePanel[]; direction: \"horizontal\" | \"vertical\"; initialRatio: first-pane percent (2 panes only). Use instead of stacking two tables."
+    },
+    "ResizablePanel": {
+      "signature": "ResizablePanel(content?: any[])",
+      "description": "One pane of a Resizable. content: nodes rendered inside the pane."
+    },
+    "ScrollArea": {
+      "signature": "ScrollArea(content?: any[], orientation?: \"vertical\" | \"horizontal\", maxHeight?: number)",
+      "description": "Fixed-height scroll region for long evidence lists, so the Card cannot grow unbounded. content: nodes; orientation: scroll axis; maxHeight: pixel cap (default 320)."
+    },
+    "Sonner": {
+      "signature": "Sonner(message: string, variant?: \"default\" | \"success\" | \"error\" | \"warning\" | \"info\", label?: string, description?: string)",
+      "description": "Transient toast for confirmations (\"Citation copied\", \"Filter applied\"). message: toast body; variant: tone; label: button text (default \"Notify\"); description: secondary line. Never use a permanent Alert for a transient confirmation."
+    },
+    "Skeleton": {
+      "signature": "Skeleton(width?: string | number, height?: string | number, rounded?: \"none\" | \"sm\" | \"md\" | \"lg\" | \"full\")",
+      "description": "Streaming placeholder. Match width/height to the component that will replace it to prevent layout shift. width/height accept px numbers or CSS strings; rounded: none | sm | md | lg | full."
+    },
+    "Spinner": {
+      "signature": "Spinner(label?: string)",
+      "description": "Inline loading indicator while a single passage resolves. label: optional text."
+    },
+    "Empty": {
+      "signature": "Empty(title: string, description?: string, content?: any[])",
+      "description": "Empty state when a filter returns zero studies, e.g. title \"No RCTs match this population\". title: headline; description: explanation; content: optional actions."
+    },
+    "Field": {
+      "signature": "Field(label: string, control: any, description?: string)",
+      "description": "Generic form field wrapper when FormControl is too opinionated. label: field label; control: the input node; description: helper text."
+    },
+    "Breadcrumb": {
+      "signature": "Breadcrumb(items?: BreadcrumbItem[])",
+      "description": "Research trail showing how the evidence set was narrowed (Question > Filtered evidence (12) > Included studies (5) > Synthesis). items: BreadcrumbItem[]; the last item renders as the current page."
+    },
+    "BreadcrumbItem": {
+      "signature": "BreadcrumbItem(label: string, href?: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>})",
+      "description": "One step in a Breadcrumb. label: step text; href: link target; action: fired when a non-link step is clicked."
+    },
+    "NavigationMenu": {
+      "signature": "NavigationMenu(items?: NavigationMenuItem[])",
+      "description": "Top-level sections: \"Evidence\", \"Subgroups\", \"Heterogeneity\", \"GRADE\". items: NavigationMenuItem[]."
+    },
+    "NavigationMenuItem": {
+      "signature": "NavigationMenuItem(trigger: string, content?: any[])",
+      "description": "One top-level section. trigger: section label; content: nodes revealed in the dropdown."
+    },
+    "DropdownMenu": {
+      "signature": "DropdownMenu(trigger: string, items?: DropdownMenuItem[], label?: string)",
+      "description": "Row-level actions opened from a button. trigger: button text; items: DropdownMenuItem[]; label: optional group heading."
+    },
+    "DropdownMenuItem": {
+      "signature": "DropdownMenuItem(label: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>}, variant?: \"default\" | \"destructive\", inset?: boolean)",
+      "description": "One row action (e.g. \"Show abstract\", \"Open in PubMed\", \"Exclude\"). label: row text; action: fired on select; variant: \"default\" | \"destructive\"."
+    },
+    "ContextMenu": {
+      "signature": "ContextMenu(trigger: any, items?: ContextMenuItem[], label?: string)",
+      "description": "Right-click actions on a passage. trigger: the region node; items: ContextMenuItem[]; label: optional heading."
+    },
+    "ContextMenuItem": {
+      "signature": "ContextMenuItem(label: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>}, variant?: \"default\" | \"destructive\", inset?: boolean)",
+      "description": "One right-click action (e.g. \"Copy citation\", \"Highlight\", \"Compare\"). label: row text; action: fired on select."
+    },
+    "Menubar": {
+      "signature": "Menubar(menus?: MenubarMenu[])",
+      "description": "Desktop-style menu bar for a full research console. menus: MenubarMenu[]."
+    },
+    "MenubarMenu": {
+      "signature": "MenubarMenu(trigger: string, items?: MenubarItem[])",
+      "description": "One top-level menubar menu. trigger: menu label; items: MenubarItem[]."
+    },
+    "MenubarItem": {
+      "signature": "MenubarItem(label: string, action?: {type: \"open_url\", url: string} | {type: \"continue_conversation\", context?: string} | {type: string, params?: Record<string, any>}, variant?: \"default\" | \"destructive\", inset?: boolean)",
+      "description": "One action inside a MenubarMenu. label: row text; action: fired on select."
+    },
+    "Kbd": {
+      "signature": "Kbd(keys: string | string[])",
+      "description": "Keyboard shortcut display. keys: one string (\"Cmd+K\") or a string array rendered as a combo."
+    },
+    "AspectRatio": {
+      "signature": "AspectRatio(ratio: number, content?: any[])",
+      "description": "Constrain an image thumbnail or forest-plot preview to a fixed ratio. ratio: width / height (e.g. 1.7778 for 16:9); content: nodes."
+    },
+    "ButtonGroup": {
+      "signature": "ButtonGroup(buttons?: Button[])",
+      "description": "Group related actions without spacing, e.g. \"Include / Exclude / Maybe\" as one control. buttons: Button[]."
+    },
+    "InputGroup": {
+      "signature": "InputGroup(placeholder?: string, addonStart?: string, addonEnd?: string)",
+      "description": "Input with addons, e.g. a search field with a leading filter label and a trailing hint. placeholder: input hint; addonStart/addonEnd: text on either side."
+    }
+  },
+  "componentGroups": [
+    {
+      "name": "Content",
+      "components": [
+        "CardHeader",
+        "TextContent",
+        "MarkDownRenderer",
+        "Alert",
+        "Badge",
+        "Avatar",
+        "CodeBlock",
+        "Image",
+        "ImageBlock",
+        "Progress",
+        "Separator"
+      ]
+    },
+    {
+      "name": "Tables",
+      "components": [
+        "Table",
+        "Col"
+      ]
+    },
+    {
+      "name": "Charts (2D)",
+      "components": [
+        "BarChart",
+        "LineChart",
+        "AreaChart",
+        "RadarChart",
+        "Series"
+      ]
+    },
+    {
+      "name": "Charts (1D)",
+      "components": [
+        "PieChart",
+        "RadialChart",
+        "Slice"
+      ]
+    },
+    {
+      "name": "Charts (Scatter)",
+      "components": [
+        "ScatterChart",
+        "ScatterSeries",
+        "Point"
+      ]
+    },
+    {
+      "name": "Charts (Advanced)",
+      "components": [
+        "WaterfallChart",
+        "WaterfallItem",
+        "SunburstChart",
+        "SunburstNode",
+        "TreemapChart",
+        "TreemapNode",
+        "FunnelChart",
+        "FunnelStage",
+        "SankeyChart",
+        "FlowNode",
+        "FlowLink",
+        "GaugeChart",
+        "HeatmapChart",
+        "HeatCell"
+      ],
+      "notes": [
+        "Pick the chart by the data's shape, not by habit:",
+        "- Change to a running total -> WaterfallChart.",
+        "- Nested parts of a whole (2-4 levels) -> SunburstChart; a flat split -> PieChart.",
+        "- Many categories or two hierarchy levels -> TreemapChart; pair with a Table for exact values.",
+        "- Ordered attrition or screening stages -> FunnelChart.",
+        "- Movement between stages or groups -> SankeyChart.",
+        "- One KPI against a maximum -> GaugeChart.",
+        "- A value at every row x column combination -> HeatmapChart."
+      ]
+    },
+    {
+      "name": "Maps",
+      "components": [
+        "MapChart",
+        "MapPoint",
+        "MapRegion"
+      ],
+      "notes": [
+        "- Use MapChart for geographic distribution: MapRegion for country-level shading, MapPoint for study sites.",
+        "- Every region value and point value must come from a cited passage; never invent coordinates or rates.",
+        "- Country names use common English (United States, China, Brazil); points use decimal lat/lng."
+      ]
+    },
+    {
+      "name": "Forms",
+      "components": [
+        "Form",
+        "FormControl",
+        "Label",
+        "Input",
+        "TextArea",
+        "Select",
+        "SelectItem",
+        "DatePicker",
+        "Slider",
+        "CheckBoxGroup",
+        "CheckBoxItem",
+        "RadioGroup",
+        "RadioItem",
+        "SwitchGroup",
+        "SwitchItem"
+      ],
+      "notes": [
+        "- Define EACH FormControl as its own reference — do NOT inline all controls in one array.",
+        "- NEVER nest Form inside Form.",
+        "- Form requires explicit buttons. Always pass a Buttons(...) reference as the third Form argument.",
+        "- rules is an optional object: { required: true, email: true, min: 8, maxLength: 100 }",
+        "- The renderer shows error messages automatically — do NOT generate error text in the UI"
+      ]
+    },
+    {
+      "name": "Buttons",
+      "components": [
+        "Button",
+        "Buttons"
+      ]
+    },
+    {
+      "name": "Follow-ups",
+      "components": [
+        "FollowUpBlock",
+        "FollowUpItem"
+      ],
+      "notes": [
+        "- Use FollowUpBlock with FollowUpItem references at the end of a response to suggest next actions.",
+        "- Clicking a FollowUpItem sends its text to the LLM as a user message."
+      ]
+    },
+    {
+      "name": "Layout",
+      "components": [
+        "Tabs",
+        "TabItem",
+        "Accordion",
+        "AccordionItem",
+        "Carousel"
+      ],
+      "notes": [
+        "- Use Tabs to present alternative views — each TabItem has a value id, trigger label, and content array.",
+        "- Carousel takes an array of slides, where each slide is an array of content.",
+        "- IMPORTANT: Every slide in a Carousel must have the same structure."
+      ]
+    },
+    {
+      "name": "Data Display",
+      "components": [
+        "TagBlock",
+        "Tag"
+      ]
+    },
+    {
+      "name": "Typography",
+      "components": [
+        "Heading",
+        "Blockquote",
+        "InlineCode"
+      ],
+      "notes": [
+        "- Heading levels: \"h1\" | \"h2\" | \"h3\" | \"h4\". Each renders with appropriate shadcn/ui typography styles.",
+        "- Blockquote for styled quotes with optional cite attribution.",
+        "- InlineCode for monospace code snippets within text."
+      ]
+    },
+    {
+      "name": "Calendar",
+      "components": [
+        "CalendarBlock"
+      ],
+      "notes": [
+        "- CalendarBlock renders a standalone interactive calendar. mode: \"single\" | \"multiple\" | \"range\".",
+        "- Use numberOfMonths to show multiple months side by side.",
+        "- Use defaultMonth (ISO date string) to set the initial visible month."
+      ]
+    },
+    {
+      "name": "Navigation",
+      "components": [
+        "PaginationBlock"
+      ],
+      "notes": [
+        "- PaginationBlock takes currentPage and totalPages."
+      ]
+    },
+    {
+      "name": "Overlays",
+      "components": [
+        "DialogBlock",
+        "AlertDialogBlock",
+        "DrawerBlock"
+      ],
+      "notes": [
+        "- DialogBlock renders a button that opens a modal dialog with content inside.",
+        "- AlertDialogBlock renders a confirmation dialog with cancel/confirm actions.",
+        "- DrawerBlock renders a bottom drawer panel triggered by a button."
+      ]
+    },
+    {
+      "name": "Evidence Search",
+      "components": [
+        "Command",
+        "CommandItem",
+        "Combobox",
+        "ComboboxItem",
+        "ToggleGroup"
+      ],
+      "notes": [
+        "- Evidence search MUST be a Command palette (Cmd+K), never a prose instruction or a bare Input.",
+        "- Use ToggleGroup to filter by study design (\"RCT\" / \"Cohort\" / \"Case-control\"), never write \"you can filter by...\" in text.",
+        "- Use Combobox to pick a population, design, or intervention from a searchable list."
+      ]
+    },
+    {
+      "name": "Citations & Terms",
+      "components": [
+        "HoverCard",
+        "Tooltip"
+      ],
+      "notes": [
+        "- Cite inline as plain [n]; the application renders each as a clickable citation badge (author-year by default) and lists the references at the bottom. Never wrap a marker in HoverCard/Badge, add a citations column, or repeat the full citation inline.",
+        "- Wrap technical terms (GRADE certainty, RR) in a Tooltip with a one-line definition; never parenthesize the definition in prose."
+      ]
+    },
+    {
+      "name": "Details & Disclosure",
+      "components": [
+        "Popover",
+        "Collapsible",
+        "Sheet",
+        "Resizable",
+        "ResizablePanel",
+        "ScrollArea"
+      ],
+      "notes": [
+        "- Single-point detail goes in a Popover, never a full DialogBlock.",
+        "- Nested evidence such as subgroup analyses goes in a Collapsible.",
+        "- Full-text context goes in a Sheet (side panel) so the answer stays visible.",
+        "- Side-by-side evidence goes in Resizable; never stack two tables meant to be compared.",
+        "- Long evidence lists go in ScrollArea; never let the Card grow unbounded."
+      ]
+    },
+    {
+      "name": "Feedback & Loading",
+      "components": [
+        "Sonner",
+        "Skeleton",
+        "Spinner",
+        "Empty"
+      ],
+      "notes": [
+        "- Streaming placeholders MUST be Skeleton sized like the eventual table/chart; never leave a blank region.",
+        "- Transient confirmations use Sonner, never a permanent Alert.",
+        "- When a filter returns zero studies, use Empty (e.g. \"No RCTs match this population\")."
+      ]
+    },
+    {
+      "name": "Research Navigation",
+      "components": [
+        "Breadcrumb",
+        "BreadcrumbItem",
+        "NavigationMenu",
+        "NavigationMenuItem",
+        "DropdownMenu",
+        "DropdownMenuItem",
+        "ContextMenu",
+        "ContextMenuItem",
+        "Menubar",
+        "MenubarMenu",
+        "MenubarItem",
+        "Kbd"
+      ],
+      "notes": [
+        "- Breadcrumb shows the research trail: Question > Filtered evidence (12) > Included studies (5) > Synthesis.",
+        "- DropdownMenu holds per-study row actions (Show abstract, Open in PubMed, Exclude).",
+        "- ContextMenu holds right-click passage actions (Copy citation, Highlight, Compare).",
+        "- Kbd shows shortcuts such as Cmd+K."
+      ]
+    },
+    {
+      "name": "Utility",
+      "components": [
+        "AspectRatio",
+        "ButtonGroup",
+        "InputGroup",
+        "Field"
+      ],
+      "notes": [
+        "- AspectRatio constrains image thumbnails and forest-plot previews.",
+        "- ButtonGroup groups related actions, e.g. \"Include / Exclude / Maybe\" as one control.",
+        "- InputGroup is an input with addons (leading label / trailing hint).",
+        "- Field is a generic field wrapper when FormControl is too opinionated."
+      ]
+    }
+  ],
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "Card": {
+        "$ref": "#/$defs/Card"
+      },
+      "CardHeader": {
+        "$ref": "#/$defs/CardHeader"
+      },
+      "TextContent": {
+        "$ref": "#/$defs/TextContent"
+      },
+      "MarkDownRenderer": {
+        "$ref": "#/$defs/MarkDownRenderer"
+      },
+      "Alert": {
+        "$ref": "#/$defs/Alert"
+      },
+      "Badge": {
+        "$ref": "#/$defs/Badge"
+      },
+      "Avatar": {
+        "$ref": "#/$defs/Avatar"
+      },
+      "CodeBlock": {
+        "$ref": "#/$defs/CodeBlock"
+      },
+      "Image": {
+        "$ref": "#/$defs/Image"
+      },
+      "ImageBlock": {
+        "$ref": "#/$defs/ImageBlock"
+      },
+      "Progress": {
+        "$ref": "#/$defs/Progress"
+      },
+      "Separator": {
+        "$ref": "#/$defs/Separator"
+      },
+      "Table": {
+        "$ref": "#/$defs/Table"
+      },
+      "Col": {
+        "$ref": "#/$defs/Col"
+      },
+      "BarChart": {
+        "$ref": "#/$defs/BarChart"
+      },
+      "LineChart": {
+        "$ref": "#/$defs/LineChart"
+      },
+      "AreaChart": {
+        "$ref": "#/$defs/AreaChart"
+      },
+      "RadarChart": {
+        "$ref": "#/$defs/RadarChart"
+      },
+      "Series": {
+        "$ref": "#/$defs/Series"
+      },
+      "PieChart": {
+        "$ref": "#/$defs/PieChart"
+      },
+      "RadialChart": {
+        "$ref": "#/$defs/RadialChart"
+      },
+      "Slice": {
+        "$ref": "#/$defs/Slice"
+      },
+      "ScatterChart": {
+        "$ref": "#/$defs/ScatterChart"
+      },
+      "ScatterSeries": {
+        "$ref": "#/$defs/ScatterSeries"
+      },
+      "Point": {
+        "$ref": "#/$defs/Point"
+      },
+      "WaterfallChart": {
+        "$ref": "#/$defs/WaterfallChart"
+      },
+      "WaterfallItem": {
+        "$ref": "#/$defs/WaterfallItem"
+      },
+      "SunburstChart": {
+        "$ref": "#/$defs/SunburstChart"
+      },
+      "SunburstNode": {
+        "$ref": "#/$defs/SunburstNode"
+      },
+      "TreemapChart": {
+        "$ref": "#/$defs/TreemapChart"
+      },
+      "TreemapNode": {
+        "$ref": "#/$defs/TreemapNode"
+      },
+      "FunnelChart": {
+        "$ref": "#/$defs/FunnelChart"
+      },
+      "FunnelStage": {
+        "$ref": "#/$defs/FunnelStage"
+      },
+      "SankeyChart": {
+        "$ref": "#/$defs/SankeyChart"
+      },
+      "FlowNode": {
+        "$ref": "#/$defs/FlowNode"
+      },
+      "FlowLink": {
+        "$ref": "#/$defs/FlowLink"
+      },
+      "GaugeChart": {
+        "$ref": "#/$defs/GaugeChart"
+      },
+      "HeatmapChart": {
+        "$ref": "#/$defs/HeatmapChart"
+      },
+      "HeatCell": {
+        "$ref": "#/$defs/HeatCell"
+      },
+      "MapChart": {
+        "$ref": "#/$defs/MapChart"
+      },
+      "MapPoint": {
+        "$ref": "#/$defs/MapPoint"
+      },
+      "MapRegion": {
+        "$ref": "#/$defs/MapRegion"
+      },
+      "Form": {
+        "$ref": "#/$defs/Form"
+      },
+      "FormControl": {
+        "$ref": "#/$defs/FormControl"
+      },
+      "Label": {
+        "$ref": "#/$defs/Label"
+      },
+      "Input": {
+        "$ref": "#/$defs/Input"
+      },
+      "TextArea": {
+        "$ref": "#/$defs/TextArea"
+      },
+      "Select": {
+        "$ref": "#/$defs/Select"
+      },
+      "SelectItem": {
+        "$ref": "#/$defs/SelectItem"
+      },
+      "DatePicker": {
+        "$ref": "#/$defs/DatePicker"
+      },
+      "Slider": {
+        "$ref": "#/$defs/Slider"
+      },
+      "CheckBoxGroup": {
+        "$ref": "#/$defs/CheckBoxGroup"
+      },
+      "CheckBoxItem": {
+        "$ref": "#/$defs/CheckBoxItem"
+      },
+      "RadioGroup": {
+        "$ref": "#/$defs/RadioGroup"
+      },
+      "RadioItem": {
+        "$ref": "#/$defs/RadioItem"
+      },
+      "SwitchGroup": {
+        "$ref": "#/$defs/SwitchGroup"
+      },
+      "SwitchItem": {
+        "$ref": "#/$defs/SwitchItem"
+      },
+      "Button": {
+        "$ref": "#/$defs/Button"
+      },
+      "Buttons": {
+        "$ref": "#/$defs/Buttons"
+      },
+      "FollowUpBlock": {
+        "$ref": "#/$defs/FollowUpBlock"
+      },
+      "FollowUpItem": {
+        "$ref": "#/$defs/FollowUpItem"
+      },
+      "Tabs": {
+        "$ref": "#/$defs/Tabs"
+      },
+      "TabItem": {
+        "$ref": "#/$defs/TabItem"
+      },
+      "Accordion": {
+        "$ref": "#/$defs/Accordion"
+      },
+      "AccordionItem": {
+        "$ref": "#/$defs/AccordionItem"
+      },
+      "Carousel": {
+        "$ref": "#/$defs/Carousel"
+      },
+      "TagBlock": {
+        "$ref": "#/$defs/TagBlock"
+      },
+      "Tag": {
+        "$ref": "#/$defs/Tag"
+      },
+      "Heading": {
+        "$ref": "#/$defs/Heading"
+      },
+      "Blockquote": {
+        "$ref": "#/$defs/Blockquote"
+      },
+      "InlineCode": {
+        "$ref": "#/$defs/InlineCode"
+      },
+      "PaginationBlock": {
+        "$ref": "#/$defs/PaginationBlock"
+      },
+      "DialogBlock": {
+        "$ref": "#/$defs/DialogBlock"
+      },
+      "AlertDialogBlock": {
+        "$ref": "#/$defs/AlertDialogBlock"
+      },
+      "DrawerBlock": {
+        "$ref": "#/$defs/DrawerBlock"
+      },
+      "CalendarBlock": {
+        "$ref": "#/$defs/CalendarBlock"
+      },
+      "Command": {
+        "$ref": "#/$defs/Command"
+      },
+      "CommandItem": {
+        "$ref": "#/$defs/CommandItem"
+      },
+      "Combobox": {
+        "$ref": "#/$defs/Combobox"
+      },
+      "ComboboxItem": {
+        "$ref": "#/$defs/ComboboxItem"
+      },
+      "ToggleGroup": {
+        "$ref": "#/$defs/ToggleGroup"
+      },
+      "HoverCard": {
+        "$ref": "#/$defs/HoverCard"
+      },
+      "Tooltip": {
+        "$ref": "#/$defs/Tooltip"
+      },
+      "Popover": {
+        "$ref": "#/$defs/Popover"
+      },
+      "Collapsible": {
+        "$ref": "#/$defs/Collapsible"
+      },
+      "Sheet": {
+        "$ref": "#/$defs/Sheet"
+      },
+      "Resizable": {
+        "$ref": "#/$defs/Resizable"
+      },
+      "ResizablePanel": {
+        "$ref": "#/$defs/ResizablePanel"
+      },
+      "ScrollArea": {
+        "$ref": "#/$defs/ScrollArea"
+      },
+      "Sonner": {
+        "$ref": "#/$defs/Sonner"
+      },
+      "Skeleton": {
+        "$ref": "#/$defs/Skeleton"
+      },
+      "Spinner": {
+        "$ref": "#/$defs/Spinner"
+      },
+      "Empty": {
+        "$ref": "#/$defs/Empty"
+      },
+      "Field": {
+        "$ref": "#/$defs/Field"
+      },
+      "Breadcrumb": {
+        "$ref": "#/$defs/Breadcrumb"
+      },
+      "BreadcrumbItem": {
+        "$ref": "#/$defs/BreadcrumbItem"
+      },
+      "NavigationMenu": {
+        "$ref": "#/$defs/NavigationMenu"
+      },
+      "NavigationMenuItem": {
+        "$ref": "#/$defs/NavigationMenuItem"
+      },
+      "DropdownMenu": {
+        "$ref": "#/$defs/DropdownMenu"
+      },
+      "DropdownMenuItem": {
+        "$ref": "#/$defs/DropdownMenuItem"
+      },
+      "ContextMenu": {
+        "$ref": "#/$defs/ContextMenu"
+      },
+      "ContextMenuItem": {
+        "$ref": "#/$defs/ContextMenuItem"
+      },
+      "Menubar": {
+        "$ref": "#/$defs/Menubar"
+      },
+      "MenubarMenu": {
+        "$ref": "#/$defs/MenubarMenu"
+      },
+      "MenubarItem": {
+        "$ref": "#/$defs/MenubarItem"
+      },
+      "Kbd": {
+        "$ref": "#/$defs/Kbd"
+      },
+      "AspectRatio": {
+        "$ref": "#/$defs/AspectRatio"
+      },
+      "ButtonGroup": {
+        "$ref": "#/$defs/ButtonGroup"
+      },
+      "InputGroup": {
+        "$ref": "#/$defs/InputGroup"
+      }
+    },
+    "required": [
+      "Card",
+      "CardHeader",
+      "TextContent",
+      "MarkDownRenderer",
+      "Alert",
+      "Badge",
+      "Avatar",
+      "CodeBlock",
+      "Image",
+      "ImageBlock",
+      "Progress",
+      "Separator",
+      "Table",
+      "Col",
+      "BarChart",
+      "LineChart",
+      "AreaChart",
+      "RadarChart",
+      "Series",
+      "PieChart",
+      "RadialChart",
+      "Slice",
+      "ScatterChart",
+      "ScatterSeries",
+      "Point",
+      "WaterfallChart",
+      "WaterfallItem",
+      "SunburstChart",
+      "SunburstNode",
+      "TreemapChart",
+      "TreemapNode",
+      "FunnelChart",
+      "FunnelStage",
+      "SankeyChart",
+      "FlowNode",
+      "FlowLink",
+      "GaugeChart",
+      "HeatmapChart",
+      "HeatCell",
+      "MapChart",
+      "MapPoint",
+      "MapRegion",
+      "Form",
+      "FormControl",
+      "Label",
+      "Input",
+      "TextArea",
+      "Select",
+      "SelectItem",
+      "DatePicker",
+      "Slider",
+      "CheckBoxGroup",
+      "CheckBoxItem",
+      "RadioGroup",
+      "RadioItem",
+      "SwitchGroup",
+      "SwitchItem",
+      "Button",
+      "Buttons",
+      "FollowUpBlock",
+      "FollowUpItem",
+      "Tabs",
+      "TabItem",
+      "Accordion",
+      "AccordionItem",
+      "Carousel",
+      "TagBlock",
+      "Tag",
+      "Heading",
+      "Blockquote",
+      "InlineCode",
+      "PaginationBlock",
+      "DialogBlock",
+      "AlertDialogBlock",
+      "DrawerBlock",
+      "CalendarBlock",
+      "Command",
+      "CommandItem",
+      "Combobox",
+      "ComboboxItem",
+      "ToggleGroup",
+      "HoverCard",
+      "Tooltip",
+      "Popover",
+      "Collapsible",
+      "Sheet",
+      "Resizable",
+      "ResizablePanel",
+      "ScrollArea",
+      "Sonner",
+      "Skeleton",
+      "Spinner",
+      "Empty",
+      "Field",
+      "Breadcrumb",
+      "BreadcrumbItem",
+      "NavigationMenu",
+      "NavigationMenuItem",
+      "DropdownMenu",
+      "DropdownMenuItem",
+      "ContextMenu",
+      "ContextMenuItem",
+      "Menubar",
+      "MenubarMenu",
+      "MenubarItem",
+      "Kbd",
+      "AspectRatio",
+      "ButtonGroup",
+      "InputGroup"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+      "Card": {
+        "type": "object",
+        "properties": {
+          "children": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TextContent"
+                },
+                {
+                  "$ref": "#/$defs/MarkDownRenderer"
+                },
+                {
+                  "$ref": "#/$defs/CardHeader"
+                },
+                {
+                  "$ref": "#/$defs/Alert"
+                },
+                {
+                  "$ref": "#/$defs/Badge"
+                },
+                {
+                  "$ref": "#/$defs/Avatar"
+                },
+                {
+                  "$ref": "#/$defs/CodeBlock"
+                },
+                {
+                  "$ref": "#/$defs/Image"
+                },
+                {
+                  "$ref": "#/$defs/ImageBlock"
+                },
+                {
+                  "$ref": "#/$defs/Progress"
+                },
+                {
+                  "$ref": "#/$defs/Separator"
+                },
+                {
+                  "$ref": "#/$defs/BarChart"
+                },
+                {
+                  "$ref": "#/$defs/LineChart"
+                },
+                {
+                  "$ref": "#/$defs/AreaChart"
+                },
+                {
+                  "$ref": "#/$defs/PieChart"
+                },
+                {
+                  "$ref": "#/$defs/RadarChart"
+                },
+                {
+                  "$ref": "#/$defs/RadialChart"
+                },
+                {
+                  "$ref": "#/$defs/ScatterChart"
+                },
+                {
+                  "$ref": "#/$defs/WaterfallChart"
+                },
+                {
+                  "$ref": "#/$defs/SunburstChart"
+                },
+                {
+                  "$ref": "#/$defs/TreemapChart"
+                },
+                {
+                  "$ref": "#/$defs/FunnelChart"
+                },
+                {
+                  "$ref": "#/$defs/SankeyChart"
+                },
+                {
+                  "$ref": "#/$defs/GaugeChart"
+                },
+                {
+                  "$ref": "#/$defs/HeatmapChart"
+                },
+                {
+                  "$ref": "#/$defs/MapChart"
+                },
+                {
+                  "$ref": "#/$defs/Table"
+                },
+                {
+                  "$ref": "#/$defs/TagBlock"
+                },
+                {
+                  "$ref": "#/$defs/Form"
+                },
+                {
+                  "$ref": "#/$defs/Buttons"
+                },
+                {
+                  "$ref": "#/$defs/Heading"
+                },
+                {
+                  "$ref": "#/$defs/Blockquote"
+                },
+                {
+                  "$ref": "#/$defs/InlineCode"
+                },
+                {
+                  "$ref": "#/$defs/PaginationBlock"
+                },
+                {
+                  "$ref": "#/$defs/DialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/AlertDialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/DrawerBlock"
+                },
+                {
+                  "$ref": "#/$defs/CalendarBlock"
+                },
+                {
+                  "$ref": "#/$defs/Command"
+                },
+                {
+                  "$ref": "#/$defs/Combobox"
+                },
+                {
+                  "$ref": "#/$defs/HoverCard"
+                },
+                {
+                  "$ref": "#/$defs/Tooltip"
+                },
+                {
+                  "$ref": "#/$defs/Popover"
+                },
+                {
+                  "$ref": "#/$defs/Collapsible"
+                },
+                {
+                  "$ref": "#/$defs/ToggleGroup"
+                },
+                {
+                  "$ref": "#/$defs/Sheet"
+                },
+                {
+                  "$ref": "#/$defs/Resizable"
+                },
+                {
+                  "$ref": "#/$defs/ScrollArea"
+                },
+                {
+                  "$ref": "#/$defs/Sonner"
+                },
+                {
+                  "$ref": "#/$defs/Skeleton"
+                },
+                {
+                  "$ref": "#/$defs/Spinner"
+                },
+                {
+                  "$ref": "#/$defs/Empty"
+                },
+                {
+                  "$ref": "#/$defs/Field"
+                },
+                {
+                  "$ref": "#/$defs/Breadcrumb"
+                },
+                {
+                  "$ref": "#/$defs/NavigationMenu"
+                },
+                {
+                  "$ref": "#/$defs/DropdownMenu"
+                },
+                {
+                  "$ref": "#/$defs/ContextMenu"
+                },
+                {
+                  "$ref": "#/$defs/Menubar"
+                },
+                {
+                  "$ref": "#/$defs/Kbd"
+                },
+                {
+                  "$ref": "#/$defs/AspectRatio"
+                },
+                {
+                  "$ref": "#/$defs/ButtonGroup"
+                },
+                {
+                  "$ref": "#/$defs/InputGroup"
+                },
+                {
+                  "$ref": "#/$defs/FollowUpBlock"
+                },
+                {
+                  "$ref": "#/$defs/Tabs"
+                },
+                {
+                  "$ref": "#/$defs/Carousel"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "children"
+        ],
+        "additionalProperties": false,
+        "description": "Vertical container for all content in a chat response. Children stack top to bottom automatically."
+      },
+      "TextContent": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "small",
+              "default",
+              "large",
+              "small-heavy",
+              "large-heavy"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Text block with optional size. size: \"small\" | \"default\" | \"large\" | \"small-heavy\" | \"large-heavy\". Cite inline as [n] and the app renders a clickable badge."
+      },
+      "MarkDownRenderer": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Renders markdown text with GFM support and clickable [n] citation badges."
+      },
+      "CardHeader": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "description": "Title/description header block for a Card."
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive",
+              "info",
+              "success",
+              "warning"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description"
+        ],
+        "additionalProperties": false,
+        "description": "Alert banner with icon, title, and description. variant: \"default\" | \"destructive\" | \"info\" | \"success\" | \"warning\"."
+      },
+      "Badge": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "secondary",
+              "destructive",
+              "outline",
+              "ghost",
+              "link"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Inline label/badge. variant: \"default\" | \"secondary\" | \"destructive\" | \"outline\" | \"ghost\" | \"link\"."
+      },
+      "Avatar": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "fallback": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fallback"
+        ],
+        "additionalProperties": false,
+        "description": "Circular avatar with image and fallback text."
+      },
+      "CodeBlock": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false,
+        "description": "Syntax-highlighted code block with optional language and title."
+      },
+      "Image": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "src"
+        ],
+        "additionalProperties": false,
+        "description": "Displays an image with optional alt text."
+      },
+      "ImageBlock": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "src"
+        ],
+        "additionalProperties": false,
+        "description": "Image with optional caption."
+      },
+      "Progress": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "Progress bar showing completion percentage (0-100). Optional label."
+      },
+      "Separator": {
+        "type": "object",
+        "properties": {
+          "orientation": {
+            "type": "string",
+            "enum": [
+              "horizontal",
+              "vertical"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Horizontal or vertical rule. orientation: \"horizontal\" | \"vertical\"."
+      },
+      "BarChart": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Series"
+            }
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "grouped",
+              "stacked"
+            ]
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ],
+        "additionalProperties": false,
+        "description": "Vertical bars comparing a value across categories, or a stacked composition. Use to rank or compare discrete groups. Set meta.title, meta.unit, and both axis labels."
+      },
+      "Series": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "values"
+        ],
+        "additionalProperties": false,
+        "description": "One named data series with values matching labels."
+      },
+      "LineChart": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Series"
+            }
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ],
+        "additionalProperties": false,
+        "description": "Line chart for a trend across an ordered axis, often time. Use when the shape of change matters more than individual points. Set meta.title, meta.unit, and both axis labels."
+      },
+      "AreaChart": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Series"
+            }
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ],
+        "additionalProperties": false,
+        "description": "Filled area chart emphasising magnitude or cumulative volume over an ordered axis. Use for totals/volume, not precise comparisons. Set meta.title, meta.unit, and both axis labels."
+      },
+      "PieChart": {
+        "type": "object",
+        "properties": {
+          "slices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Slice"
+            }
+          },
+          "donut": {
+            "type": "boolean"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "slices"
+        ],
+        "additionalProperties": false,
+        "description": "Pie or donut for parts of a whole at one point in time (2-7 slices). Use a bar chart or Table when the reader must compare exact values. Set meta.title and meta.unit."
+      },
+      "Slice": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "category",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "A single slice in a PieChart or RadialChart."
+      },
+      "RadarChart": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Series"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "labels",
+          "series"
+        ],
+        "additionalProperties": false,
+        "description": "Radar/spider comparing entities across the same 3-8 dimensions on one 0-100 scale. Never mix units on a radar. Set meta.title and meta.unit."
+      },
+      "RadialChart": {
+        "type": "object",
+        "properties": {
+          "slices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Slice"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "slices"
+        ],
+        "additionalProperties": false,
+        "description": "Radial bar (concentric rings) for a small ranked set on independent scales or progress per category. Use a bar chart when values share one scale. Set meta.title and meta.unit."
+      },
+      "ScatterChart": {
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ScatterSeries"
+            }
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "showValues": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "series"
+        ],
+        "additionalProperties": false,
+        "description": "Scatter relating two numeric variables, one point per study. Use to show correlation, clusters, or effect against a baseline. Label both axes and their units in meta."
+      },
+      "ScatterSeries": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Point"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "points"
+        ],
+        "additionalProperties": false,
+        "description": "Named scatter series with Point references."
+      },
+      "Point": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "additionalProperties": false,
+        "description": "A single data point in a ScatterChart series."
+      },
+      "WaterfallChart": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/WaterfallItem"
+            }
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Waterfall: how a starting value moves through signed increments to a final total. Use for additive effect decomposition. Mark the last bar total: true. Set meta.title and meta.unit."
+      },
+      "WaterfallItem": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "total": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "category",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "One step in a WaterfallChart. category: step label; value: signed change (negative decreases); total: true renders the running cumulative total bar."
+      },
+      "SunburstChart": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/SunburstNode"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "nodes"
+        ],
+        "additionalProperties": false,
+        "description": "Sunburst: a two-to-four level part-of-whole hierarchy as concentric rings. Use for nested categories; use a pie chart for a flat one-level split. Set meta.title and meta.unit."
+      },
+      "SunburstNode": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "parent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "One node of a SunburstChart hierarchy. name: unique label; value: leaf size (omit for branch nodes); parent: parent node name (omit for a root)."
+      },
+      "TreemapChart": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/TreemapNode"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "nodes"
+        ],
+        "additionalProperties": false,
+        "description": "Treemap: nested part-of-whole as area-proportional rectangles. Use when many categories or two levels must fit at once; pair with a Table for exact values. Set meta.title and meta.unit."
+      },
+      "TreemapNode": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "parent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "One node of a TreemapChart hierarchy. name: unique label; value: leaf size; parent: parent node name (omit for a root)."
+      },
+      "FunnelChart": {
+        "type": "object",
+        "properties": {
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FunnelStage"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "stages"
+        ],
+        "additionalProperties": false,
+        "description": "Funnel: progressive attrition through ordered stages (screened > eligible > included > analysed). Use for any screening or selection flow. Set meta.title and meta.unit."
+      },
+      "FunnelStage": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "One stage in a FunnelChart. name: stage label; value: stage count."
+      },
+      "SankeyChart": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FlowNode"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FlowLink"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "nodes",
+          "links"
+        ],
+        "additionalProperties": false,
+        "description": "Sankey: how quantities flow between stages or groups. Use for movement/allocation, never simple category totals. Set meta.title and meta.unit."
+      },
+      "FlowNode": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "One node (source or target) in a SankeyChart. name: unique label used by FlowLink."
+      },
+      "FlowLink": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "One flow in a SankeyChart. source/target: FlowNode names; value: flow magnitude."
+      },
+      "GaugeChart": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "Gauge: one headline number against a maximum (pooled estimate, certainty score, completion). Use only for a single KPI, never comparisons. Set meta.title and meta.unit."
+      },
+      "HeatmapChart": {
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/HeatCell"
+            }
+          },
+          "xLabel": {
+            "type": "string"
+          },
+          "yLabel": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "cells"
+        ],
+        "additionalProperties": false,
+        "description": "Heatmap matrix: a value at every row x column combination (e.g. outcome x study). Use to expose patterns and gaps across two categorical axes. Always label both axes. Set meta.title and meta.unit."
+      },
+      "HeatCell": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "string"
+          },
+          "y": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "One cell in a HeatmapChart. x: column label; y: row label; value: cell magnitude."
+      },
+      "MapChart": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/MapPoint"
+            }
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/MapRegion"
+            }
+          },
+          "region": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "caption": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "legend": {
+                "type": "boolean"
+              },
+              "roam": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "description": "World map for geographic evidence: shaded countries (regions) and/or located study sites (points). Use for geographic distribution or country-level rates. Any country shading must come from a cited numeric value."
+      },
+      "MapPoint": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "additionalProperties": false,
+        "description": "One marker on a MapChart. lat/lng: coordinates in decimal degrees; label: place or study name; value: optional magnitude used for the marker size and tooltip."
+      },
+      "MapRegion": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "additionalProperties": false,
+        "description": "One shaded country on a MapChart. name: country name in common English (United States, China, Brazil); value: magnitude that drives the color scale; label: optional display name."
+      },
+      "Table": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Col"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "columns",
+          "rows"
+        ],
+        "additionalProperties": false,
+        "description": "Data table. title: what the table shows (e.g. 'Baseline characteristics by arm'); columns: Col[] with header/type/unit; rows: 2D array of values; caption: source, n, or caveat. Every numeric column should carry its unit."
+      },
+      "Col": {
+        "type": "object",
+        "properties": {
+          "header": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "header"
+        ],
+        "additionalProperties": false,
+        "description": "Column definition for Table. header: column name; type: string | number | boolean (numbers are right-aligned); unit: measurement unit shown after the header (e.g. mg, %, RR, 95% CI)."
+      },
+      "TagBlock": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/Tag"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "additionalProperties": false,
+        "description": "Group of tags. Accepts string array or Tag references."
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "secondary",
+              "destructive",
+              "outline",
+              "ghost"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Styled tag/badge. Used inside TagBlock."
+      },
+      "Form": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "buttons": {
+            "$ref": "#/$defs/Buttons"
+          },
+          "fields": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FormControl"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "buttons",
+          "fields"
+        ],
+        "additionalProperties": false,
+        "description": "Form container with fields and explicit action buttons. fields: FormControl[], buttons: Buttons."
+      },
+      "Buttons": {
+        "type": "object",
+        "properties": {
+          "buttons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Button"
+            }
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "row",
+              "column"
+            ]
+          }
+        },
+        "required": [
+          "buttons"
+        ],
+        "additionalProperties": false,
+        "description": "Group of Button components. direction: \"row\" | \"column\"."
+      },
+      "Button": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive",
+              "outline",
+              "secondary",
+              "ghost",
+              "link"
+            ]
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "default",
+              "xs",
+              "sm",
+              "lg",
+              "icon"
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Clickable button. variant: \"default\" | \"destructive\" | \"outline\" | \"secondary\" | \"ghost\" | \"link\". size: \"default\" | \"xs\" | \"sm\" | \"lg\" | \"icon\". action: { type: \"continue_conversation\" | \"open_url\", url? }."
+      },
+      "FormControl": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "field": {}
+        },
+        "required": [
+          "label",
+          "field"
+        ],
+        "additionalProperties": false,
+        "description": "Wraps a form field with a label and error display."
+      },
+      "Heading": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "h1",
+              "h2",
+              "h3",
+              "h4"
+            ]
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Heading text. level: \"h1\" | \"h2\" | \"h3\" | \"h4\". Defaults to \"h2\"."
+      },
+      "Blockquote": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "cite": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Styled blockquote. Optional cite for attribution."
+      },
+      "InlineCode": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false,
+        "description": "Inline code snippet rendered with monospace font."
+      },
+      "PaginationBlock": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "currentPage",
+          "totalPages"
+        ],
+        "additionalProperties": false,
+        "description": "Page navigation. currentPage and totalPages control which pages are shown."
+      },
+      "DialogBlock": {
+        "type": "object",
+        "properties": {
+          "triggerLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          },
+          "triggerVariant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive",
+              "outline",
+              "secondary",
+              "ghost",
+              "link"
+            ]
+          }
+        },
+        "required": [
+          "triggerLabel",
+          "title",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Modal dialog triggered by a button. triggerLabel: button text, title/description in header, content: children rendered inside."
+      },
+      "AlertDialogBlock": {
+        "type": "object",
+        "properties": {
+          "triggerLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "confirmLabel": {
+            "type": "string"
+          },
+          "cancelLabel": {
+            "type": "string"
+          },
+          "triggerVariant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive",
+              "outline",
+              "secondary",
+              "ghost",
+              "link"
+            ]
+          }
+        },
+        "required": [
+          "triggerLabel",
+          "title",
+          "description"
+        ],
+        "additionalProperties": false,
+        "description": "Confirmation dialog with cancel and confirm buttons. Clicking confirm sends the confirmLabel as a message."
+      },
+      "DrawerBlock": {
+        "type": "object",
+        "properties": {
+          "triggerLabel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "triggerLabel",
+          "title",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Bottom drawer panel triggered by a button. triggerLabel: button text, title/description in header, content: children rendered inside."
+      },
+      "CalendarBlock": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "single",
+              "multiple",
+              "range"
+            ]
+          },
+          "defaultMonth": {
+            "type": "string"
+          },
+          "numberOfMonths": {
+            "type": "number"
+          },
+          "captionLayout": {
+            "type": "string",
+            "enum": [
+              "label",
+              "dropdown"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Standalone calendar display. mode: \"single\" | \"multiple\" | \"range\". captionLayout: \"label\" | \"dropdown\" (default \"dropdown\"). numberOfMonths defaults to 1."
+      },
+      "Command": {
+        "type": "object",
+        "properties": {
+          "placeholder": {
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CommandItem"
+            }
+          },
+          "empty": {
+            "type": "string"
+          },
+          "dialog": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Evidence search palette (Cmd+K). placeholder: input hint; items: CommandItem[]; empty: no-results text; dialog: true renders a button that opens the palette modally."
+      },
+      "CommandItem": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "keywords": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One selectable row in a Command palette. label: primary text; description: secondary text; keywords: extra search terms; action: fired on select."
+      },
+      "Combobox": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ComboboxItem"
+            }
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "searchPlaceholder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "trigger",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Searchable select for filtering studies (design, population, intervention). trigger: button label; items: ComboboxItem[]; placeholder: idle text; searchPlaceholder: input hint."
+      },
+      "ComboboxItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One option for Combobox. value: unique id; label: visible text; description: secondary text; action: fired on select."
+      },
+      "HoverCard": {
+        "type": "object",
+        "properties": {
+          "trigger": {},
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Citation preview on hover. trigger: the visible node (e.g. a Badge marker); content: nodes revealed in the card. Never repeat the full citation inline."
+      },
+      "Tooltip": {
+        "type": "object",
+        "properties": {
+          "trigger": {},
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "trigger",
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "One-line definition shown on hover. trigger: the term node (e.g. TextContent 'GRADE certainty'); text: the definition. Never parenthesize definitions in prose."
+      },
+      "Popover": {
+        "type": "object",
+        "properties": {
+          "trigger": {},
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Inline detail on click for a single data point. trigger: the clickable node; content: nodes shown in the floating panel. Use instead of a full Dialog for one number."
+      },
+      "Collapsible": {
+        "type": "object",
+        "properties": {
+          "trigger": {},
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          },
+          "defaultOpen": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Single expandable section for nested evidence (e.g. subgroup analyses). trigger: header node; content: revealed nodes; defaultOpen: start expanded."
+      },
+      "ToggleGroup": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "multiple": {
+            "type": "boolean"
+          },
+          "defaultValue": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Study-design filter as toggle buttons (e.g. RCT / Cohort / Case-control). items: labels; multiple: allow more than one on; defaultValue: initially active label. Never write \"you can filter by...\" in prose."
+      },
+      "Sheet": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "top",
+              "right",
+              "bottom",
+              "left"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "trigger",
+          "title",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Side panel for full-text context without covering the answer. trigger: button text; side: \"top\" | \"right\" | \"bottom\" | \"left\" (default right); title/description: header; content: panel nodes."
+      },
+      "Resizable": {
+        "type": "object",
+        "properties": {
+          "panels": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ResizablePanel"
+            }
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "horizontal",
+              "vertical"
+            ]
+          },
+          "initialRatio": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "panels"
+        ],
+        "additionalProperties": false,
+        "description": "Side-by-side evidence comparison with a draggable divider. panels: ResizablePanel[]; direction: \"horizontal\" | \"vertical\"; initialRatio: first-pane percent (2 panes only). Use instead of stacking two tables."
+      },
+      "ResizablePanel": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "One pane of a Resizable. content: nodes rendered inside the pane."
+      },
+      "ScrollArea": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          },
+          "orientation": {
+            "type": "string",
+            "enum": [
+              "vertical",
+              "horizontal"
+            ]
+          },
+          "maxHeight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Fixed-height scroll region for long evidence lists, so the Card cannot grow unbounded. content: nodes; orientation: scroll axis; maxHeight: pixel cap (default 320)."
+      },
+      "Sonner": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "success",
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false,
+        "description": "Transient toast for confirmations (\"Citation copied\", \"Filter applied\"). message: toast body; variant: tone; label: button text (default \"Notify\"); description: secondary line. Never use a permanent Alert for a transient confirmation."
+      },
+      "Skeleton": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "height": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "rounded": {
+            "type": "string",
+            "enum": [
+              "none",
+              "sm",
+              "md",
+              "lg",
+              "full"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Streaming placeholder. Match width/height to the component that will replace it to prevent layout shift. width/height accept px numbers or CSS strings; rounded: none | sm | md | lg | full."
+      },
+      "Spinner": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Inline loading indicator while a single passage resolves. label: optional text."
+      },
+      "Empty": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Empty state when a filter returns zero studies, e.g. title \"No RCTs match this population\". title: headline; description: explanation; content: optional actions."
+      },
+      "Field": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "control": {},
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "control"
+        ],
+        "additionalProperties": false,
+        "description": "Generic form field wrapper when FormControl is too opinionated. label: field label; control: the input node; description: helper text."
+      },
+      "Breadcrumb": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/BreadcrumbItem"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Research trail showing how the evidence set was narrowed (Question > Filtered evidence (12) > Included studies (5) > Synthesis). items: BreadcrumbItem[]; the last item renders as the current page."
+      },
+      "BreadcrumbItem": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One step in a Breadcrumb. label: step text; href: link target; action: fired when a non-link step is clicked."
+      },
+      "NavigationMenu": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/NavigationMenuItem"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Top-level sections: \"Evidence\", \"Subgroups\", \"Heterogeneity\", \"GRADE\". items: NavigationMenuItem[]."
+      },
+      "NavigationMenuItem": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "One top-level section. trigger: section label; content: nodes revealed in the dropdown."
+      },
+      "DropdownMenu": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DropdownMenuItem"
+            }
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "trigger",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Row-level actions opened from a button. trigger: button text; items: DropdownMenuItem[]; label: optional group heading."
+      },
+      "DropdownMenuItem": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive"
+            ]
+          },
+          "inset": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One row action (e.g. \"Show abstract\", \"Open in PubMed\", \"Exclude\"). label: row text; action: fired on select; variant: \"default\" | \"destructive\"."
+      },
+      "ContextMenu": {
+        "type": "object",
+        "properties": {
+          "trigger": {},
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ContextMenuItem"
+            }
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "trigger",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Right-click actions on a passage. trigger: the region node; items: ContextMenuItem[]; label: optional heading."
+      },
+      "ContextMenuItem": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive"
+            ]
+          },
+          "inset": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One right-click action (e.g. \"Copy citation\", \"Highlight\", \"Compare\"). label: row text; action: fired on select."
+      },
+      "Menubar": {
+        "type": "object",
+        "properties": {
+          "menus": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/MenubarMenu"
+            }
+          }
+        },
+        "required": [
+          "menus"
+        ],
+        "additionalProperties": false,
+        "description": "Desktop-style menu bar for a full research console. menus: MenubarMenu[]."
+      },
+      "MenubarMenu": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/MenubarItem"
+            }
+          }
+        },
+        "required": [
+          "trigger",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "One top-level menubar menu. trigger: menu label; items: MenubarItem[]."
+      },
+      "MenubarItem": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "open_url"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "continue_conversation"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "destructive"
+            ]
+          },
+          "inset": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One action inside a MenubarMenu. label: row text; action: fired on select."
+      },
+      "Kbd": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "keys"
+        ],
+        "additionalProperties": false,
+        "description": "Keyboard shortcut display. keys: one string (\"Cmd+K\") or a string array rendered as a combo."
+      },
+      "AspectRatio": {
+        "type": "object",
+        "properties": {
+          "ratio": {
+            "type": "number"
+          },
+          "content": {
+            "default": [],
+            "type": "array",
+            "items": {}
+          }
+        },
+        "required": [
+          "ratio",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Constrain an image thumbnail or forest-plot preview to a fixed ratio. ratio: width / height (e.g. 1.7778 for 16:9); content: nodes."
+      },
+      "ButtonGroup": {
+        "type": "object",
+        "properties": {
+          "buttons": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Button"
+            }
+          }
+        },
+        "required": [
+          "buttons"
+        ],
+        "additionalProperties": false,
+        "description": "Group related actions without spacing, e.g. \"Include / Exclude / Maybe\" as one control. buttons: Button[]."
+      },
+      "InputGroup": {
+        "type": "object",
+        "properties": {
+          "placeholder": {
+            "type": "string"
+          },
+          "addonStart": {
+            "type": "string"
+          },
+          "addonEnd": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Input with addons, e.g. a search field with a leading filter label and a trailing hint. placeholder: input hint; addonStart/addonEnd: text on either side."
+      },
+      "FollowUpBlock": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FollowUpItem"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "List of follow-up suggestion chips at the end of a response."
+      },
+      "FollowUpItem": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Clickable follow-up suggestion — sends text as user message when clicked."
+      },
+      "Tabs": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/TabItem"
+            }
+          },
+          "defaultValue": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Tabbed content. items: TabItem[]. defaultValue: initially active tab."
+      },
+      "TabItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TextContent"
+                },
+                {
+                  "$ref": "#/$defs/MarkDownRenderer"
+                },
+                {
+                  "$ref": "#/$defs/CardHeader"
+                },
+                {
+                  "$ref": "#/$defs/Alert"
+                },
+                {
+                  "$ref": "#/$defs/Badge"
+                },
+                {
+                  "$ref": "#/$defs/Avatar"
+                },
+                {
+                  "$ref": "#/$defs/CodeBlock"
+                },
+                {
+                  "$ref": "#/$defs/Image"
+                },
+                {
+                  "$ref": "#/$defs/ImageBlock"
+                },
+                {
+                  "$ref": "#/$defs/Progress"
+                },
+                {
+                  "$ref": "#/$defs/Separator"
+                },
+                {
+                  "$ref": "#/$defs/BarChart"
+                },
+                {
+                  "$ref": "#/$defs/LineChart"
+                },
+                {
+                  "$ref": "#/$defs/AreaChart"
+                },
+                {
+                  "$ref": "#/$defs/PieChart"
+                },
+                {
+                  "$ref": "#/$defs/RadarChart"
+                },
+                {
+                  "$ref": "#/$defs/RadialChart"
+                },
+                {
+                  "$ref": "#/$defs/ScatterChart"
+                },
+                {
+                  "$ref": "#/$defs/WaterfallChart"
+                },
+                {
+                  "$ref": "#/$defs/SunburstChart"
+                },
+                {
+                  "$ref": "#/$defs/TreemapChart"
+                },
+                {
+                  "$ref": "#/$defs/FunnelChart"
+                },
+                {
+                  "$ref": "#/$defs/SankeyChart"
+                },
+                {
+                  "$ref": "#/$defs/GaugeChart"
+                },
+                {
+                  "$ref": "#/$defs/HeatmapChart"
+                },
+                {
+                  "$ref": "#/$defs/MapChart"
+                },
+                {
+                  "$ref": "#/$defs/Table"
+                },
+                {
+                  "$ref": "#/$defs/TagBlock"
+                },
+                {
+                  "$ref": "#/$defs/Form"
+                },
+                {
+                  "$ref": "#/$defs/Buttons"
+                },
+                {
+                  "$ref": "#/$defs/Heading"
+                },
+                {
+                  "$ref": "#/$defs/Blockquote"
+                },
+                {
+                  "$ref": "#/$defs/InlineCode"
+                },
+                {
+                  "$ref": "#/$defs/PaginationBlock"
+                },
+                {
+                  "$ref": "#/$defs/DialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/AlertDialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/DrawerBlock"
+                },
+                {
+                  "$ref": "#/$defs/CalendarBlock"
+                },
+                {
+                  "$ref": "#/$defs/Command"
+                },
+                {
+                  "$ref": "#/$defs/Combobox"
+                },
+                {
+                  "$ref": "#/$defs/HoverCard"
+                },
+                {
+                  "$ref": "#/$defs/Tooltip"
+                },
+                {
+                  "$ref": "#/$defs/Popover"
+                },
+                {
+                  "$ref": "#/$defs/Collapsible"
+                },
+                {
+                  "$ref": "#/$defs/ToggleGroup"
+                },
+                {
+                  "$ref": "#/$defs/Sheet"
+                },
+                {
+                  "$ref": "#/$defs/Resizable"
+                },
+                {
+                  "$ref": "#/$defs/ScrollArea"
+                },
+                {
+                  "$ref": "#/$defs/Sonner"
+                },
+                {
+                  "$ref": "#/$defs/Skeleton"
+                },
+                {
+                  "$ref": "#/$defs/Spinner"
+                },
+                {
+                  "$ref": "#/$defs/Empty"
+                },
+                {
+                  "$ref": "#/$defs/Field"
+                },
+                {
+                  "$ref": "#/$defs/Breadcrumb"
+                },
+                {
+                  "$ref": "#/$defs/NavigationMenu"
+                },
+                {
+                  "$ref": "#/$defs/DropdownMenu"
+                },
+                {
+                  "$ref": "#/$defs/ContextMenu"
+                },
+                {
+                  "$ref": "#/$defs/Menubar"
+                },
+                {
+                  "$ref": "#/$defs/Kbd"
+                },
+                {
+                  "$ref": "#/$defs/AspectRatio"
+                },
+                {
+                  "$ref": "#/$defs/ButtonGroup"
+                },
+                {
+                  "$ref": "#/$defs/InputGroup"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "value",
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Tab panel. value: unique id, trigger: tab label, content: children."
+      },
+      "Carousel": {
+        "type": "object",
+        "properties": {
+          "slides": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "variant": {
+            "type": "string",
+            "enum": [
+              "default",
+              "card"
+            ]
+          }
+        },
+        "required": [
+          "slides"
+        ],
+        "additionalProperties": false,
+        "description": "Horizontal sliding content. slides: array of slide arrays. variant: \"default\" | \"card\"."
+      },
+      "Label": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "htmlFor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "description": "Form label. Optionally links to an input via htmlFor."
+      },
+      "Input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "email",
+              "password",
+              "number",
+              "url"
+            ]
+          },
+          "rules": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean"
+              },
+              "email": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              },
+              "numeric": {
+                "type": "boolean"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "minLength": {
+                "type": "number"
+              },
+              "maxLength": {
+                "type": "number"
+              },
+              "pattern": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Text input field. type: \"text\" | \"email\" | \"password\" | \"number\" | \"url\". rules for validation."
+      },
+      "TextArea": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "rules": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean"
+              },
+              "email": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              },
+              "numeric": {
+                "type": "boolean"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "minLength": {
+                "type": "number"
+              },
+              "maxLength": {
+                "type": "number"
+              },
+              "pattern": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Multi-line text input. rows sets visible height. rules for validation."
+      },
+      "Select": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/SelectItem"
+            }
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "type": "boolean"
+              },
+              "email": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              },
+              "numeric": {
+                "type": "boolean"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "minLength": {
+                "type": "number"
+              },
+              "maxLength": {
+                "type": "number"
+              },
+              "pattern": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Dropdown select. items: SelectItem[], placeholder, rules for validation."
+      },
+      "SelectItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Option for Select dropdown."
+      },
+      "DatePicker": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Date selection input with calendar popover."
+      },
+      "Slider": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "step": {
+            "type": "number"
+          },
+          "defaultValue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "Range slider input. min, max, step, defaultValue."
+      },
+      "CheckBoxGroup": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CheckBoxItem"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Multiple checkbox options. items: CheckBoxItem[]."
+      },
+      "CheckBoxItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Option in a CheckBoxGroup."
+      },
+      "RadioGroup": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RadioItem"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Radio selection group. items: RadioItem[]."
+      },
+      "RadioItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Option in a RadioGroup."
+      },
+      "SwitchGroup": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/SwitchItem"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Group of toggle switches. items: SwitchItem[]."
+      },
+      "SwitchItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Toggle option in a SwitchGroup."
+      },
+      "Accordion": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AccordionItem"
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "single",
+              "multiple"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "Collapsible sections. type: \"single\" | \"multiple\". items: AccordionItem[]."
+      },
+      "AccordionItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TextContent"
+                },
+                {
+                  "$ref": "#/$defs/MarkDownRenderer"
+                },
+                {
+                  "$ref": "#/$defs/CardHeader"
+                },
+                {
+                  "$ref": "#/$defs/Alert"
+                },
+                {
+                  "$ref": "#/$defs/Badge"
+                },
+                {
+                  "$ref": "#/$defs/Avatar"
+                },
+                {
+                  "$ref": "#/$defs/CodeBlock"
+                },
+                {
+                  "$ref": "#/$defs/Image"
+                },
+                {
+                  "$ref": "#/$defs/ImageBlock"
+                },
+                {
+                  "$ref": "#/$defs/Progress"
+                },
+                {
+                  "$ref": "#/$defs/Separator"
+                },
+                {
+                  "$ref": "#/$defs/BarChart"
+                },
+                {
+                  "$ref": "#/$defs/LineChart"
+                },
+                {
+                  "$ref": "#/$defs/AreaChart"
+                },
+                {
+                  "$ref": "#/$defs/PieChart"
+                },
+                {
+                  "$ref": "#/$defs/RadarChart"
+                },
+                {
+                  "$ref": "#/$defs/RadialChart"
+                },
+                {
+                  "$ref": "#/$defs/ScatterChart"
+                },
+                {
+                  "$ref": "#/$defs/WaterfallChart"
+                },
+                {
+                  "$ref": "#/$defs/SunburstChart"
+                },
+                {
+                  "$ref": "#/$defs/TreemapChart"
+                },
+                {
+                  "$ref": "#/$defs/FunnelChart"
+                },
+                {
+                  "$ref": "#/$defs/SankeyChart"
+                },
+                {
+                  "$ref": "#/$defs/GaugeChart"
+                },
+                {
+                  "$ref": "#/$defs/HeatmapChart"
+                },
+                {
+                  "$ref": "#/$defs/MapChart"
+                },
+                {
+                  "$ref": "#/$defs/Table"
+                },
+                {
+                  "$ref": "#/$defs/TagBlock"
+                },
+                {
+                  "$ref": "#/$defs/Form"
+                },
+                {
+                  "$ref": "#/$defs/Buttons"
+                },
+                {
+                  "$ref": "#/$defs/Heading"
+                },
+                {
+                  "$ref": "#/$defs/Blockquote"
+                },
+                {
+                  "$ref": "#/$defs/InlineCode"
+                },
+                {
+                  "$ref": "#/$defs/PaginationBlock"
+                },
+                {
+                  "$ref": "#/$defs/DialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/AlertDialogBlock"
+                },
+                {
+                  "$ref": "#/$defs/DrawerBlock"
+                },
+                {
+                  "$ref": "#/$defs/CalendarBlock"
+                },
+                {
+                  "$ref": "#/$defs/Command"
+                },
+                {
+                  "$ref": "#/$defs/Combobox"
+                },
+                {
+                  "$ref": "#/$defs/HoverCard"
+                },
+                {
+                  "$ref": "#/$defs/Tooltip"
+                },
+                {
+                  "$ref": "#/$defs/Popover"
+                },
+                {
+                  "$ref": "#/$defs/Collapsible"
+                },
+                {
+                  "$ref": "#/$defs/ToggleGroup"
+                },
+                {
+                  "$ref": "#/$defs/Sheet"
+                },
+                {
+                  "$ref": "#/$defs/Resizable"
+                },
+                {
+                  "$ref": "#/$defs/ScrollArea"
+                },
+                {
+                  "$ref": "#/$defs/Sonner"
+                },
+                {
+                  "$ref": "#/$defs/Skeleton"
+                },
+                {
+                  "$ref": "#/$defs/Spinner"
+                },
+                {
+                  "$ref": "#/$defs/Empty"
+                },
+                {
+                  "$ref": "#/$defs/Field"
+                },
+                {
+                  "$ref": "#/$defs/Breadcrumb"
+                },
+                {
+                  "$ref": "#/$defs/NavigationMenu"
+                },
+                {
+                  "$ref": "#/$defs/DropdownMenu"
+                },
+                {
+                  "$ref": "#/$defs/ContextMenu"
+                },
+                {
+                  "$ref": "#/$defs/Menubar"
+                },
+                {
+                  "$ref": "#/$defs/Kbd"
+                },
+                {
+                  "$ref": "#/$defs/AspectRatio"
+                },
+                {
+                  "$ref": "#/$defs/ButtonGroup"
+                },
+                {
+                  "$ref": "#/$defs/InputGroup"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "value",
+          "trigger",
+          "content"
+        ],
+        "additionalProperties": false,
+        "description": "Collapsible item inside Accordion. value: unique id, trigger: header text."
+      }
+    }
+  }
+}
